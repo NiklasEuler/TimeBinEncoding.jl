@@ -24,7 +24,7 @@ function j2lcmk(N, j)
     c, j = divrem(j, n_loops * N)
 	#c = j ÷ (n_loops * N)
 	#j -= c * n_loops * N
-    m, k = divrem(j, n_loops)
+    m, k = divrem(j-1, n_loops)
 	#m = j ÷ n_loops
 	#j -= m * n_loops
 	#k = j
@@ -85,7 +85,7 @@ function coin_operator(angles::Vector)
     return tensor_coin_operator
 end
 
-function correlated_timebin_state(coeffs::Vec)
+#= function correlated_timebin_state(coeffs::Vec)
 N = length(coeffs)
 state_vec = zeros{ComplexF64}(N^2)
 for i in 0:N-1
@@ -95,3 +95,4 @@ for i in 0:N-1
 
 function insert_initial_state()
 end
+ =#
