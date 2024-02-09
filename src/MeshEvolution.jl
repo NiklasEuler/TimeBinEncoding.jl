@@ -19,5 +19,5 @@ end
 
 function coin_operator(angles::Vector)
     matrices = [beam_splitter_operator(θ) for θ in angles]
-    return coin_operator(matrices...)
+    return blockdiag(matrices...)
 end
