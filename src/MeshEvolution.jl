@@ -1,4 +1,5 @@
-export lcmk2j, j2lcmk, shift_timebins, beam_splitter_operator, coin_operator
+export lcmk2j, j2lcmk, lm2j, j2lm
+export shift_timebins, beam_splitter_operator, coin_operator
 
 
 
@@ -34,13 +35,13 @@ function lm2j(N, l, m) # transforms the one index notation of basis elements to 
     N = convert(Int64, N)
     l = convert(Int64, l)
     m = convert(Int64, m)
-    return l*N+m
+    return l*N+m + 1
 end
 
 function j2lm(N, j) # inverse of lm2j
     N = convert(Int64, N)
     j = convert(Int64, j)
-    l,m = divrem(j,N)
+    l,m = divrem(j-1,N)
     return l,m
 end
 
@@ -86,6 +87,10 @@ end
 
 function correlated_timebin_state(coeffs::Vec)
 N = length(coeffs)
+state_vec = zeros{ComplexF64}(N^2)
+for i in 0:N-1
+    j = lm2j(N,i,i)
+
 
 
 function insert_initial_state()
