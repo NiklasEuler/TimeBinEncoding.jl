@@ -1,5 +1,6 @@
 export lcmk2j, j2lcmk, lm2j, j2lm
 export shift_timebins, beam_splitter_operator, coin_operator
+export correlated_timebin_state, insert_initial_state
 
 
 
@@ -86,7 +87,7 @@ function coin_operator(angles::Vector)
     return tensor_coin_operator
 end
 
-function correlated_timebin_state(coeffs::Vector)
+function correlated_timebin_state(coeffs::Vector)#todo: normalize
     N = length(coeffs)
     time_bin_state_vec = zeros{ComplexF64}(N^2)
     for i in 0:N-1
