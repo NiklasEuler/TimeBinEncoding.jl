@@ -1,4 +1,4 @@
-export lcmk2j, lcmk2j, shift_timebins, beam_splitter_operator, coin_operator
+export lcmk2j, j2lcmk, shift_timebins, beam_splitter_operator, coin_operator
 
 
 
