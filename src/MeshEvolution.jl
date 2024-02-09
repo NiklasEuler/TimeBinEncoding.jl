@@ -89,7 +89,7 @@ end
 
 function correlated_timebin_state(wf_coeffs::Vector)#todo: normalize
     N = length(wf_coeffs)
-    time_bin_state_vec = zeros{ComplexF64}(N^2)
+    time_bin_state_vec = zeros(ComplexF64, N^2)
     for i in 0:N-1
         j = lm2j(N,i,i)
         state_vec[j] = wf_coeffs[i+1]
