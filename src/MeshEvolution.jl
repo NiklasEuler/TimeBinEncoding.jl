@@ -17,5 +17,7 @@ function beam_splitter_operator(θ)
    return sparse(cols,rows,vals)
 end
 
-function coin_operator
+function coin_operator(angles::Vector)
+    matrices = [beam_splitter_operator(θ) for θ in angles]
+    return coin_operator(matrices...)
 end
