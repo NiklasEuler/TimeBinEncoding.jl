@@ -60,7 +60,7 @@ end =#
 function shift_timebins(state_vec::Vector)
     n_loops = 2
     N = Int64(sqrt(length(state_vec)/(n_loops)))
-    new_vec = zeros{ComplexF64}(length(state_vec)+n_loops)
+    new_vec = zeros(ComplexF64, length(state_vec)+n_loops)
     for j in 1:length(state_vec)
         l,c,m,k = j2lcmk(N,j)
         shifted_j = lcmk2j(N, l+c, c, m+k, k)
@@ -100,7 +100,7 @@ end
 
 function insert_initial_state(time_bin_state_vec::Vector)
     N = Int64(sqrt(length(time_bin_state_vec)))
-    full_state_vec = zeros{ComplexF64}(length(time_bin_state_vec))
+    full_state_vec = zeros(ComplexF64, length(time_bin_state_vec))
     for l in 1:N, m in 1:N
         j_time_bin = lm2j(N, l, m)
         j_full = lcmk2j(N, l, 0, m, 0)
