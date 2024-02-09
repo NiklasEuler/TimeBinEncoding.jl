@@ -24,11 +24,11 @@ function j2lcmk(N, j)
     c, j = divrem(j, n_loops * N)
 	#c = j ÷ (n_loops * N)
 	#j -= c * n_loops * N
-    m, k = divrem(j-1, n_loops)
+    m, k = divrem(j, n_loops)
 	#m = j ÷ n_loops
 	#j -= m * n_loops
 	#k = j
-	return l, c, m, k
+	return l, c, m, k-1
 end
 
 function lm2j(N, l, m) # transforms the one index notation of basis elements to the two index notation
