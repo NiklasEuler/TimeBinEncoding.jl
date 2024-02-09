@@ -8,12 +8,14 @@ function shift_timebins(state_vec::Vector)
     return new_vec
 end
 
-function beam_splitter_operator(θ)
-    
+function beam_splitter_operator(θ) 
     cs = cos(θ)
     sn = im*sin(θ)
     cols = [1,1,2,2]
     rows = [1,2,1,2]
     vals = [cs, sn, sn, cs]
-   # sparse([1, 1, 2, 3], [1, 3, 2, 3], [0, 1, 2, 0])
+   return sparse(cols,rows,vals)
+end
+
 function coin_operator
+end
