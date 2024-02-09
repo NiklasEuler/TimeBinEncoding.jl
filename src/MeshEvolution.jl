@@ -86,14 +86,24 @@ function coin_operator(angles::Vector)
     return tensor_coin_operator
 end
 
-#= function correlated_timebin_state(coeffs::Vec)
-N = length(coeffs)
-state_vec = zeros{ComplexF64}(N^2)
-for i in 0:N-1
-    j = lm2j(N,i,i)
-
-
-
-function insert_initial_state()
+function correlated_timebin_state(coeffs::Vector)
+    N = length(coeffs)
+    time_bin_state_vec = zeros{ComplexF64}(N^2)
+    for i in 0:N-1
+        j = lm2j(N,i,i)
+        state_vec[j] = coeffs[i]
+    end
+    return time_bin_state_vec
 end
- =#
+
+
+function insert_initial_state(time_bin_state_vec::Vector)
+    N = Int64(sqrt(length(time_bin_state_vec)))
+    full_state_vec = zeros{ComplexF64}(length(time_bin_state_vec))
+    for l in 1:N, m in 1:N
+        j_time_bin = lm2j(N, l, m)
+        j_full = lcmk2j(N, l, 0, m, 0)
+        full_state_vec[j_full] = time_bin_state_vec[j_time_bin]
+    end
+    return full_state_vec
+end
