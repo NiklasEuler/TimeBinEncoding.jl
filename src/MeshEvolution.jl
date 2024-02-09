@@ -99,8 +99,9 @@ end
 
 
 function insert_initial_state(time_bin_state_vec::Vector)
+    n_loops2 = 4
     N = Int64(sqrt(length(time_bin_state_vec)))
-    full_state_vec = zeros(ComplexF64, length(time_bin_state_vec))
+    full_state_vec = zeros(ComplexF64, length(time_bin_state_vec)*n_loops2)
     for l in 1:N, m in 1:N
         j_time_bin = lm2j(N, l, m)
         j_full = lcmk2j(N, l, 0, m, 0)
