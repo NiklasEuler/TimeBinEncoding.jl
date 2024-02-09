@@ -4,6 +4,7 @@ export lcmk2j, j2lcmk, shift_timebins, beam_splitter_operator, coin_operator
 
 
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
+    N = convert(Int64, N)
     l = convert(Int64, l)
     c = convert(Int64, c)
     m = convert(Int64, m)
@@ -29,11 +30,16 @@ function j2lcmk(N, j)
 	return l, c, m, k
 end
 
-function lm2j(N, l, m): # transforms the one index notation of basis elements to the two index notation
+function lm2j(N, l, m) # transforms the one index notation of basis elements to the two index notation
+    N = convert(Int64, N)
+    l = convert(Int64, l)
+    m = convert(Int64, m)
     return l*N+m
 end
 
-function j2lm(N, j): # inverse of lm2j
+function j2lm(N, j) # inverse of lm2j
+    N = convert(Int64, N)
+    j = convert(Int64, j)
     l,m = divrem(j,N)
     return l,m
 end
