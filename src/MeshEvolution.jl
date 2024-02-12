@@ -63,7 +63,7 @@ function shift_timebins(state_vec::Vector)
     new_vec = zeros(ComplexF64, ((N+1)*n_loops)^2)
     for j in 1:length(state_vec)
         l,c,m,k = j2lcmk(N,j)
-        shifted_j = lcmk2j(N, l+c, c, m+k, k)
+        shifted_j = lcmk2j(N+1, l+c, c, m+k, k)
         new_vec[shifted_j] = state_vec[j]
     end
     return new_vec
