@@ -58,8 +58,8 @@ end
 end =#
 
 function shift_timebins(state_vec::Vector)
-    n_loops = 2
-    N = Int64(sqrt(length(state_vec)/(n_loops)))
+    n_loops2 = 4
+    N = Int64(sqrt(length(state_vec)/(n_loops2)))
     new_vec = zeros(ComplexF64, length(state_vec)+n_loops)
     for j in 1:length(state_vec)
         l,c,m,k = j2lcmk(N,j)
