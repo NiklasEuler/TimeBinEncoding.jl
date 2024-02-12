@@ -111,3 +111,13 @@ function insert_initial_state(time_bin_state_vec::Vector)
     end
     return full_state_vec
 end
+
+function mesh_evolution(ψ_init, angles)
+    state = copy(ψ_init)
+    for i in eachindex(angles)
+        coin_operator = coin_operator(angles)
+        state = coin_operator * state
+        state =  shift_timebins(state)
+    end
+    return state
+end
