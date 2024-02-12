@@ -1,5 +1,5 @@
 export lcmk2j, j2lcmk, lm2j, j2lm
-export shift_timebins, beam_splitter_operator, coin_operator
+export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export correlated_timebin_state, insert_initial_state
 
 const global n_loops = 2
@@ -115,8 +115,8 @@ end
 function mesh_evolution(ψ_init, angles)
     state = copy(ψ_init)
     for i in eachindex(angles)
-        coin_operator = coin_operator(angles)
-        state = coin_operator * state
+        coin_op = coin_operator(angles)
+        state = coin_op * state
         state =  shift_timebins(state)
     end
     return state
