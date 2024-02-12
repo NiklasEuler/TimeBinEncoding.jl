@@ -115,7 +115,7 @@ end
 function mesh_evolution(ψ_init, angles)
     state = copy(ψ_init)
     for i in eachindex(angles)
-        coin_op = coin_operator(angles)
+        coin_op = coin_operator(angles[i])
         state = coin_op * state
         state =  shift_timebins(state)
     end
