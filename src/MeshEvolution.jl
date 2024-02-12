@@ -2,7 +2,8 @@ export lcmk2j, j2lcmk, lm2j, j2lm
 export shift_timebins, beam_splitter_operator, coin_operator
 export correlated_timebin_state, insert_initial_state
 
-
+const global n_loops = 2
+const global n_loops2 = 4
 
 
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
@@ -18,8 +19,8 @@ end
 function j2lcmk(N, j)
     N = convert(Int64, N)
     j = convert(Int64,j)
-	n_loops = 2
-    n_loops2 = 4
+#	n_loops = 2
+#    n_loops2 = 4
     l, j = divrem(j-1, n_loops2 * N)
 	#l = j ÷ (n_loops2 * N)
 	#j -= l * n_loops2 * N
@@ -58,8 +59,6 @@ end
 end =#
 
 function shift_timebins(state_vec::Vector)
-    n_loops = 2
-    n_loops2 = 4
     N = Int64(sqrt(length(state_vec)/(n_loops2)))
     new_vec = zeros(ComplexF64, length(state_vec)+n_loops)
     for j in 1:length(state_vec)
@@ -102,7 +101,7 @@ end
 
 
 function insert_initial_state(time_bin_state_vec::Vector)
-    n_loops2 = 4
+    #n_loops2 = 4
     N = Int64(sqrt(length(time_bin_state_vec)))
     full_state_vec = zeros(ComplexF64, length(time_bin_state_vec)*n_loops2)
     for l in 0:N-1, m in 0:N-1
