@@ -14,9 +14,9 @@ function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elem
 
     @argcheck N > 0
     @argcheck l ≥ 0
-    @argcheck l <= N
+    @argcheck l < N
     @argcheck m ≥ 0
-    @argcheck m <= N
+    @argcheck m < N
     @argcheck c ∈ [0,1]
     @argcheck k ∈ [0,1]
 
@@ -26,7 +26,7 @@ end
 function j2lcmk(N, j)
     N = convert(Int64, N)
     j = convert(Int64,j)
-    
+
     @argcheck N > 0
     @argcheck j > 0
     @argcheck j ≤ 4*N^2

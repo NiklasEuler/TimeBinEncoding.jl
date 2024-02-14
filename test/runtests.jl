@@ -15,7 +15,7 @@ using Test
     @test j_arr == j_arr_reconstructed
     @test lcmk_arr[:,1] == [0,0,0,0]
     @test lcmk_arr[:,end] == [N-1,1,N-1,1]
-    @test lcmk_arr[:,105] == [5,0,2,0]
+    @test lcmk_arr[:,77] == [3,1,3,0]
     @test_throws ArgumentError j2lcmk(0,1)
     @test_throws ArgumentError j2lcmk(N,0)
     @test_throws ArgumentError j2lcmk(N,4*N^2+1)
