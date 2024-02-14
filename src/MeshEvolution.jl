@@ -2,9 +2,8 @@ export lcmk2j, j2lcmk, lm2j, j2lm
 export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export correlated_timebin_state, insert_initial_state
 
-const global n_loops = 2
-const global n_loops2 = 4
-
+const global n_loops = 2 # number of fiber loops. Saved as const to avoid magic numbers.
+const global n_loops2 = 4 # number of fiber loops squared. Saved as const to avoid magic numbers.
 
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
     N = convert(Int64, N)
@@ -12,15 +11,12 @@ function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elem
     c = convert(Int64, c)
     m = convert(Int64, m)
     k = convert(Int64, k)
-	n_loops = 2
     return (l * n_loops + c) * N * n_loops + m * n_loops + k + 1
 end
 
 function j2lcmk(N, j)
     N = convert(Int64, N)
     j = convert(Int64,j)
-#	n_loops = 2
-#    n_loops2 = 4
     l, j = divrem(j-1, n_loops2 * N)
 	#l = j ÷ (n_loops2 * N)
 	#j -= l * n_loops2 * N
@@ -38,14 +34,27 @@ function lm2j(N, l, m) # transforms the one index notation of basis elements to 
     N = convert(Int64, N)
     l = convert(Int64, l)
     m = convert(Int64, m)
-    return l*N+m + 1
+    return l * N + m + 1
 end
 
 function j2lm(N, j) # inverse of lm2j
     N = convert(Int64, N)
     j = convert(Int64, j)
-    l,m = divrem(j-1,N)
-    return l,m
+    l, m = divrem(j-1, N)
+    return l, m
+end
+
+function lc2j(l, c) 
+    l = convert(Int64, l)
+    c = convert(Int64, c)
+    m = convert(Int64, m)
+    return l * 2 + c + 1
+end
+
+function j2lc(j) # inverse of lm2j
+    j = convert(Int64, j)
+    l,m = divrem(j-1,2)
+    return l, m
 end
 
 #= function shift_timebins(state_vec::Vector)
@@ -101,7 +110,6 @@ end
 
 
 function insert_initial_state(time_bin_state_vec::Vector)
-    #n_loops2 = 4
     N = Int64(sqrt(length(time_bin_state_vec)))
     full_state_vec = zeros(ComplexF64, length(time_bin_state_vec)*n_loops2)
     for l in 0:N-1, m in 0:N-1
