@@ -42,9 +42,9 @@ end
        j_arr_reconstructed[j] = lm2j(N,lm...)
     end
     @test j_arr == j_arr_reconstructed
-    @test lcmk_arr[:,1] == [0,0]
-    @test lcmk_arr[:,end] == [N-1,N-1]
-    @test lcmk_arr[:,13] == [2,2]
+    @test lm_arr[:,1] == [0,0]
+    @test lm_arr[:,end] == [N-1,N-1]
+    @test lm_arr[:,13] == [2,2]
     @test_throws ArgumentError j2lm(0,1)
     @test_throws ArgumentError j2lm(N,0)
     @test_throws ArgumentError j2lm(N,N^2+1)
