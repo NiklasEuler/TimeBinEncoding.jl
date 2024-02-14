@@ -11,12 +11,26 @@ function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elem
     c = convert(Int64, c)
     m = convert(Int64, m)
     k = convert(Int64, k)
+
+    @argcheck N > 0
+    @argcheck l ≥ 0
+    @argcheck l <= N
+    @argcheck m ≥ 0
+    @argcheck m <= N
+    @argcheck c ∈ [0,1]
+    @argcheck k ∈ [0,1]
+
     return (l * n_loops + c) * N * n_loops + m * n_loops + k + 1
 end
 
 function j2lcmk(N, j)
     N = convert(Int64, N)
     j = convert(Int64,j)
+    
+    @argcheck N > 0
+    @argcheck j > 0
+    @argcheck j ≤ 4*N^2
+
     l, j = divrem(j-1, n_loops2 * N)
 	#l = j ÷ (n_loops2 * N)
 	#j -= l * n_loops2 * N
