@@ -48,12 +48,24 @@ function lm2j(N, l, m) # transforms the one index notation of basis elements to 
     N = convert(Int64, N)
     l = convert(Int64, l)
     m = convert(Int64, m)
+
+    @argcheck N > 0
+    @argcheck l ≥ 0
+    @argcheck l < N
+    @argcheck m ≥ 0
+    @argcheck m < N
+
     return l * N + m + 1
 end
 
 function j2lm(N, j) # inverse of lm2j
     N = convert(Int64, N)
     j = convert(Int64, j)
+
+    @argcheck N > 0
+    @argcheck j > 0
+    @argcheck j ≤ N^2
+
     l, m = divrem(j-1, N)
     return l, m
 end
