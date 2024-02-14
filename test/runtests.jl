@@ -54,3 +54,30 @@ end
     @test_throws ArgumentError lm2j(N,-2,2)
     
 end
+
+@testset "lc <-> j" begin
+    # Write your tests here.
+    N = 5
+    j_arr = 1:(2*N)
+    lc_arr = zeros(2, 2*N)
+    j_arr_reconstructed = zeros(2*N)
+    for j in eachindex(j_arr)
+       lc = collect(j2lc(j))
+       lc_arr[:,j] = lc
+       j_arr_reconstructed[j] = lc2j(lc...)
+    end
+    @test j_arr == j_arr_reconstructed
+    @test lc_arr[:,1] == [0,0]
+    @test lc_arr[:,end] == [N-1,1]
+    @test lc_arr[:,6] == [2,1]
+    @test_throws ArgumentError j2lc(0)
+    @test_throws ArgumentError lc2j(-1,1)
+    @test_throws ArgumentError lc2j(1,-1)
+    @test_throws ArgumentError lc2j(4,2)
+end
+
+@testset "beam_splitter_operator" begin
+    @test beam_splitter_operator(0) ≈ [[1,0] [0,1]]
+    @test beam_splitter_operator(π/2) ≈ [[0,im] [im,0]]
+    @test beam_splitter_operator(π/4) ≈ 1/√2 *[[1,im] [im,1]]
+end
