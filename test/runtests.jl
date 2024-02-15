@@ -1,5 +1,5 @@
-using TimeBinEncoding
 using Test
+using TimeBinEncoding
 
 @testset "lcmk <-> j" begin
     # Write your tests here.

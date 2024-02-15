@@ -73,7 +73,24 @@ function symbolic_ket_evolution_sp(M, l)
     return j_idx_arr, trigonometric_history_arr, angle_history_arr
 end
 
-function visualize_symbolic_ket_evolution_sp(M, l)
+function visualize_symbolic_ket_evolution_sp(M, l_init)
     j_idx_arr, trigonometric_history_arr, angle_history_arr = symbolic_ket_evolution_sp(M, l)
-    println(L"The initial state $\ket{%$l,s} after %$M roundtrips has evolved into the following contributions:")
+    println("The initial state |$l_init,S⟩ after $M roundtrips has evolved into the following contributions:")
+    println("(̂Ŝ̂C)^{M} |$l_init,S⟩ =")
+    for (i, j) in enumerate(j_idx_arr)
+        l,c = j2lc(j)
+        if c==0
+            cs = "S"
+        else
+            cs = "L"
+        end
+        println("+ |$l,$CS⟩(")
+        trigonometric_history = trigonometric_history_arr[i]
+        angle_history = angle_history_arr[i]
+        n_tri_strings = size(trigonometric_history)[1]
+        for k in 1:n_tri_strings
+        
+        end
+
+    end
 end

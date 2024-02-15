@@ -1,9 +1,10 @@
 module TimeBinEncoding
 
-using SparseArrays
+using ArgCheck
+using LaTeXStrings
 using LinearAlgebra
 using Random
-using ArgCheck
+using SparseArrays
 
 const global n_loops = 2 # number of fiber loops. Saved as const to avoid magic numbers.
 const global n_loops2 = 4 # number of fiber loops squared. Saved as const to avoid magic numbers.
