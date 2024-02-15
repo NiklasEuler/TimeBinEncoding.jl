@@ -2,11 +2,11 @@ export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc
 
 
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
-    N = convert(Int64, N)
-    l = convert(Int64, l)
-    c = convert(Int64, c)
-    m = convert(Int64, m)
-    k = convert(Int64, k)
+    N = convert(Int64, N)::Int64
+    l = convert(Int64, l)::Int64
+    c = convert(Int64, c)::Int64
+    m = convert(Int64, m)::Int64
+    k = convert(Int64, k)::Int64
 
     @argcheck N > 0
     @argcheck l ≥ 0
@@ -20,8 +20,8 @@ function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elem
 end
 
 function j2lcmk(N, j)
-    N = convert(Int64, N)
-    j = convert(Int64,j)
+    N = convert(Int64, N)::Int64
+    j = convert(Int64, j)::Int64
 
     @argcheck N > 0
     @argcheck j > 0
@@ -41,9 +41,9 @@ function j2lcmk(N, j)
 end
 
 function lm2j(N, l, m) # transforms the one index notation of basis elements to the two index notation
-    N = convert(Int64, N)
-    l = convert(Int64, l)
-    m = convert(Int64, m)
+    N = convert(Int64, N)::Int64
+    l = convert(Int64, l)::Int64
+    m = convert(Int64, m)::Int64
 
     @argcheck N > 0
     @argcheck l ≥ 0
@@ -55,8 +55,8 @@ function lm2j(N, l, m) # transforms the one index notation of basis elements to 
 end
 
 function j2lm(N, j) # inverse of lm2j
-    N = convert(Int64, N)
-    j = convert(Int64, j)
+    N = convert(Int64, N)::Int64
+    j = convert(Int64, j)::Int64
 
     @argcheck N > 0
     @argcheck j > 0
@@ -67,15 +67,17 @@ function j2lm(N, j) # inverse of lm2j
 end
 
 function lc2j(l, c) 
-    l = convert(Int64, l)
-    c = convert(Int64, c)
+    l = convert(Int64, l)::Int64
+    c = convert(Int64, c)::Int64
+
     @argcheck l ≥ 0
     @argcheck c ∈ [0,1]
     return l * 2 + c + 1
 end
 
 function j2lc(j) # inverse of lm2j
-    j = convert(Int64, j)
+    j = convert(Int64, j)::Int64
+
     @argcheck j > 0
     l,c = divrem(j-1,2)
     return l, c
