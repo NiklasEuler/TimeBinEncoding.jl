@@ -1,7 +1,11 @@
 export symbolic_generic_ket_evolution_sp, symbolic_ket_evolution_sp
-export symbolic_final_state_projection
-export visualize_symbolic_ket_evolution_sp, visualize_symbolic_final_state_projection
+export symbolic_final_state_projection_sp
 
+"""
+    symbolic_generic_ket_evolution_sp(M)
+
+TBW
+"""
 function symbolic_generic_ket_evolution_sp(M)
     M = convert(Int64, M)::Int64 # number of roundtrips
     @argcheck M > 0
@@ -20,6 +24,11 @@ function symbolic_generic_ket_evolution_sp(M)
     return j_idx_arr, trigonometric_history_arr, angle_history_arr
 end
 
+"""
+    symbolic_generic_ket_coin_sp(m, trigonometric_history_arr, angle_history_arr)
+
+TBW
+"""
 function symbolic_generic_ket_coin_sp(m, trigonometric_history_arr, angle_history_arr)
     m = convert(Int64, m)::Int64 # current round trip index
     @argcheck m > 0
@@ -44,6 +53,11 @@ function symbolic_generic_ket_coin_sp(m, trigonometric_history_arr, angle_histor
     end
 end
 
+"""
+    symbolic_generic_ket_shift_sp(M, m, trigonometric_history_arr, angle_history_arr)
+
+TBW
+"""
 function symbolic_generic_ket_shift_sp(M, m, trigonometric_history_arr, angle_history_arr)
     M = convert(Int64, M)::Int64 # number of roundtrips
     m = convert(Int64, m)::Int64 # current round trip index
@@ -59,6 +73,11 @@ function symbolic_generic_ket_shift_sp(M, m, trigonometric_history_arr, angle_hi
     angle_history_arr[n_loops] = Matrix{Int64}(undef, 0, M) # reset 0L bin after shift
 end
 
+"""
+    symbolic_ket_evolution_sp(M, l)
+
+TBW
+"""
 function symbolic_ket_evolution_sp(M, l)
     M = convert(Int64, M)::Int64 # number of roundtrips
     l = convert(Int64, l)::Int64 # initial time bin index
@@ -75,23 +94,38 @@ function symbolic_ket_evolution_sp(M, l)
     return j_idx_arr, trigonometric_history_arr, angle_history_arr
 end
 
-function symbolic_final_state_projection(M, l, c)
+"""
+    symbolic_final_state_projection_sp(M, l, c)
+
+TBW
+"""
+function symbolic_final_state_projection_sp(M, l, c)
     M = convert(Int64, M)::Int64 # number of roundtrips
     l = convert(Int64, l)::Int64 # final state time bin index
     c = convert(Int64, c)::Int64 # final state loop index
     @argcheck M > 0
-    return symbolic_final_state_projection_worker(M, l, c)
+    return symbolic_final_state_projection_worker_sp(M, l, c)
 end
 
-function symbolic_final_state_projection(M, j)
+"""
+    symbolic_final_state_projection_sp(M, j)
+
+TBW
+"""
+function symbolic_final_state_projection_sp(M, j)
     M = convert(Int64, M)::Int64 # number of roundtrips
     j = convert(Int64, j)::Int64 # final state ket index
     @argcheck M > 0
     l, c = j2lc(j)
-    return symbolic_final_state_projection_worker(M, l, c)
+    return symbolic_final_state_projection_worker_sp(M, l, c)
 end
 
-function symbolic_final_state_projection_worker(M, l, c)
+"""
+    symbolic_final_state_projection_worker_sp(M, l, c)
+
+TBW
+"""
+function symbolic_final_state_projection_worker_sp(M, l, c)
     trigonometric_history_arr_fs = Vector{Matrix{Int64}}(undef, 0)
     angle_history_arr_fs = copy(trigonometric_history_arr_fs)
     j_idx_arr_fs = Int64[]
@@ -115,46 +149,4 @@ function symbolic_final_state_projection_worker(M, l, c)
         end
     end
     return j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
-end
-
-function visualize_symbolic_ket_evolution_sp(M, l_init)
-    j_idx_arr, trigonometric_history_arr, angle_history_arr = symbolic_ket_evolution_sp(M, l_init)
-    println("The initial state |$l_init,S⟩ after $M roundtrips has evolved into the following contributions:")
-    println("")
-    println("(SC)^{$M} |$l_init,S⟩ =")
-    cs = ["S", "L"]
-    for (i, j) in enumerate(j_idx_arr)
-        l,c = j2lc(j)
-        print("+ |$l,$(cs[c+1])⟩⋅[")
-        trigonometric_string_formatter(trigonometric_history_arr[i], angle_history_arr[i])
-        println(" ]")
-    end
-end
-
-function visualize_symbolic_final_state_projection(M, l_fs, c_fs)
-    j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs = symbolic_final_state_projection_worker(M, l_fs, c_fs)
-    #println("The initial state |$l_init,S⟩ after $M roundtrips has evolved into the following contributions:")
-    #println("")
-    cs = ["S", "L"]
-    println("|$l_fs,$(cs[c_fs+1])⟩⟨$l_fs,$(cs[c_fs+1])| (SC)^{$M} |Ψ_init⟩ = |$l_fs,$(cs[c_fs+1])⟩⋅{")
-    for (i, j) in enumerate(j_idx_arr_fs)
-        l_init,c_init = j2lc(j)
-        print("+ c_($l_init,$(cs[c_init+1]))⋅[")
-        trigonometric_string_formatter(trigonometric_history_arr_fs[i], angle_history_arr_fs[i])
-        println(" ]")
-    end
-    println("}")
-end
-
-function trigonometric_string_formatter(trigonometric_history, angle_history)
-    n_tri_strings = size(trigonometric_history)[1]
-    tri_replacement_str = ["cos(θ","sin(θ"]
-    phase_replacement_str = [" + "," + i ⋅ "," - "," - i ⋅ "]
-    for k in 1:n_tri_strings
-        tri_string_bin = trigonometric_history[k,:]
-        angle_string_bin = angle_history[k,:]
-        tri_string_formatted = join([join([tri_replacement_str[1+tri_string_bin[i]],"_$(angle_string_bin[i])^$i)"]) for i in eachindex(tri_string_bin)])
-        phase_tri_string = join([phase_replacement_str[mod(sum(tri_string_bin),4)+1],tri_string_formatted])
-        print(phase_tri_string)
-    end
 end

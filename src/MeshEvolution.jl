@@ -1,6 +1,7 @@
 export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export correlated_timebin_state, insert_initial_state
 export shift_timebins_single_photon
+export explicit_ket_evolution_sp
 
 function shift_timebins_single_photon(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
@@ -76,3 +77,46 @@ function mesh_evolution(ψ_init, angles)
     end
     return state
 end
+
+"""
+    symbolic_ket_evolution_sp(M, l)
+
+TBW
+"""
+function explicit_ket_evolution_sp(M, l, angles)
+    M = convert(Int64, M)::Int64 # number of roundtrips
+    l = convert(Int64, l)::Int64 # initial time bin index
+    #@argcheck M > 0
+    @argcheck l ≥ 0
+    j_idx_arr, trigonometric_history_arr, angle_history_arr = symbolic_ket_evolution_sp(M, l)
+    coeff_arr = Vector{ComplexF64}(undef, 0)
+    j_idx_arr_contr = Int64[]
+    tri_vals = [hcat(cos.(ang), sin.(ang)) for ang in angles]
+    for (i, j) in enumerate(j_idx_arr)
+        coeff = Complex(0)
+        for k in 1:size(angle_history_arr[i])[1]
+            tri_string = trigonometric_history_arr[i][k,:]
+            phase_factor = im^(sum(tri_string))
+            angle_string = angle_history_arr[i][k,:] .+ 1
+            tri_string .+= 1
+            coeff += prod([tri_vals[m][angle_string[m], tri_string[m]] for m in 1:M]) * phase_factor
+        end
+        if !isapprox(abs2(coeff), 0.0, atol=1e-16)
+            push!(coeff_arr, coeff)
+            push!(j_idx_arr_contr, j)
+        end
+    end
+    return j_idx_arr_contr, coeff_arr
+end
+
+
+#= function symbolic_final_state_projection(M, j1, j2)
+    M = convert(Int64, M)::Int64 # number of roundtrips
+    j1 = convert(Int64, j1)::Int64 # first photon final state ket index
+    j2 = convert(Int64, j2)::Int64 # second photon final state ket index
+    @argcheck M > 0
+    l1, c1 = j2lc(j1)
+    l2, c2 = j2lc(j2)
+    j_idx_arr_fs_1, trigonometric_history_arr_fs_1, angle_history_arr_fs_1 = symbolic_final_state_projection_sp(M, j1)
+    j_idx_arr_fs_2, trigonometric_history_arr_fs_2, angle_history_arr_fs_2 = symbolic_final_state_projection_sp(M, j2)
+end =#
