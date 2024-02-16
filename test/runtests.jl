@@ -81,3 +81,19 @@ end
     @test beam_splitter_operator(π/2) ≈ [[0,im] [im,0]]
     @test beam_splitter_operator(π/4) ≈ 1/√2 *[[1,im] [im,1]]
 end
+
+@testset "symbolic_final_state_projection" begin
+
+    @test_throws ArgumentError symbolic_final_state_projection(0,0,0)
+    @test_throws ArgumentError symbolic_final_state_projection(0,0)
+    j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs = symbolic_final_state_projection(1, 0, 0)
+    @test j_idx_arr_fs == [1]
+    @test trigonometric_history_arr_fs == [fill(0,1,1)]
+    @test trigonometric_history_arr_fs == [fill(0,1,1)]
+    j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs = symbolic_final_state_projection(2, 2, 1)
+    @test j_idx_arr_fs == [1, 3]
+    @test trigonometric_history_arr_fs == [[[1] [0]], [[0] [1]]]
+    @test angle_history_arr_fs == [[[0] [1]], [[1] [1]]]
+    j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs = symbolic_final_state_projection(2, 0, 1)
+    @test j_idx_arr_fs == trigonometric_history_arr_fs == angle_history_arr_fs == []
+end
