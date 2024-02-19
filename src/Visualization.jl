@@ -1,4 +1,4 @@
-export visualize_symbolic_ket_evolution_sp, visualize_symbolic_final_state_projection_sp
+export visualize_symbolic_ket_evolution_sp, visualize_symbolic_final_state_projection_sp, visualize_measurement_coherence_map
 
 
 """
@@ -58,3 +58,17 @@ function trigonometric_string_formatter(trigonometric_history, angle_history)
     end
 end
 
+function visualize_measurement_coherence_map(j_out, angles)
+    M = length(angles)  # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+
+    j1_arr, j2_arr, weights =  explicit_measurement_coherence_map(j_out, angles)
+    display_weights = round.(Real.(weights), digits=5)
+    l_out,c_out,m_out,k_out = j2lcmk(N+M,j_out)
+	println("⟨",l_out," ",c_out," ",m_out," ",k_out,"|(SC)^M ρ (C^†S^†)^M) |",l_out," ",c_out," ",m_out," ",k_out,"⟩ =")
+	for i in eachindex(j1_arr)
+		l1, c1, m1, k1 = j2lcmk(N,j1_arr[i])
+		l2, c2, m2, k2 = j2lcmk(N,j2_arr[i])
+		println("+ ρ_[",l1," ",m1,"]^[",l2," ",m2,"] ⋅ ",display_weights[i])
+	end
+end

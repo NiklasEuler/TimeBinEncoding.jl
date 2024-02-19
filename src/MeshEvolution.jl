@@ -1,7 +1,8 @@
 export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export correlated_timebin_state, insert_initial_state
 export shift_timebins_single_photon
-export explicit_ket_evolution_sp
+export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
+export density_matrix
 
 function shift_timebins_single_photon(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
@@ -67,6 +68,16 @@ function insert_initial_state(time_bin_state_vec::Vector)
     return full_state_vec
 end
 
+function density_matrix(Ψ)
+    ρ = kron(Ψ, Ψ')
+    return ρ
+end
+
+"""
+    mesh_evolution(ψ_init, angles)
+
+TBW
+"""
 function mesh_evolution(ψ_init, angles)
     state = convert(Vector{ComplexF64}, ψ_init)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
@@ -83,22 +94,51 @@ end
 
 TBW
 """
-function explicit_ket_evolution_sp(M, l, angles)
-    M = convert(Int64, M)::Int64 # number of roundtrips
+function explicit_ket_evolution_sp(l, angles)
     l = convert(Int64, l)::Int64 # initial time bin index
-    #@argcheck M > 0
-    @argcheck l ≥ 0
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}} # beam splitter angles
+    M = length(angles) # number of roundtrips
+
     j_idx_arr, trigonometric_history_arr, angle_history_arr = symbolic_ket_evolution_sp(M, l)
+    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(angles, j_idx_arr, trigonometric_history_arr, angle_history_arr)
+    return j_idx_arr_contr, coeff_arr
+end
+
+function explicit_final_state_projection_sp(l, c, angles)
+    l = convert(Int64, l)::Int64 # final state time bin index
+    c = convert(Int64, c)::Int64 # final state loop index
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}} # beam splitter angles
+    M = length(angles) # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+
+    j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs = symbolic_final_state_projection_sp(M, l, c)
+    filter_idxs = Int64[]
+    for (idx, j) in enumerate(j_idx_arr_fs)
+        l,c = j2lc(j)
+        if l ≥ N
+            push!(filter_idxs, idx) # outside of beam splitter angle range
+        end
+    end
+    deleteat!(j_idx_arr_fs, filter_idxs)
+    deleteat!(trigonometric_history_arr_fs, filter_idxs)
+    deleteat!(angle_history_arr_fs, filter_idxs)
+    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs)
+    return j_idx_arr_contr, coeff_arr
+end
+
+function symbolic_2_explicit_worker(angles, j_idx_arr, trigonometric_history_arr, angle_history_arr)
+    M = length(angles) # number of roundtrips
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     tri_vals = [hcat(cos.(ang), sin.(ang)) for ang in angles]
+
     for (i, j) in enumerate(j_idx_arr)
         coeff = Complex(0)
         for k in 1:size(angle_history_arr[i])[1]
             tri_string = trigonometric_history_arr[i][k,:]
             phase_factor = im^(sum(tri_string))
             angle_string = angle_history_arr[i][k,:] .+ 1
-            tri_string .+= 1
+            tri_string .+= 1 # shift all values to 1 and 2, making them their respective indices of tri_vals matrices
             coeff += prod([tri_vals[m][angle_string[m], tri_string[m]] for m in 1:M]) * phase_factor
         end
         if !isapprox(abs2(coeff), 0.0, atol=1e-16)
@@ -109,14 +149,83 @@ function explicit_ket_evolution_sp(M, l, angles)
     return j_idx_arr_contr, coeff_arr
 end
 
+function explicit_ket_evolution(j_init, angles)
+    j_init = convert(Int64, j_init)::Int64 # two-photon bin index in the |l,c,m,k> basis
 
-#= function symbolic_final_state_projection(M, j1, j2)
-    M = convert(Int64, M)::Int64 # number of roundtrips
-    j1 = convert(Int64, j1)::Int64 # first photon final state ket index
-    j2 = convert(Int64, j2)::Int64 # second photon final state ket index
-    @argcheck M > 0
-    l1, c1 = j2lc(j1)
-    l2, c2 = j2lc(j2)
-    j_idx_arr_fs_1, trigonometric_history_arr_fs_1, angle_history_arr_fs_1 = symbolic_final_state_projection_sp(M, j1)
-    j_idx_arr_fs_2, trigonometric_history_arr_fs_2, angle_history_arr_fs_2 = symbolic_final_state_projection_sp(M, j2)
-end =#
+    M = length(angles) # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+    n_bins = N + M # maximum number of bins after evolution
+
+    l_init, c_init, m_init, k_init = j2lcmk(N, j_init)
+    @argcheck c_init == 0
+	@argcheck k_init == 0
+    j_idx_arr_l, coeff_arr_l = explicit_ket_evolution_sp(l_init, angles)
+    j_idx_arr_m, coeff_arr_m = explicit_ket_evolution_sp(m_init, angles)
+    j_idx_arr_contr, coeff_arr = sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+
+    return j_idx_arr_contr, coeff_arr
+end
+
+function explicit_final_state_projection(j_out, angles)
+    j_out = convert(Int64, j_out)::Int64 # two-photon bin index in the |l,c,m,k> basis
+
+    M = length(angles) # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+    n_bins = N # maximum number of bins before evolution ≕ N
+
+    l_out, c_out, m_out, k_out = j2lcmk(N+M, j_out)
+
+    j_idx_arr_l, coeff_arr_l = explicit_final_state_projection_sp(l_out, c_out, angles)
+    j_idx_arr_m, coeff_arr_m = explicit_final_state_projection_sp(m_out, k_out, angles)
+    j_idx_arr_contr, coeff_arr = sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+    
+    return j_idx_arr_contr, coeff_arr
+end
+
+function sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+    coeff_arr = Vector{ComplexF64}(undef, 0)
+    j_idx_arr_contr = Int64[]
+
+    for (idxl, jl) in enumerate(j_idx_arr_l)
+        l,c = j2lc(jl)
+        for (idxm, jm) in enumerate(j_idx_arr_m)
+            m,k = j2lc(jm)
+            j = lcmk2j(n_bins, l, c, m, k)
+            coeff = coeff_arr_l[idxl] * coeff_arr_m[idxm]
+            if coeff ≠ 0
+                push!(coeff_arr, coeff)
+                push!(j_idx_arr_contr, j)
+            end
+        end
+    end
+    return j_idx_arr_contr, coeff_arr
+end
+
+function explicit_state_evolution(Ψ_init, angles)
+    state = convert(Vector{ComplexF64}, Ψ_init)::Vector{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+
+    M = length(angles)  # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+
+    Ψ_out = zeros(ComplexF64, n_loops2*(N+M)^2)
+    for (j_init, coeff) in enumerate(state)
+		if coeff == 0
+			continue
+		end
+        j_idx_arr_contr, coeff_arr = explicit_ket_evolution(j_init, angles)
+        Ψ_out[j_idx_arr_contr] .+= coeff .* coeff_arr
+    end
+    return Ψ_out
+end
+
+
+function explicit_measurement_coherence_map(j_out, angles)
+    j_idx_arr_contr, coeff_arr = explicit_final_state_projection(j_out, angles)
+
+    n_contr = length(j_idx_arr_contr)
+    j1_arr = inverse_rle(j_idx_arr_contr,fill(n_contr,n_contr))
+    j2_arr = repeat(j_idx_arr_contr,n_contr)
+    weights = kron(coeff_arr,conj.(coeff_arr))
+    return j1_arr, j2_arr, weights
+end
