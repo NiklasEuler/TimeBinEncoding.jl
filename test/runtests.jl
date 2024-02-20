@@ -1,5 +1,6 @@
 using Test
 using TimeBinEncoding
+using LinearAlgebra
 
 @testset "lcmk <-> j" begin
     # Write your tests here.
@@ -172,4 +173,34 @@ end
     j = lcmk2j(N+M,2,1,0,0)
     @test all(explicit_final_state_projection(j, angles) .≈ ([1,9], im/4 .* Complex.([1,1])))
 
+end
+
+@testset "density_matrix" begin
+    N = 6
+    ϕ = 0.64
+	wf_coeffs = [cis(2*n*ϕ*π) for n in 0:N-1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+    
+    ρ = density_matrix(Ψ_init)
+    @test ρ == ρ'
+    trace = diag(ρ)
+    @test sum(trace) ≈ 1
+    @test all(Float64.(trace) .≥ 0)
+end
+
+
+@testset "density_matrix_dephased" begin
+    N = 6
+    ϕ = 0.64
+    ϵ = 0.1
+	wf_coeffs = [cis(2*n*ϕ*π) for n in 0:N-1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+    
+    ρ = density_matrix_dephased(Ψ_init,ϵ)
+    @test ρ == ρ'
+    trace = diag(ρ)
+    @test sum(trace) ≈ 1
+    @test all(Float64.(trace) .≥ 0)
 end

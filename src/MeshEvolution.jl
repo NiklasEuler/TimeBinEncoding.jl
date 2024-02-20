@@ -1,9 +1,7 @@
 export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
-export correlated_timebin_state, insert_initial_state
 export shift_timebins_single_photon
 export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
 export explicit_final_state_projection_sp, explicit_final_state_projection, explicit_measurement_coherence_map
-export density_matrix
 
 function shift_timebins_single_photon(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
@@ -43,35 +41,6 @@ function coin_operator(angles::Vector)
     single_photon_coin_operator = blockdiag(matrices...)
     tensor_coin_operator = kron(single_photon_coin_operator,single_photon_coin_operator)
     return tensor_coin_operator::SparseMatrixCSC{ComplexF64, Int64}
-end
-
-function correlated_timebin_state(wf_coeffs::Vector)#todo: normalize
-    wf_coeffs = convert(Vector{ComplexF64}, wf_coeffs)::Vector{ComplexF64}
-    N = length(wf_coeffs)
-    coeffs = normalize(wf_coeffs)
-    time_bin_state_vec = zeros(ComplexF64, N^2)
-    for i in 0:N-1
-        j = lm2j(N,i,i)
-        time_bin_state_vec[j] = coeffs[i+1]
-    end
-    return time_bin_state_vec
-end
-
-
-function insert_initial_state(time_bin_state_vec::Vector)
-    N = Int64(sqrt(length(time_bin_state_vec)))
-    full_state_vec = zeros(ComplexF64, length(time_bin_state_vec)*n_loops2)
-    for l in 0:N-1, m in 0:N-1
-        j_time_bin = lm2j(N, l, m)
-        j_full = lcmk2j(N, l, 0, m, 0) #insertion into the short-short ket
-        full_state_vec[j_full] = time_bin_state_vec[j_time_bin]
-    end
-    return full_state_vec
-end
-
-function density_matrix(Ψ)
-    ρ = kron(Ψ, Ψ')
-    return ρ
 end
 
 """

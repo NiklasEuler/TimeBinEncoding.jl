@@ -15,5 +15,6 @@ include("MeshEvolution.jl")
 include("SymbolicEvolution.jl")
 include("IndexConversions.jl")
 include("Visualization.jl")
+include("StatePrep.jl")
 
 end
