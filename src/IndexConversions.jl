@@ -1,4 +1,4 @@
-export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc
+export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
 
 
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
@@ -81,4 +81,10 @@ function j2lc(j) # inverse of lm2j
     @argcheck j > 0
     l,c = divrem(j-1,2)
     return l, c
+end
+
+function correlated_short_bins_idxs(N)
+    N = convert(Int64, N)::Int64
+    contr_j_idxs = [lcmk2j(N,i,0,i,0) for i in 0:N-1]
+    return contr_j_idxs
 end

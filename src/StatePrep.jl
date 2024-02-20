@@ -1,5 +1,6 @@
 export correlated_timebin_state, insert_initial_state
 export density_matrix, density_matrix_dephased, white_noise
+export fidelity, purity
 
 
 
@@ -34,7 +35,10 @@ end
 
 function density_matrix_dephased(Ψ, ϵ)
     ϵ = convert(Float64, ϵ)::Float64
-    N = Int64(sqrt(length(Ψ))/n_loops)
+    N = Int64(sqrt(length(Ψ))/n_loops)::Int64
+    @argcheck ϵ ≥ 0
+    @argcheck ϵ ≤ 1
+    
     ρ_pure = density_matrix(Ψ)
     ρ = (1-ϵ) * ρ_pure + ϵ * white_noise(N) 
     return ρ
@@ -48,4 +52,13 @@ function white_noise(N)
         ρ_noise[j,j] = weight
     end
     return ρ_noise
+end
+
+function fidelity(Ψ::Vector,ρ::Matrix)
+    fidelity = Ψ' * ρ * Ψ
+    return convert(Float64,fidelity)
+end
+
+function purity(ρ)
+    return Float64(sum(diag(ρ*ρ)))
 end

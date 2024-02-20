@@ -1,4 +1,4 @@
-export visualize_symbolic_ket_evolution_sp, visualize_symbolic_final_state_projection_sp, visualize_measurement_coherence_map
+export visualize_symbolic_ket_evolution_sp, visualize_symbolic_final_state_projection_sp, visualize_measurement_coherence_map, visualize_combined_measurement_coherence_map
 
 
 """
@@ -58,17 +58,52 @@ function trigonometric_string_formatter(trigonometric_history, angle_history)
     end
 end
 
-function visualize_measurement_coherence_map(j_out, angles)
+function visualize_measurement_coherence_map(j_out::Int64, angles)
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
+    
+    j1_arr, j2_arr, weights =  explicit_final_state_coherence_map(j_out, angles)
 
-    j1_arr, j2_arr, weights =  explicit_measurement_coherence_map(j_out, angles)
-    display_weights = round.(Real.(weights), digits=5)
     l_out,c_out,m_out,k_out = j2lcmk(N+M,j_out)
 	println("⟨",l_out," ",c_out," ",m_out," ",k_out,"|(SC)^M ρ (C^†S^†)^M) |",l_out," ",c_out," ",m_out," ",k_out,"⟩ =")
+    visualize_coherence(N, j1_arr, j2_arr, weights)
+end
+
+function visualize_measurement_coherence_map(j_out_arr::Vector{Int64}, angles)
+    M = length(angles)  # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+    
+    j1_arr, j2_arr, weights =  explicit_final_state_coherence_map(j_out_arr, angles)
+
+    for j_out in j_out_arr
+        l_out,c_out,m_out,k_out = j2lcmk(N+M,j_out)
+        println("+⟨",l_out," ",c_out," ",m_out," ",k_out,"|(SC)^M ρ (C^†S^†)^M) |",l_out," ",c_out," ",m_out," ",k_out,"⟩")
+    end
+    println("=")
+    visualize_coherence(N, j1_arr, j2_arr, weights)
+end
+
+function visualize_coherence(N, j1_arr, j2_arr, weights)
+    contr_j_idxs = correlated_short_bins_idxs(N)
+    extractable_correlated_coherences = []
+    display_weights = round.(Real.(weights), digits=5)
+
 	for i in eachindex(j1_arr)
-		l1, c1, m1, k1 = j2lcmk(N,j1_arr[i])
-		l2, c2, m2, k2 = j2lcmk(N,j2_arr[i])
+        j1 = j1_arr[i]
+        j2 = j2_arr[i]
+		l1, c1, m1, k1 = j2lcmk(N,j1)
+		l2, c2, m2, k2 = j2lcmk(N,j2)
+        if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs)
+            push!(extractable_correlated_coherences, i)
+        end
 		println("+ ρ_[",l1," ",m1,"]^[",l2," ",m2,"] ⋅ ",display_weights[i])
 	end
+    println("Useful extractable coherences:")
+    for i in extractable_correlated_coherences
+        j1 = j1_arr[i]
+        j2 = j2_arr[i]
+		l1, c1, m1, k1 = j2lcmk(N,j1)
+		l2, c2, m2, k2 = j2lcmk(N,j2)
+        println("+ ρ_[",l1," ",m1,"]^[",l2," ",m2,"] ⋅ ",display_weights[i])
+    end
 end

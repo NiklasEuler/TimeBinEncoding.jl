@@ -1,7 +1,11 @@
 export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export shift_timebins_single_photon
 export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
-export explicit_final_state_projection_sp, explicit_final_state_projection, explicit_measurement_coherence_map
+export explicit_final_state_projection_sp, explicit_final_state_projection, explicit_final_state_coherence_map, explicit_add_final_state_projection
+export explicit_final_state_projection_expval
+export coherence_extraction
+
+global const weight_cutoff = 1e-16
 
 function shift_timebins_single_photon(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
@@ -111,7 +115,7 @@ function symbolic_2_explicit_worker(angles, j_idx_arr, trigonometric_history_arr
             tri_string .+= 1 # shift all values to 1 and 2, making them their respective indices of tri_vals matrices
             coeff += prod([tri_vals[m][angle_string[m], tri_string[m]] for m in 1:M]) * phase_factor
         end
-        if !isapprox(abs2(coeff), 0.0, atol=1e-16)
+        if !isapprox(abs2(coeff), 0.0, atol=weight_cutoff)
             push!(coeff_arr, coeff)
             push!(j_idx_arr_contr, j)
         end
@@ -190,7 +194,8 @@ function explicit_state_evolution(Ψ_init, angles)
 end
 
 
-function explicit_measurement_coherence_map(j_out, angles)
+function explicit_final_state_coherence_map(j_out::Int64, angles)
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_final_state_projection(j_out, angles)
 
     n_contr = length(j_idx_arr_contr)
@@ -198,4 +203,88 @@ function explicit_measurement_coherence_map(j_out, angles)
     j2_arr = repeat(j_idx_arr_contr,n_contr)
     weights = kron(coeff_arr,conj.(coeff_arr))
     return j1_arr, j2_arr, weights
+end
+
+function explicit_final_state_coherence_map(j_out_arr::Vector{Int64}, angles)
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    #M = length(angles)  # number of roundtrips
+    N = length(angles[1]) # initial number of time bins
+    d_hilbert_space = n_loops2*N^2::Int64 # hilbert space dimension of the initial state
+
+    j1_arr = Int64[]
+    j2_arr = Int64[]
+    weights = ComplexF64[]
+    weight_vec = SparseVector(d_hilbert_space^2,Int64[],ComplexF64[])
+    for j_out in j_out_arr
+        j_idx_arr_contr, coeff_arr = explicit_final_state_projection(j_out, angles)
+        for (idx1, j1) in enumerate(j_idx_arr_contr), (idx2, j2) in enumerate(j_idx_arr_contr)
+            weight = kron(coeff_arr[idx1],conj(coeff_arr[idx2]))
+            j_coh = lm2j(d_hilbert_space, j1, j2)
+            weight_vec[j_coh] += weight
+        end
+    end
+    for j_coh in weight_vec.nzind
+        j1, j2 = j2lm(d_hilbert_space, j_coh)
+        weight = weight_vec[j_coh]
+        if !isapprox(abs2(weight), 0.0, atol = weight_cutoff)  
+            push!(j1_arr, j1)
+            push!(j2_arr, j2)
+            push!(weights, weight_vec[j_coh])
+        end
+    end
+    return j1_arr, j2_arr, weights
+end
+
+function explicit_final_state_projection_expval(ρ_init, j_out::Int64, angles)
+    j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles)
+    exp_val = 0
+    for i in eachindex(j1_arr)
+        j1 = j1_arr[i]
+        j2 = j2_arr[i]
+        weight = weights[i]
+        exp_val += ρ_init[j1,j2]*weight
+    end
+    return convert(Float64, exp_val)
+end
+
+function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)
+    exp_val = 0.0
+    for j_out in j_out_arr
+        exp_val += explicit_final_state_projection_expval(ρ_init, j_out, angles)
+    end
+    return exp_val
+end
+
+function coherence_extraction(N, j_out, ρ, angles)
+    N = convert(Int64, N)::Int64
+    j_out = try 
+		convert(Vector{Int64}, j_out)::Vector{Int64}
+	catch 
+		convert(Int64, j_out)::Int64
+	end
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    pops = Float64.(diag(ρ))
+
+
+
+    contr_j_idxs = correlated_short_bins_idxs(N)
+    j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles)
+    @argcheck weights ≠ []
+
+	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, angles)
+	extracted_coherence = []
+	# coherence_extracted = 0.0
+	for idx in eachindex(j1_arr)
+		j1 = j1_arr[idx]
+		j2 = j2_arr[idx]
+		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs)
+			push!(extracted_coherence,(j1,j2))
+		elseif j1 == j2
+			pop_j_out_extracted -= pops[j1] * weights[idx]
+		else			
+			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx])
+		end
+	end
+	pop_j_out_extracted /= N*weights[1]
+	return convert(Float64, pop_j_out_extracted)
 end
