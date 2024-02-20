@@ -2,6 +2,7 @@ export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
 export correlated_timebin_state, insert_initial_state
 export shift_timebins_single_photon
 export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
+export explicit_final_state_projection_sp, explicit_final_state_projection, explicit_measurement_coherence_map
 export density_matrix
 
 function shift_timebins_single_photon(state_vec::Vector)
