@@ -56,9 +56,9 @@ end
 
 function fidelity(Ψ::Vector,ρ::Matrix)
     fidelity = Ψ' * ρ * Ψ
-    return convert(Float64,fidelity)
+    return convert(Float64,real(fidelity))
 end
 
 function purity(ρ)
-    return Float64(sum(diag(ρ*ρ)))
+    return Float64(real(sum(diag(ρ*ρ))))
 end

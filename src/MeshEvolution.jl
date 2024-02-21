@@ -255,7 +255,7 @@ function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64
     return exp_val
 end
 
-function coherence_extraction(N, j_out, ρ, angles)
+function coherence_extraction(N, j_out, ρ, angles, extract_diagonal=true)
     N = convert(Int64, N)::Int64
     j_out = try 
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -277,7 +277,7 @@ function coherence_extraction(N, j_out, ρ, angles)
 	for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs)
+		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2))
 			push!(extracted_coherence,(j1,j2))
 		elseif j1 == j2
 			pop_j_out_extracted -= pops[j1] * weights[idx]

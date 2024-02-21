@@ -58,7 +58,7 @@ function trigonometric_string_formatter(trigonometric_history, angle_history)
     end
 end
 
-function visualize_measurement_coherence_map(j_out::Int64, angles)
+function visualize_measurement_coherence_map(j_out::Int64, angles, extract_diagonal=true)
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
     
@@ -66,10 +66,10 @@ function visualize_measurement_coherence_map(j_out::Int64, angles)
 
     l_out,c_out,m_out,k_out = j2lcmk(N+M,j_out)
 	println("⟨",l_out," ",c_out," ",m_out," ",k_out,"|(SC)^M ρ (C^†S^†)^M) |",l_out," ",c_out," ",m_out," ",k_out,"⟩ =")
-    visualize_coherence(N, j1_arr, j2_arr, weights)
+    visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
 end
 
-function visualize_measurement_coherence_map(j_out_arr::Vector{Int64}, angles)
+function visualize_measurement_coherence_map(j_out_arr::Vector{Int64}, angles, extract_diagonal=true)
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
     
@@ -80,10 +80,10 @@ function visualize_measurement_coherence_map(j_out_arr::Vector{Int64}, angles)
         println("+⟨",l_out," ",c_out," ",m_out," ",k_out,"|(SC)^M ρ (C^†S^†)^M) |",l_out," ",c_out," ",m_out," ",k_out,"⟩")
     end
     println("=")
-    visualize_coherence(N, j1_arr, j2_arr, weights)
+    visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
 end
 
-function visualize_coherence(N, j1_arr, j2_arr, weights)
+function visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
     contr_j_idxs = correlated_short_bins_idxs(N)
     extractable_correlated_coherences = []
     display_weights = round.(Real.(weights), digits=5)
@@ -93,7 +93,7 @@ function visualize_coherence(N, j1_arr, j2_arr, weights)
         j2 = j2_arr[i]
 		l1, c1, m1, k1 = j2lcmk(N,j1)
 		l2, c2, m2, k2 = j2lcmk(N,j2)
-        if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs)
+        if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2))
             push!(extractable_correlated_coherences, i)
         end
 		println("+ ρ_[",l1," ",m1,"]^[",l2," ",m2,"] ⋅ ",display_weights[i])
