@@ -3,7 +3,7 @@ export shift_timebins_single_photon
 export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
 export explicit_final_state_projection_sp, explicit_final_state_projection, explicit_final_state_coherence_map, explicit_add_final_state_projection
 export explicit_final_state_projection_expval
-export coherence_extraction
+export phase_on_density_matrix
 
 global const weight_cutoff = 1e-16
 
@@ -255,36 +255,16 @@ function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64
     return exp_val
 end
 
-function coherence_extraction(N, j_out, ρ, angles, extract_diagonal=true)
-    N = convert(Int64, N)::Int64
-    j_out = try 
-		convert(Vector{Int64}, j_out)::Vector{Int64}
-	catch 
-		convert(Int64, j_out)::Int64
-	end
-    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    pops = Float64.(diag(ρ))
+function phase_on_density_matrix(ρ, φ_arr)
+    ρ_rot = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
+    φ_arr = convert(Vector{Float64}, φ_arr)::Vector{Float64}
+    N = Int64(sqrt(size(ρ)[1]/(n_loops2)))
 
-
-
-    contr_j_idxs = correlated_short_bins_idxs(N)
-    j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles)
-    @argcheck weights ≠ []
-
-	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, angles)
-	extracted_coherence = []
-	# coherence_extracted = 0.0
-	for idx in eachindex(j1_arr)
-		j1 = j1_arr[idx]
-		j2 = j2_arr[idx]
-		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2))
-			push!(extracted_coherence,(j1,j2))
-		elseif j1 == j2
-			pop_j_out_extracted -= pops[j1] * weights[idx]
-		else			
-			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx])
-		end
-	end
-	pop_j_out_extracted /= N*weights[1]
-	return convert(Float64, pop_j_out_extracted)
+    @argcheck length(φ_arr) == N
+    
+    tb_idxs = [lcmk2j(N,i,0,i,0) for i in 0:N-1]
+    for (idx1, j1) in enumerate(tb_idxs), (idx2, j2) in enumerate(tb_idxs)
+        ρ_rot[j1,j2] *= cis(φ_arr[idx1]-φ_arr[idx2])
+    end
+    return ρ_rot
 end
