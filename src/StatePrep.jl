@@ -62,3 +62,4 @@ end
 function purity(ρ)
     return Float64(real(sum(diag(ρ*ρ))))
 end
+

@@ -204,3 +204,19 @@ end
     @test sum(trace) ≈ 1
     @test all(Float64.(trace) .≥ 0)
 end
+
+@testset "phase_on_density_matrix" begin
+    N = 6
+    ϕ = 0.64
+	wf_coeffs = [cis(2*n*ϕ*π) for n in 0:N-1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+    
+    ρ = density_matrix(Ψ_init)
+    φ_arr = zeros(N)
+    ρ_rot = phase_on_density_matrix(ρ, φ_arr)
+    @test ρ == ρ_rot
+    φ_arr = 2*π*rand(N)
+    ρ_rot = phase_on_density_matrix(ρ, φ_arr)
+    @test ρ_rot == ρ_rot'
+end
