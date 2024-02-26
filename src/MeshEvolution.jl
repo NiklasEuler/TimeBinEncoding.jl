@@ -244,7 +244,7 @@ function explicit_final_state_projection_expval(ρ_init, j_out::Int64, angles)
         weight = weights[i]
         exp_val += ρ_init[j1,j2]*weight
     end
-    return convert(Float64, exp_val)
+    return convert(Float64, real(exp_val))
 end
 
 function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)

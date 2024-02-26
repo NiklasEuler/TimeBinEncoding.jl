@@ -29,11 +29,15 @@ function insert_initial_state(time_bin_state_vec::Vector)
 end
 
 function density_matrix(Ψ)
+    Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
+    normalize!(Ψ) # normalization
+    
     ρ = kron(Ψ, Ψ')
     return ρ
 end
 
 function density_matrix_dephased(Ψ, ϵ)
+    Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     ϵ = convert(Float64, ϵ)::Float64
     N = Int64(sqrt(length(Ψ))/n_loops)::Int64
     @argcheck ϵ ≥ 0
@@ -55,6 +59,7 @@ function white_noise(N)
 end
 
 function fidelity(Ψ::Vector,ρ::Matrix)
+    Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     fidelity = Ψ' * ρ * Ψ
     return convert(Float64,real(fidelity))
 end

@@ -1,8 +1,8 @@
 export coherence_extraction, compound_coherence_extraction, initial_state_phase_estimation
-export angles_kth_neighbor_interference
+export angles_kth_neighbor_interference, noisy_angles_symmetric
 
 
-function coherence_extraction(N, j_out, ρ, angles, extract_diagonal=true)
+function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles); extract_diagonal::Bool=true)
     N = convert(Int64, N)::Int64
     j_out = try 
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -12,13 +12,11 @@ function coherence_extraction(N, j_out, ρ, angles, extract_diagonal=true)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     pops = Float64.(diag(ρ))
 
-
-
     contr_j_idxs = correlated_short_bins_idxs(N)
-    j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles)
+    j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles) # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
-	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, angles)
+	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, noisy_angles) # actual measured value can be noisy
 	extracted_coherence = []
 	# coherence_extracted = 0.0
 	for idx in eachindex(j1_arr)
@@ -36,76 +34,30 @@ function coherence_extraction(N, j_out, ρ, angles, extract_diagonal=true)
 	return convert(Float64, pop_j_out_extracted)#, extracted_coherence
 end
 
-#= function initial_state_phase_estimation(ρ_init)
+function initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
     ρ = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
+    ϵ_angles = convert(Float64, ϵ_angles)::Float64
     N = Int64(sqrt(size(ρ)[1]/(n_loops2)))
     
-    ϕ_arr = (0:0.0001:2)*π
-    #contr_j_idxs = correlated_short_bins_idxs(N)
-    #contr_pops = Float64(sum([ρ[j,j] for j in contr_j_idxs]))
-    #population_correction_term = contr_pops/N
-    nn_phases = zeros(Float64, N)
-    #tb_coefficients = [state[lcmk2j(N,i,0,i,0),lcmk2j(N,i,0,i,0)] for i in 0:N-1]
-    
-    angles_1_1 = zeros(Float64,N)
-    angles_1_1[1:2:end] .= 0.5*π
-    angles_1_2 = zeros(Float64,N+1)
-    angles_1_2[2:2:end] .= 0.25*π
-    angles_1 = [angles_1_1,angles_1_2]
-
-    angles_2_1 = zeros(Float64,N)
-    angles_2_1[2:2:end] .= 0.5*π
-    angles_2_2 = zeros(Float64,N+1)
-    angles_2_2[3:2:end] .= 0.25*π
-    angles_2 = [angles_2_1,angles_2_2]
-
-    angles_arr = [angles_1, angles_2]
-    j_out_1_arr = [[lcmk2j(N+2,i,0,i,0),lcmk2j(N+2,i+1,1,i+1,1)] for i in 1:2:N-1]
-    #if iseven(N)
-        j_out_2_arr = [[lcmk2j(N+2,i,0,i,0),lcmk2j(N+2,i+1,1,i+1,1)] for i in 2:2:N-1]
-    #else
-    #    j_out_2_arr = [[lcmk2j(N+2,i,0,i,0),lcmk2j(N+2,i+1,1,i+1,1)]for i in 2:2:N-1]
-    #end
-    j_out_arr = [j_out_1_arr, j_out_2_arr]
-    for l ∈ [1,2]
-        j_out = j_out_arr[l]
-        angles = angles_arr[l]
-        for (k, j) in enumerate(j_out)
-            φ_arr = zeros(Float64, N)
-            bin_idx = 2*(k-1)+l+1
-            φ_arr[bin_idx] = π/2
-            ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
-			c_real = coherence_extraction(N, j, ρ, angles, false)
-			c_imag = coherence_extraction(N, j, ρ_rotated, angles, false)
-			c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
-			nn_phases[bin_idx] = ϕ_arr[argmax(c_contr)]
-		end
-    end
-    relative_phases =  mod.(cumsum(nn_phases),2*π)
-    ρ_corrected = phase_on_density_matrix(ρ, -1 * relative_phases)
-    return ρ_corrected, relative_phases
-end =#
-
-function initial_state_phase_estimation(ρ_init)
-    ρ = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
-    N = Int64(sqrt(size(ρ)[1]/(n_loops2)))
-    
-    ϕ_arr = (0:0.0001:2)*π
+    ϕ_arr = (0:0.00001:2)*π
     nn_phases = zeros(Float64, N)
     k = 1 # nearest neigbour phase measurements suffice
+    extract_diagonal = false # dont need the populations
     angles_arr = angles_kth_neighbor_interference(N, k)
     j_out_arr = [[lcmk2j(N+k+1,i,0,i,0),lcmk2j(N+k+1,i+1,1,i+1,1)] for i in 1:k:N-1]
     for (idx, j) in enumerate(j_out_arr)
         φ_arr = zeros(Float64, N)
         φ_arr[idx+1] = π/2
         ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
-        c_real = coherence_extraction(N, j, ρ, angles_arr[idx], false)
-        c_imag = coherence_extraction(N, j, ρ_rotated, angles_arr[idx], false)
+        noisy_angles_real = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
+        noisy_angles_imag = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
+        c_real = coherence_extraction(N, j, ρ, angles_arr[idx], noisy_angles_real; extract_diagonal=extract_diagonal)
+        c_imag = coherence_extraction(N, j, ρ_rotated, angles_arr[idx], noisy_angles_imag; extract_diagonal=extract_diagonal)
         c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
         nn_phases[idx+1] = ϕ_arr[argmax(c_contr)]
     end
     relative_phases =  mod.(cumsum(nn_phases),2*π)
-    ρ_corrected = phase_on_density_matrix(ρ, -1 * relative_phases)
+    ρ_corrected = phase_on_density_matrix(ρ, -1 * relative_phases) # reverse initial state phase profile
     return ρ_corrected, relative_phases
 end
 
@@ -127,8 +79,16 @@ function angles_kth_neighbor_interference(N, k)
 return angles
 end
 
-function compound_coherence_extraction(ρ)
+function noisy_angles_symmetric(angles, ϵ_angles)
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    ϵ_angles = convert(Float64, ϵ_angles)::Float64
+    noisy_angles = [angles_m .+ ϵ_angles * 2 .* (rand(length(angles_m)) .- 1) for angles_m in angles]
+    return noisy_angles
+end
+
+function compound_coherence_extraction(ρ, ϵ_angles = 0.0)
     ρ = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
+    ϵ_angles = convert(Float64, ϵ_angles)::Float64
     N = Int64(sqrt(size(ρ)[1]/(n_loops2)))
 
     contr_j_idxs = correlated_short_bins_idxs(N)
@@ -140,8 +100,8 @@ function compound_coherence_extraction(ρ)
         j_out_k = [[lcmk2j(N+k+1,i,0,i,0),lcmk2j(N+k+1,i+1,1,i+1,1)] for i in k:1:N-1]
         for (idx, j_out) in enumerate(j_out_k)
             angles = angles_k[idx]
-            coh = coherence_extraction(N, j_out, ρ, angles, extract_diagonal)
-            #println(coh," ",j_out," ",angles)
+            noisy_angles = noisy_angles_symmetric(angles, ϵ_angles)
+            coh = coherence_extraction(N, j_out, ρ, angles, noisy_angles; extract_diagonal=extract_diagonal)  # noisy extraction
             extracted_cohereneces += coh
         end
     end
