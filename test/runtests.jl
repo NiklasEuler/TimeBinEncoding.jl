@@ -174,6 +174,16 @@ end
     j = lcmk2j(N+M,2,1,0,0)
     @test all(explicit_final_state_projection(j, angles) .≈ ([1,9], im/4 .* Complex.([1,1])))
 
+
+    N = 4
+    M = 2*(N-1)
+    angles = angles_single_setup(N)
+    for j in 1:TimeBinEncoding.n_loops2*(N+M)^2
+        j_idx_arr_contr_symb, coeff_arr_symb = TimeBinEncoding.explicit_final_state_projection_symbolic_backend(N, M, j, angles)
+        j_idx_arr_contr_mesh, coeff_arr_mesh = TimeBinEncoding.explicit_final_state_projection_mesh(N, M, j, angles)
+        @test j_idx_arr_contr_symb == j_idx_arr_contr_mesh
+        @test coeff_arr_symb ≈ coeff_arr_mesh
+    end
 end
 
 @testset "density_matrix" begin
@@ -256,4 +266,48 @@ end
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
     @test compound_coherence_extraction(ρ_mixed) ≤  compound_coherence_extraction(ρ_pure)
     @test compound_coherence_extraction(ρ_mixed, ϵ_angles) ≤ compound_coherence_extraction(ρ_mixed)
+end
+
+@testset "angles_single_setup" begin
+    N = 4
+    angles_1_mod = [0.5,0.5,0,0]*π
+	angles_2_mod = [0,0,0,0,0]*π
+	angles_3_mod = [0,0,0.25,0.25,0,0]*π
+	angles_4_mod = [0,0,0.5,0.25,0.5,0,0]*π
+	angles_5_mod = [0,0,0,0,0,0,0,0]*π
+	angles_6_mod = [0,0,0,0,0.25,0,0,0,0]*π
+	angles_mod = [angles_1_mod,angles_2_mod,angles_3_mod,angles_4_mod,angles_5_mod,angles_6_mod]
+    angles = angles_single_setup(N)
+    @test angles == angles_mod
+
+    N = 8
+    M_mod = 14
+	angles_8_mod = [zeros(Float64, n) for n in N:N+M_mod-1]
+	angles_8_mod[1][1:4] .= 0.5*π
+	angles_8_mod[5][5:8] .= 0.25*π
+	angles_8_mod[7][[5,10]] .= 0.5*π
+	angles_8_mod[7][7:8] .= 0.25*π
+	angles_8_mod[8][[6,8,10]] .= 0.25*π
+	angles_8_mod[8][[7,9]] .= 0.5*π
+	angles_8_mod[9][[6,11]] .= 0.5*π
+	angles_8_mod[10][[9]] .= 0.25*π
+	angles_8_mod[12][10] = 0.25*π
+	angles_8_mod[14][11] = 0.25*π
+    angles_8 = angles_single_setup(N)
+    @test angles_8 == angles_8_mod
+
+    N = 6
+    @test_throws ArgumentError angles_single_setup(N)
+end
+
+@testset "j_out_single_setup" begin
+    N = 8
+    M_mod = 14
+    j_mod_arr = [lcmk2j(N+M_mod,7,0,7,0), lcmk2j(N+M_mod,14,1,14,1), lcmk2j(N+M_mod,8,0,8,0), lcmk2j(N+M_mod,13,1,13,1),
+    lcmk2j(N+M_mod,9,0,9,0), lcmk2j(N+M_mod,12,1,12,1), lcmk2j(N+M_mod,10,0,10,0), lcmk2j(N+M_mod,11,1,11,1)]
+    j_arr = j_out_single_setup(N)
+    @test all([j ∈ j_arr for j in j_mod_arr])
+    @test all([j ∈ j_mod_arr for j in j_arr])
+    N = 10
+    @test_throws ArgumentError j_out_single_setup(N)
 end

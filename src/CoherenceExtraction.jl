@@ -1,5 +1,6 @@
 export coherence_extraction, compound_coherence_extraction, initial_state_phase_estimation
-export angles_kth_neighbor_interference, noisy_angles_symmetric
+export angles_kth_neighbor_interference, noisy_angles_symmetric, angles_single_setup
+export j_out_single_setup
 
 
 function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles); extract_diagonal::Bool=true)
@@ -106,4 +107,49 @@ function compound_coherence_extraction(ρ, ϵ_angles = 0.0)
         end
     end
     return extracted_cohereneces
+end
+
+function angles_single_setup(N)
+    N = convert(Int64, N)::Int64
+    @argcheck isinteger(log2(N))
+    M = 2*(N-1)
+    N_half = N ÷ 2
+    pow_half = log2(N_half)
+    angles_cascade = [zeros(Float64, n) for n in N:N+M-1]
+    angles_cascade[1][1:N_half] .= π/2
+    bs_idx = 1 
+    for i in 1:pow_half
+        n_bs = Int64(N / 2^i)
+        bs_idx += n_bs
+        angles_cascade[bs_idx][N - n_bs + 1:N] .= π/4
+        n_bs_half = Int64(n_bs / 2)
+        for j in 0:n_bs_half - 1
+            revolution_idx = bs_idx + n_bs_half + j * 2
+            tb_idx_early = N - n_bs + 1 + j
+            tb_idx_late = N + n_bs_half + j
+            angles_cascade[revolution_idx][tb_idx_early] = π/2 # left flank switch
+            angles_cascade[revolution_idx][tb_idx_late] = π/2 # right flank switch
+            # println("n = ",n_bs_half)
+            for k in 1:n_bs_half - j -1
+                # println(k)
+                angles_cascade[revolution_idx + k][tb_idx_early + k] = π/4 # early diagonal beam splitters
+                angles_cascade[revolution_idx + k][tb_idx_late] = π/4 # late vertical beam splitters
+            end
+        end
+    end
+    for i in 0:N_half-1
+        angles_cascade[N + i * 2][N + i] = π/4
+    end
+    return angles_cascade
+end
+
+function j_out_single_setup(N)
+    N = convert(Int64, N)::Int64
+    @argcheck isinteger(log2(N))
+    N_half = Int64(N/2)
+	M = 2*(N-1)
+	j_short = [lcmk2j(N+M,i,0,i,0) for i in N-1:N-2+N_half]
+	j_long = [lcmk2j(N+M,i,1,i,1) for i in N-1+N_half:2*(N-1)]
+	j_arr = append!(j_short, j_long)
+    return j_arr
 end

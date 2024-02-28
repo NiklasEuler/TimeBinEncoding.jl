@@ -13,6 +13,7 @@ const global n_loops2 = 4 # number of fiber loops squared. Saved as const to avo
 # Write your package code here.
 include("MeshEvolution.jl")
 include("SymbolicEvolution.jl")
+include("ExplicitEvolution.jl")
 include("IndexConversions.jl")
 include("Visualization.jl")
 include("StatePrep.jl")
