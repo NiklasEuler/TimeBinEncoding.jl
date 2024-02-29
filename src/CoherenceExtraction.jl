@@ -117,6 +117,55 @@ function angles_single_setup(N)
     pow_half = log2(N_half)
     angles_cascade = [zeros(Float64, n) for n in N:N+M-1]
     angles_cascade[1][1:N_half] .= π/2
+    recursive_beam_splitter_array!(N_half, 1 + N_half, 1 + N_half, angles_cascade, "center")
+    for i in 2:N_half - 1 # 2 are already included in minimum structure
+        angles_cascade[N + i * 2][N + i] = π/4
+    end
+    return angles_cascade
+end
+
+function recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
+    @argcheck branch ∈ ["early", "center", "late"]
+    
+    angles[m_idx][n_idx:n_idx+N_bs-1] .= π/4 # put original bs
+    if N_bs == 1 # can happen in the flanks, no further recursion
+        if branch == "early"
+            angles[m_idx+1][[n_idx]] .= π/2 # left flank transparent couplers
+        elseif branch == "late"
+            angles[m_idx+1][[n_idx+1]] .= π/2 # right flank transparent couplers
+        end
+    elseif N_bs == 2 # smallest regular structure in the center, also appears in the flanks. no further recursion 
+        angles[m_idx+1][[n_idx,n_idx+2]] .= π/2
+        angles[m_idx+1][[n_idx+1]] .= π/4
+        angles[m_idx+3][[n_idx+2]] .= π/4
+        if branch == "early"
+            angles[m_idx+4][[n_idx+1]] .= π/2 # left flank transparent couplers
+            angles[m_idx+4][[n_idx+2]] .= π/2 # left flank transparent couplers
+        elseif branch == "late"
+            angles[m_idx+4][[n_idx+3]] .= π/2 # left flank transparent couplers
+            angles[m_idx+4][[n_idx+4]] .= π/2 # left flank transparent couplers
+        end
+    else
+        N_bs_half = Int64(N_bs/2)
+        N_bs_quarter = Int64(N_bs/4)
+        angles[m_idx+N_bs_half][n_idx:n_idx+N_bs_quarter-1] .= π/2 # left flank transparent couplers
+        angles[m_idx+N_bs_half][n_idx+N_bs+N_bs_quarter:n_idx+N_bs+N_bs_half-1] .= π/2 # right flank transparent couplers
+        recursive_beam_splitter_array!(N_bs_quarter, n_idx+N_bs_quarter, m_idx+N_bs_half+N_bs_quarter, angles, "early") # left flank beam splitter array
+        recursive_beam_splitter_array!(N_bs_quarter, n_idx+N_bs+N_bs_quarter, m_idx+N_bs_half+N_bs_quarter, angles, "late") # right flank beam splitter array
+        recursive_beam_splitter_array!(N_bs_half, n_idx+N_bs_half, m_idx+N_bs_half, angles, "center")
+    end
+end
+
+
+
+#= function angles_single_setup(N)
+    N = convert(Int64, N)::Int64
+    @argcheck isinteger(log2(N))
+    M = 2*(N-1)
+    N_half = N ÷ 2
+    pow_half = log2(N_half)
+    angles_cascade = [zeros(Float64, n) for n in N:N+M-1]
+    angles_cascade[1][1:N_half] .= π/2
     bs_idx = 1 
     for i in 1:pow_half
         n_bs = Int64(N / 2^i)
@@ -141,7 +190,7 @@ function angles_single_setup(N)
         angles_cascade[N + i * 2][N + i] = π/4
     end
     return angles_cascade
-end
+end =#
 
 function j_out_single_setup(N)
     N = convert(Int64, N)::Int64

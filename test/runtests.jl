@@ -296,6 +296,29 @@ end
     angles_8 = angles_single_setup(N)
     @test angles_8 == angles_8_mod
 
+    N = 16
+    M_mod = 30
+    angles_16_mod_symm = [zeros(Float64, n) for n in N:N+M_mod-1]
+	angles_16_mod_symm[1][1:8] .= 0.5*π
+	angles_16_mod_symm[9][9:16] .= 0.25*π
+	angles_16_mod_symm[13][[9,10,19,20]] .= 0.5*π
+	angles_16_mod_symm[13][13:16] .= 0.25*π
+	angles_16_mod_symm[15][[13,18]] .= 0.5*π
+	angles_16_mod_symm[15][[11,12,15,16,19,20]] .= 0.25*π
+	angles_16_mod_symm[16][[11,13,15,17,19,21]] .= 0.5*π
+	angles_16_mod_symm[16][[12,14,16,18,20]] .= 0.25*π
+	angles_16_mod_symm[17][[14,19]] .= 0.5*π
+	angles_16_mod_symm[18][[13,17,21]] .= 0.25*π
+	angles_16_mod_symm[19][[12,13,22,23]] .= 0.5*π
+	angles_16_mod_symm[20][[18]] .= 0.25*π
+	angles_16_mod_symm[22][[19]] .= 0.25*π
+	angles_16_mod_symm[24][[20]] .= 0.25*π
+	angles_16_mod_symm[26][[21]] .= 0.25*π
+	angles_16_mod_symm[28][[22]] .= 0.25*π
+	angles_16_mod_symm[30][[23]] .= 0.25*π
+    angles_16 = angles_single_setup(N)
+    @test angles_16 == angles_16_mod_symm
+
     N = 6
     @test_throws ArgumentError angles_single_setup(N)
 end
