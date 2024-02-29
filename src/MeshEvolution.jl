@@ -26,6 +26,18 @@ function shift_timebins(state_vec::Vector)
     return new_vec
 end
 
+function shift_timebins(state_vec::SparseVector)
+    state_vec = convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
+    N = Int64(sqrt(length(state_vec)/(n_loops2)))
+    new_vec = spzeros(ComplexF64, ((N+1)*n_loops)^2)
+    for j in state_vec.nzind
+        l,c,m,k = j2lcmk(N,j)
+        shifted_j = lcmk2j(N+1, l+c, c, m+k, k) # adapted system has one more time bin, so we need to put N+1
+        new_vec[shifted_j] = state_vec[j]
+    end
+    return new_vec
+end
+
 function beam_splitter_operator(θ)
     θ = convert(Float64,θ)::Float64
     cs = cos(θ)
@@ -49,9 +61,21 @@ end
 
 TBW
 """
-function mesh_evolution(ψ_init, angles)
+function mesh_evolution(ψ_init::Vector, angles)
     state = convert(Vector{ComplexF64}, ψ_init)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = iterative_mesh_evolution(state, angles)
+    return state
+end
+
+function mesh_evolution(ψ_init::SparseVector, angles)
+    state = convert(SparseVector{ComplexF64, Int64}, ψ_init)::SparseVector{ComplexF64, Int64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = iterative_mesh_evolution(state, angles)
+    return state
+end
+
+function iterative_mesh_evolution(state, angles)
     for i in eachindex(angles)
         coin_op = coin_operator(angles[i])
         state = coin_op * state

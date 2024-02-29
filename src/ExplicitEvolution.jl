@@ -80,7 +80,7 @@ function explicit_final_state_projection(j_out, angles)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     M = length(angles) # number of roundtrips
     N = length(angles[1]) # initial number of time bins
-    if M ≤ 8 # symbolic backend is faster, but too memory intensive for too many iterations  
+    if M ≤ 6 # symbolic backend is faster, but too memory intensive for too many iterations  
         return explicit_final_state_projection_symbolic_backend(N, M, j_out, angles)
     else
         explicit_final_state_projection_mesh(N, M, j_out, angles)
@@ -113,7 +113,8 @@ function explicit_final_state_projection_mesh(N, M, j_out, angles)
     end
     for l_init in 0:l_init_max, m_init in 0:m_init_max
         j_init = lcmk2j(N, l_init, 0, m_init, 0)
-        single_ket = zeros(ComplexF64, n_loops2*N^2)
+        #single_ket = zeros(ComplexF64, n_loops2*N^2)
+        single_ket = spzeros(ComplexF64, n_loops2*N^2)
         single_ket[j_init] = 1.0
         single_ket_evolved = mesh_evolution(single_ket, angles)
         coeff = single_ket_evolved[j_out]
@@ -207,14 +208,8 @@ end
 
 function explicit_final_state_projection_expval(ρ_init, j_out::Int64, angles)
     j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles)
-    exp_val = 0
-    for i in eachindex(j1_arr)
-        j1 = j1_arr[i]
-        j2 = j2_arr[i]
-        weight = weights[i]
-        exp_val += ρ_init[j1,j2]*weight
-    end
-    return convert(Float64, real(exp_val))
+    
+    return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
 function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)
@@ -223,4 +218,15 @@ function explicit_final_state_projection_expval(ρ_init, j_out_arr::Vector{Int64
         exp_val += explicit_final_state_projection_expval(ρ_init, j_out, angles)
     end
     return exp_val
+end
+
+function expval_calculation(ρ_init, j1_arr, j2_arr, weights)
+    exp_val = 0
+    for i in eachindex(j1_arr)
+        j1 = j1_arr[i]
+        j2 = j2_arr[i]
+        weight = weights[i]
+        exp_val += ρ_init[j1,j2]*weight
+    end
+    return convert(Float64, real(exp_val))
 end

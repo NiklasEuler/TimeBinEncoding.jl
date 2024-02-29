@@ -1,6 +1,7 @@
 using Test
 using TimeBinEncoding
 using LinearAlgebra
+using SparseArrays
 
 @testset "lcmk <-> j" begin
     # Write your tests here.
@@ -133,6 +134,13 @@ end
     Ψ_out_numerical = mesh_evolution(Ψ_init, angles)
     Ψ_out_analytical = explicit_state_evolution(Ψ_init, angles)
     @test Ψ_out_numerical ≈ Ψ_out_analytical
+
+    ψ_dense = zeros(ComplexF64, 4*N^2)
+	ψ_dense[1] = 1
+	ψ_sparse = spzeros(ComplexF64, 4*N^2)
+	ψ_sparse[1] = 1
+    @test mesh_evolution(ψ_dense, angles) ≈ mesh_evolution(ψ_sparse, angles) 
+
 end
 
 @testset "explicit_final_state_projection_sp" begin
