@@ -1,4 +1,4 @@
-export correlated_timebin_state, insert_initial_state
+export correlated_timebin_state, insert_initial_state, insert_initial_state_sp
 export density_matrix, density_matrix_dephased, white_noise
 export fidelity, purity
 
@@ -27,9 +27,9 @@ end
 """
     insert_initial_state(time_bin_state_vec::Vector)
 
-Insert the time-bin state in the `|l,m⟩' basis into the short loop by imbedding `|l,m⟩' → `|l,0,m,0⟩'.
+Insert the two-photon time-bin state in the `|l,m⟩' basis into the short loop by imbedding `|l,m⟩' → `|l,0,m,0⟩'.
 
-See also `correlated_timebin_state`, `density_matrix`.
+See also `insert_initial_state_sp`, `correlated_timebin_state`, `density_matrix`.
 """
 function insert_initial_state(time_bin_state_vec::Vector)
     N = Int64(sqrt(length(time_bin_state_vec)))
@@ -38,6 +38,23 @@ function insert_initial_state(time_bin_state_vec::Vector)
         j_time_bin = lm2j(N, l, m)
         j_full = lcmk2j(N, l, 0, m, 0) #insertion into the short-short ket |l0m0⟩
         full_state_vec[j_full] = time_bin_state_vec[j_time_bin]
+    end
+    return full_state_vec
+end
+
+"""
+    insert_initial_state_sp(time_bin_state_vec::Vector)
+
+Insert the single-photon time-bin state in the `|l⟩' basis into the short loop by imbedding `|l⟩' → `|l,0⟩'.
+
+See also `insert_initial_state` `correlated_timebin_state`, `density_matrix`.
+"""
+function insert_initial_state_sp(time_bin_state_vec::Vector)
+    N = Int64(length(time_bin_state_vec))
+    full_state_vec = zeros(ComplexF64, length(time_bin_state_vec)*n_loops)
+    for l in 0:N-1
+        j_full = lc2j(l, 0) #insertion into the short ket |l0⟩
+        full_state_vec[j_full] = time_bin_state_vec[l+1]
     end
     return full_state_vec
 end

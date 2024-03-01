@@ -11,6 +11,8 @@ Evolve the single-photon state `|l,0⟩' according to `angles`, using a symbolic
 # Output
 - `j_idx_arr_contr`: vector of `j` indices with nonzero contribution in the state after evolution.
 - `coeff_arr`: vector of corresponding coefficients to the `j` indices given in `j_idx_arr_contr`.
+
+See also  `explicit_ket_evolution`, `explicit_final_state_projection`, `explicit_final_state_projection_sp`
 """
 function explicit_ket_evolution_sp(l, angles)
     l = convert(Int64, l)::Int64 # initial time bin index
@@ -26,6 +28,12 @@ end
     explicit_final_state_projection_sp(l, c, angles)
 
 Computes the indicies and weights of all initial states that contribute to the single-photon state `|lc⟩` after evolution by `angles`.
+
+# Output
+- `j_idx_arr_contr`: vector of `j` indices with nonzero contribution to `|l,c⟩` after evolution.
+- `coeff_arr`: vector of corresponding coefficients to the `j` indices given in `j_idx_arr_contr`.
+
+See also `explicit_final_state_projection`, `explicit_ket_evolution_sp`, `explicit_final_state_coherence_map`
 """
 function explicit_final_state_projection_sp(l, c, angles)
     l = convert(Int64, l)::Int64 # final state time bin index
@@ -60,7 +68,7 @@ function symbolic_2_explicit_worker(angles, j_idx_arr, trigonometric_history_arr
         for k in 1:size(angle_history_arr[i])[1]
             tri_string = trigonometric_history_arr[i][k,:]
             phase_factor = im^(sum(tri_string))
-            angle_string = angle_history_arr[i][k,:] .+ 1
+            angle_string = angle_history_arr[i][k,:] .+ 1 # shift all time bins by one, such that the first (l=0) time bin aligns with the index 1
             tri_string .+= 1 # shift all values to 1 and 2, making them their respective indices of tri_vals matrices
             coeff += prod([tri_vals[m][angle_string[m], tri_string[m]] for m in 1:M]) * phase_factor
         end
@@ -72,6 +80,17 @@ function symbolic_2_explicit_worker(angles, j_idx_arr, trigonometric_history_arr
     return j_idx_arr_contr, coeff_arr
 end
 
+"""
+    explicit_ket_evolution(j_init, angles)
+
+Evolve the two-photon state related to `j` according to `angles`, using a symbolic backend.
+
+# Output
+- `j_idx_arr_contr`: vector of `j` indices with nonzero contribution in the state after evolution.
+- `coeff_arr`: vector of corresponding coefficients to the `j` indices given in `j_idx_arr_contr`.
+
+See also  `explicit_ket_evolution_sp`, `mesh_evolution`, `explicit_final_state_projection`
+"""
 function explicit_ket_evolution(j_init, angles)
     j_init = convert(Int64, j_init)::Int64 # two-photon bin index in the |l,c,m,k> basis
 

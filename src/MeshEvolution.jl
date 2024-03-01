@@ -1,12 +1,13 @@
-export shift_timebins, beam_splitter_operator, coin_operator, mesh_evolution
-export shift_timebins_single_photon
+export coin_operator
+export shift_timebins, beam_splitter_operator, mesh_evolution
+export shift_timebins_sp, coin_operator_sp, mesh_evolution_sp
 export phase_on_density_matrix
 
 "Numerical cutoff value to determine wether a certain coefficient is ≈ 0"
 global const weight_cutoff = 1e-16
 
 """
-    shift_timebins_single_photon(state_vec::Vector)
+    shift_timebins_sp(state_vec::Vector)
 
 Shift the time bins of a single photon state according to the current loop index.
 
@@ -14,7 +15,7 @@ The state after operation is returned as a `new_vec` Vector{ComplexF64} object.
 
 See also shift_timebins.
 """
-function shift_timebins_single_photon(state_vec::Vector)
+function shift_timebins_sp(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = Vector{ComplexF64}(undef, length(state_vec)+n_loops)
     new_vec[2] = 0
@@ -31,7 +32,7 @@ end
 Shift the time bins of a two-photon state according to the loop index.
 Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches the type of `state_vec`.
 
-See also shift_timebins_single_photon, shift_j!.
+See also shift_timebins_sp, shift_j!.
 """
 function shift_timebins end
 
@@ -78,6 +79,21 @@ function beam_splitter_operator(θ)
    return sparse(cols,rows,vals)
 end
 
+"""
+    coin_operator_sp(angles::Vector)
+
+Compute the complete sparse single-photon beam-splitter unitary for all time bins within one round trip.
+
+The `angles` argument contains the values of the parameter `θ` for each time bin of that round trip.
+
+See also `beam_splitter_operator`, `coin_operator`.
+"""
+function coin_operator_sp(angles::Vector)
+    real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
+    matrices = [beam_splitter_operator(θ) for θ in real_angles]
+    coin_operator_single_photon = blockdiag(matrices...)
+    return coin_operator_single_photon::SparseMatrixCSC{ComplexF64, Int64}
+end
 
 
 """
@@ -87,13 +103,11 @@ Compute the complete sparse two-photon beam-splitter unitary for all time bins w
 
 The `angles` argument contains the values of the parameter `θ` for each time bin of that round trip.
 
-See also beam_splitter_operator.
+See also `beam_splitter_operator`, `coin_operator_sp`.
 """
 function coin_operator(angles::Vector)
-    real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
-    matrices = [beam_splitter_operator(θ) for θ in real_angles]
-    single_photon_coin_operator = blockdiag(matrices...)
-    tensor_coin_operator = kron(single_photon_coin_operator,single_photon_coin_operator)
+    coin_operator_single_photon = coin_operator_sp(angles)
+    tensor_coin_operator = kron(coin_operator_single_photon,coin_operator_single_photon)
     return tensor_coin_operator::SparseMatrixCSC{ComplexF64, Int64}
 end
 
@@ -132,6 +146,31 @@ function iterative_mesh_evolution(state, angles)
         coin_op = coin_operator(angles[i])
         state = coin_op * state # apply beam splitters
         state = shift_timebins(state) # shift time bins accordingly
+    end
+    return state
+end
+
+function mesh_evolution end
+
+function mesh_evolution_sp(ψ_init::Vector, angles)
+    state = convert(Vector{ComplexF64}, ψ_init)::Vector{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = iterative_mesh_evolution_sp(state, angles)
+    return state
+end
+
+function mesh_evolution_sp(ψ_init::SparseVector, angles)
+    state = convert(SparseVector{ComplexF64, Int64}, ψ_init)::SparseVector{ComplexF64, Int64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = iterative_mesh_evolution_sp(state, angles)
+    return state
+end
+
+function iterative_mesh_evolution_sp(state, angles)
+    for i in eachindex(angles)
+        coin_op = coin_operator_sp(angles[i])
+        state = coin_op * state # apply beam splitters
+        state = shift_timebins_sp(state) # shift time bins accordingly
     end
     return state
 end

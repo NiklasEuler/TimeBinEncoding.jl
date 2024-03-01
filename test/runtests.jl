@@ -100,6 +100,41 @@ end
     @test j_idx_arr_fs == trigonometric_history_arr_fs == angle_history_arr_fs == []
 end
 
+@testset "explicit_ket_evolution_sp" begin
+    N = 2
+ 	M = 2
+ 	angles_1 = [0.5,0]*π
+ 	angles_2 = [0,0.25,0]*π
+    angles = [angles_1,angles_2]
+
+    wf_coeffs_norm = normalize([0,1])
+	Ψ_sp = insert_initial_state_sp(wf_coeffs_norm)
+
+    vec_mesh = mesh_evolution_sp(Ψ_sp, angles)
+    idx, val = explicit_ket_evolution_sp(1, angles)
+    vec_explicit = sparsevec(idx, val, 2*(N+M))
+    @test vec_explicit ≈ vec_mesh
+
+    N = 4
+	M = 4
+
+	angles_1 = [0.25,0.25,0.25,0.25]*π
+	angles_2 = [0.25,0.25,0.25,0.25,0.25]*π
+	angles_3 = [0,0,0,0,0,0]*π
+	angles_4 = [0.25,0.25,0.25,0.25,0.25,0.25,0.25]*π
+    angles = [angles_1,angles_2,angles_3,angles_4]
+
+    wf_coeffs_norm = normalize([0,0,1,0])
+	Ψ_sp = insert_initial_state_sp(wf_coeffs_norm)
+
+    vec_mesh = mesh_evolution_sp(Ψ_sp, angles)
+    idx, val = explicit_ket_evolution_sp(2, angles)
+    vec_explicit = sparsevec(idx, val, 2*(N+M))
+    @test vec_explicit ≈ vec_mesh
+end
+
+
+
 @testset "explicit_state_evolution" begin
  	N = 2
  	M = 2
