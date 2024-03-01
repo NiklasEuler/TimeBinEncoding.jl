@@ -264,6 +264,27 @@ end
     @test all(Float64.(trace) .≥ 0)
 end
 
+@testset "purity" begin
+    N = 6
+    ϕ = 0.64
+    ϵ = 0.1
+
+	wf_coeffs = [cis(2*n*ϕ*π) for n in 0:N-1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+    ρ = density_matrix(Ψ_init)
+    pure = purity(ρ)
+    @test pure ≈ 1
+    @test typeof(pure) == Float64
+    ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
+    not_so_pure = purity(ρ_mixed)
+    @test not_so_pure < 1.0
+    ρ_inf_temp = density_matrix_dephased(Ψ_init, 1)
+    not_pure_at_all = purity(ρ_inf_temp)
+    @test not_pure_at_all ≈ 1/N^2
+
+end
+
 @testset "phase_on_density_matrix" begin
     N = 6
     ϕ = 0.64

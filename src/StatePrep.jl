@@ -129,7 +129,7 @@ end
 """
     purity(ρ)
 
-Compute the purity of density matrix `Ψ`
+Compute the purity of density matrix `ρ`.
 """
 function purity(ρ)
     return Float64(real(sum(diag(ρ*ρ))))
