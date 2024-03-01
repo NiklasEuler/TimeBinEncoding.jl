@@ -1,6 +1,20 @@
 export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
 
 
+"""
+    lcmk2j(N, l, c, m, k)
+
+Convert the parameters of the two-photon state '|lcmk⟩' to its corresponding basis index `j`.
+
+# Arguments
+- `N`: number of time bins in the basis
+- `l`: time bin index of the signal photon, `l` ∈ {0,1,…}, where `l` indicates the total number of long roundtrips taken.
+- `c`: loop index of the signal photon, `c` ∈ {0,1}, where `c==0` means the short loop and `c==1` the long loop.
+- `m`: time bin index of the idler photon, `m` ∈ {0,1,…}, with the same encoding as above.
+- `k`: loop index of the idler photon, `k` ∈ {0,1}, with the same encoding as above.
+
+See also `j2lcmk`, `lm2j`, `j2lm`, `lc2j`, `j2lc`.
+"""
 function lcmk2j(N, l, c, m, k) # transforms the one index notation of basis elements to the two index notation
     N = convert(Int64, N)::Int64
     l = convert(Int64, l)::Int64
