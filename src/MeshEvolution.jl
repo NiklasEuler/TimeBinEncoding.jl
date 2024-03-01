@@ -8,13 +8,16 @@ global const weight_cutoff = 1e-16
 
 """
     shift_timebins_sp(state_vec::Vector)
+    shift_timebins_sp(state_vec::SparseVector)
 
 Shift the time bins of a single photon state according to the current loop index.
 
-The state after operation is returned as a `new_vec` Vector{ComplexF64} object.
+Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches the type of `state_vec`.
 
 See also shift_timebins.
 """
+function shift_timebins_sp end
+
 function shift_timebins_sp(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = Vector{ComplexF64}(undef, length(state_vec)+n_loops)
@@ -25,11 +28,21 @@ function shift_timebins_sp(state_vec::Vector)
     return new_vec
 end
 
+function shift_timebins_sp(state_vec::SparseVector)
+    state_vec = convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
+    new_vec = spzeros(ComplexF64, length(state_vec)+n_loops)
+    for j in state_vec.nzind
+        shift_j_sp!(j, state_vec, new_vec)
+    end
+    return new_vec
+end
+
 """
     shift_timebins(state_vec::Vector)
     shift_timebins(state_vec::SparseVector)
 
 Shift the time bins of a two-photon state according to the loop index.
+
 Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches the type of `state_vec`.
 
 See also shift_timebins_sp, shift_j!.
@@ -59,6 +72,12 @@ end
 function shift_j!(N, j, state_vec, new_vec)
     l,c,m,k = j2lcmk(N,j)
     shifted_j = lcmk2j(N+1, l+c, c, m+k, k) # adapted system has one more time bin, so we need to put N+1
+    new_vec[shifted_j] = state_vec[j]
+end
+
+function shift_j_sp!(j, state_vec, new_vec)
+    l,c = j2lc(j)
+    shifted_j = lc2j(l+c, c)
     new_vec[shifted_j] = state_vec[j]
 end
 

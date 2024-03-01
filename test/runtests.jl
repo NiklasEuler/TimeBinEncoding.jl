@@ -131,6 +131,9 @@ end
     idx, val = explicit_ket_evolution_sp(2, angles)
     vec_explicit = sparsevec(idx, val, 2*(N+M))
     @test vec_explicit ≈ vec_mesh
+    vec_mesh_sparse = mesh_evolution_sp(sparse(Ψ_sp), angles)
+    @test vec_explicit ≈ vec_mesh_sparse
+
 end
 
 
