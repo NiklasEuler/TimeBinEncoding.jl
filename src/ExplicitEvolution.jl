@@ -3,6 +3,15 @@ export explicit_final_state_projection_sp, explicit_final_state_projection, expl
 export explicit_final_state_projection_expval
 
 
+"""
+    explicit_ket_evolution_sp(l, angles)
+
+Evolve the single-photon state `|l,0⟩' according to `angles`, using a symbolic backend.
+
+# Output
+- `j_idx_arr_contr`: vector of `j` indices with nonzero contribution in the state after evolution.
+- `coeff_arr`: vector of corresponding coefficients to the `j` indices given in `j_idx_arr_contr`.
+"""
 function explicit_ket_evolution_sp(l, angles)
     l = convert(Int64, l)::Int64 # initial time bin index
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}} # beam splitter angles
@@ -13,6 +22,11 @@ function explicit_ket_evolution_sp(l, angles)
     return j_idx_arr_contr, coeff_arr
 end
 
+"""
+    explicit_final_state_projection_sp(l, c, angles)
+
+Computes the indicies and weights of all initial states that contribute to the single-photon state `|lc⟩` after evolution by `angles`.
+"""
 function explicit_final_state_projection_sp(l, c, angles)
     l = convert(Int64, l)::Int64 # final state time bin index
     c = convert(Int64, c)::Int64 # final state loop index
