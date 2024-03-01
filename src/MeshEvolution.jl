@@ -4,6 +4,15 @@ export phase_on_density_matrix
 
 global const weight_cutoff = 1e-16
 
+"""
+    shift_timebins_single_photon(state_vec::Vector)
+
+Shift the time bins of a single photon state according to the current loop index.
+
+The state after operation is returned as a new Vector object.
+
+See also shift_timebins
+"""
 function shift_timebins_single_photon(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = Vector{ComplexF64}(undef, length(state_vec)+n_loops)
@@ -14,14 +23,23 @@ function shift_timebins_single_photon(state_vec::Vector)
     return new_vec
 end
 
+"""
+    shift_timebins(state_vec::Vector)
+    shift_timebins(state_vec::SparseVector)
+
+Shift the time bins of a two-photon state according to the loop index.
+Accepts both a dense or sparse state_vec argument. The return type of the new_vec matches the type of state_vec.
+
+See also shift shift_timebins_single_photon, shift_j!
+"""
+function shift_timebins end
+
 function shift_timebins(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     N = Int64(sqrt(length(state_vec)/(n_loops2)))
     new_vec = zeros(ComplexF64, ((N+1)*n_loops)^2)
     for j in eachindex(state_vec)
-        l,c,m,k = j2lcmk(N,j)
-        shifted_j = lcmk2j(N+1, l+c, c, m+k, k) # adapted system has one more time bin, so we need to put N+1
-        new_vec[shifted_j] = state_vec[j]
+        shift_j!(N, j, state_vec, new_vec)
     end
     return new_vec
 end
@@ -31,11 +49,15 @@ function shift_timebins(state_vec::SparseVector)
     N = Int64(sqrt(length(state_vec)/(n_loops2)))
     new_vec = spzeros(ComplexF64, ((N+1)*n_loops)^2)
     for j in state_vec.nzind
-        l,c,m,k = j2lcmk(N,j)
-        shifted_j = lcmk2j(N+1, l+c, c, m+k, k) # adapted system has one more time bin, so we need to put N+1
-        new_vec[shifted_j] = state_vec[j]
+        shift_j!(N, j, state_vec, new_vec)
     end
     return new_vec
+end
+
+function shift_j!(N, j, state_vec, new_vec)
+    l,c,m,k = j2lcmk(N,j)
+    shifted_j = lcmk2j(N+1, l+c, c, m+k, k) # adapted system has one more time bin, so we need to put N+1
+    new_vec[shifted_j] = state_vec[j]
 end
 
 function beam_splitter_operator(θ)
