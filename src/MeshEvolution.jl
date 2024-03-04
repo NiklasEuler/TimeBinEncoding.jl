@@ -97,8 +97,12 @@ end
 
 function shift_timebins_operator_sp(N)
     N = convert(Int64, N)::Int64
-    s_diag = append!([[1,0] for _ in 1:N]...)
-    l_diag = append!([[0,1] for _ in 1:N]...)
+    #s_diag = append!([[1,0] for _ in 1:N]...)
+    #l_diag = append!([[0,1] for _ in 1:N]...)
+    s_diag = spzeros(2*N)
+	s_diag[1:2:end-1] .= 1
+    l_diag = spzeros(2*N)
+    l_diag[2:2:end] .= 1
     shift_operator_single_photon = dropzeros!(spdiagm(n_loops*(N+1),n_loops*N, 0 => s_diag, -2 => l_diag))
     return shift_operator_single_photon::SparseMatrixCSC{Int64, Int64}
 end
