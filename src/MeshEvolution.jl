@@ -104,14 +104,14 @@ function shift_timebins_operator_sp(N)
     l_diag = spzeros(2*N)
     l_diag[2:2:end] .= 1
     shift_operator_single_photon = dropzeros!(spdiagm(n_loops*(N+1),n_loops*N, 0 => s_diag, -2 => l_diag))
-    return shift_operator_single_photon::SparseMatrixCSC{Int64, Int64}
+    return shift_operator_single_photon::SparseMatrixCSC{Float64, Int64}
 end
 
 
 function shift_timebins_operator(N)
     shift_operator_single_photon = shift_timebins_operator_sp(N)
     tensor_coin_operator = kron(shift_operator_single_photon,shift_operator_single_photon)
-    return tensor_coin_operator::SparseMatrixCSC{Int64, Int64}
+    return tensor_coin_operator::SparseMatrixCSC{Float64, Int64}
 end
 
 
