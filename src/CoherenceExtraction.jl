@@ -3,7 +3,30 @@ export angles_kth_neighbor_interference, noisy_angles_symmetric, angles_single_s
 export j_out_single_setup
 
 
-function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles); extract_diagonal::Bool=true)
+"""
+    coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles), contr_j_idxs = correlated_short_bins_idxs(N); extract_diagonal::Bool=true)
+
+Extract the coherences between correlated time-bin populations.
+
+# Arguments
+
+- `N`: the number of time bins in the initial state `ρ`.
+- `j_out`: single `j` index or collection of `j` indices, indicating from which final state projections the coherences get extracted.
+- `ρ`: the initial state density matrix from which the coherences are extracted, given in the `|lcmk⟩` basis.
+- `angles`: a vector or vectors of scheduled beam-splitter angles. The number of round trips matches `length(angles)`.
+- `noisy_angles`: a vector or vectors of actually realized noisy beam-splitter angles used 
+    to simulate the measured population. Same shape as `angles`. By default, `noisy_angles`
+    is just a copy of `angles`, so no noise is applied.
+- `contr_j_idxs`: Vector of `j` indices of states that should be extracted from the state. 
+    Default value is `correlated_short_bins_idxs(N)`, which is all correlated time bins.
+
+# Keyword Arguments
+
+- `extract_diagonal`: Bool flag to indicate whether state populations, i.e. diagonal elements of ρ, should be extracted from the coherence. Default is `true`.
+
+See also `compound_coherence_extraction`.
+"""
+function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles), contr_j_idxs = correlated_short_bins_idxs(N); extract_diagonal::Bool=true)
     N = convert(Int64, N)::Int64
     j_out = try 
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -12,28 +35,40 @@ function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles); e
 	end
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     pops = Float64.(diag(ρ))
-
-    contr_j_idxs = correlated_short_bins_idxs(N)
+    #contr_j_idxs = correlated_short_bins_idxs(N) # j indices of correlated time bins
     j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles) # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
-	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, noisy_angles) # actual measured value can be noisy
+	pop_j_out_extracted = explicit_final_state_projection_expval(ρ, j_out, noisy_angles) # actual measured value based on noisy angles
 	extracted_coherence = []
-	# coherence_extracted = 0.0
+    extracted_weights = Float64[]
 	for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2))
-			push!(extracted_coherence,(j1,j2))
+		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2)) # check whether both j1 and j2 are correlated time bins
+			push!(extracted_coherence,(j1,j2)) # relevant coherence, so indices saved to list of extracted coherences.
+            push!(extracted_weights,weights[idx])
 		elseif j1 == j2
-			pop_j_out_extracted -= pops[j1] * weights[idx]
+			pop_j_out_extracted -= pops[j1] * weights[idx] # # non-contributing population. Can be removed exactly as exact value is known.
 		else			
-			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx])
+			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx]) # subtract non-contributing coherence bound.
 		end
 	end
-	pop_j_out_extracted /= N*weights[1]
+    if !all(extracted_weights .== extracted_weights[1])
+        weights_nonzero = extracted_weights[extracted_weights .≠ 0]
+        if !all(weights_nonzero .== weights_nonzero[1])
+            @warn "Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`."
+            weights_nonzero[1] = norm
+        else
+            throw(ArgumentError("The coherences scheduled for extraction have differing weights in the chosen final-state projectors and can thus not straight-forwardly be extracted. Please check input again."))
+        end
+    else
+        norm = extracted_weights[1]
+    end
+	pop_j_out_extracted /= N*norm # normalization
 	return convert(Float64, pop_j_out_extracted)#, extracted_coherence
 end
+
 
 function initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
     ρ = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
