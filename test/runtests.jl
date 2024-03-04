@@ -1,8 +1,11 @@
 using LinearAlgebra
 using SparseArrays
 using Suppressor
+using Random
 using Test
 using TimeBinEncoding
+
+Random.seed!(8675309) # / Jenny
 
 @testset "coherence_extraction_tests" begin
     include("coherence_extraction_tests.jl")
