@@ -41,7 +41,7 @@
 	tb_state = correlated_timebin_state(wf_coeffs)
 	Ψ_init = insert_initial_state(tb_state)
 	ρ_pure = density_matrix(Ψ_init)
-	@test isapprox((@test_logs (:warn,"Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`.") min_level=Logging.Warn coherence_extraction(N, j_01, ρ_pure, angles_1; extract_diagonal)), 1/8, atol=1e-8)
+	@test isapprox((@test_logs (:warn,"Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`.") min_level=Logging.Warn coherence_extraction(N, j_01, ρ_pure, angles_1; extract_diagonal=extract_diagonal)), 1/8, atol=1e-8)
 end
 
 @testset "compound coherence extraction" begin
