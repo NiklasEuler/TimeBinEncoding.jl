@@ -11,7 +11,7 @@ end
  	M = 2
  	angles_1 = [0.5, 0] * π
  	angles_2 = [0, 0.25, 0] * π
-    angles = [angles_1,angles_2]
+    angles = [angles_1, angles_2]
 
     ϕ = 0
 	wf_coeffs = [cis(2 * n * ϕ * π) for n in 0:N - 1]
@@ -47,7 +47,7 @@ end
  	M = 2
  	angles_1 = [0.1, 0.3] * π
  	angles_2 = [0.7, 0.25, 0.2] * π
-    angles = [angles_1,angles_2]
+    angles = [angles_1, angles_2]
 
     wf_coeffs_norm = normalize([1 + 0.2im, 0.5 + 0.6im])
 	Ψ_init = insert_initial_state_sp(wf_coeffs_norm)

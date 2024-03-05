@@ -89,7 +89,7 @@ function symbolic_2_explicit_worker(
             tri_string = trigonometric_history_arr[i][k, :]
             phase_factor = im^(sum(tri_string))
             angle_string = angle_history_arr[i][k, :] .+ 1
-            # shift all time bins by one, such that the first (l=0) time bin aligns
+            # shift all time bins by one, such that the first (l = 0) time bin aligns
             # with the index 1
             tri_string .+= 1
             # shift all values to 1 and 2, making them their respective indices of
@@ -121,7 +121,8 @@ Evolve the two-photon state related to `j` according to `angles`, using a symbol
 See also  `explicit_ket_evolution_sp`, `mesh_evolution`, `explicit_fs_projection`
 """
 function explicit_ket_evolution(j_init, angles)
-    j_init = convert(Int64, j_init)::Int64 # two-photon bin index in the |l, c , m , k > basis
+    j_init = convert(Int64, j_init)::Int64
+    # two-photon bin index in the |l, c , m , k > basis
 
     M = length(angles) # number of roundtrips
     N = length(angles[1]) # initial number of time bins

@@ -13,7 +13,7 @@
 	angles_2 = [0, 0, 0, 0, 0] * π
 	angles_3 = [0, 0, 0.25, 0.25, 0, 0] * π
 	angles_4 = [0, 0, 0.25, 0.25, 0.25, 0, 0] * π
-	angles = [angles_1,angles_2,angles_3,angles_4]
+	angles = [angles_1, angles_2, angles_3, angles_4]
 	coherence_extraction(N, j_out_arr, ρ_pure, angles)
 	Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
@@ -23,14 +23,14 @@
 	angles_2 = [0, 0.8, 0.2, 0, 0] * π
 	angles_3 = [0, 0.35, 0.41, 0.9, 0, 0] * π
 	angles_4 = [0, 0, 0.12, 0.26, 0.83, 0, 0] * π
-	angles = [angles_1,angles_2,angles_3,angles_4]
+	angles = [angles_1, angles_2, angles_3, angles_4]
 	@test_throws ArgumentError coherence_extraction(N, j_out_arr, ρ_pure, angles)
 
 	N = 4
 	M = 2
 	angles_1_1 = [0.5, 0, 0.5, 0] * π
 	angles_1_2 = [0, 0.25, 0, 0.25, 0] * π
-	angles_1 = [angles_1_1,angles_1_2]
+	angles_1 = [angles_1_1, angles_1_2]
 	j_01 = [lcmk2j(N + M, 1, 0, 1, 0), lcmk2j(N + M, 2, 1, 2, 1)]
 
 	extract_diagonal = false

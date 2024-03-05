@@ -62,7 +62,9 @@ function trigonometric_string_formatter(trigonometric_history, angle_history)
         tri_string_formatted = join([join([tri_replacement_str[1 + tri_string_bin[i]],
             "_$(angle_string_bin[i])^$i)"]) for i in eachindex(tri_string_bin)])
         phase_tri_string =
-            join([phase_replacement_str[mod(sum(tri_string_bin), 4) + 1], tri_string_formatted])
+            join([phase_replacement_str[mod(sum(tri_string_bin), 4) + 1],
+                tri_string_formatted]
+            )
         print(phase_tri_string)
    end
 

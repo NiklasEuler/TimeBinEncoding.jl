@@ -128,7 +128,8 @@ function shift_timebins_operator_sp(N)
     # short bins remain unchanged, i.e. diagonal part of shift_operator_single_photon
     l_diag = spzeros(2 * N)
     l_diag[2:2:end] .= 1
-    # long bins are shifted |n L⟩ → |N + 1 S⟩, so offdiagonal in shift_operator_single_photon
+    # long bins are shifted |n L⟩ → |N + 1 S⟩, so offdiagonal
+    # in shift_operator_single_photon
     shift_operator_single_photon =
         dropzeros!(spdiagm(N_LOOPS * (N + 1), N_LOOPS * N, 0 => s_diag, -2 => l_diag))
     return shift_operator_single_photon::SparseMatrixCSC{Float64, Int64}
@@ -392,8 +393,8 @@ end
 
 Apply phases `φ_arr` to the correlated time bins of the density matrix `ρ`
 
-Returns a new density matrix `ρ` after phase application. Each time bin |ii⟩, i ∈ {0, 1,…} is
-subjected to phase `φ_arr[i + 1]`.
+Returns a new density matrix `ρ` after phase application. Each time bin |ii⟩, i ∈ {0, 1,…}
+is subjected to phase `φ_arr[i + 1]`.
 
 See also `initial_state_phase_estimation`.
 """

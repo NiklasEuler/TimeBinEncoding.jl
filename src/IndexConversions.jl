@@ -12,7 +12,7 @@ basis index `j`.
 - `l`: time bin index of the signal photon, `l` ∈ {0, 1,…}, where `l` indicates the total
     number of long roundtrips taken.
 - `c`: loop index of the signal photon, `c` ∈ {0, 1}, where `c==0` means the short loop and
-    `c==1` means the long loop.
+    `c== 1` means the long loop.
 - `m`: time bin index of the idler photon, `m` ∈ {0, 1,…}, with the same encoding as above.
 - `k`: loop index of the idler photon, `k` ∈ {0, 1}, with the same encoding as above.
 
@@ -116,7 +116,7 @@ basis index `j`.
 # Arguments
 - `l`: time bin index of the photon, `l` ∈ {0, 1,…}, where `l` indicates the total number of
     long roundtrips taken.
-- `c`: loop index of the photon, `c` ∈ {0, 1}, where `c==0` means the short loop and `c==1`
+- `c`: loop index of the photon, `c` ∈ {0, 1}, where `c==0` means the short loop and `c== 1`
     means the long loop.
 
 See also `j2lc`, `lcmk2j`, `j2lcmk`, `lm2j`, `j2lm`.

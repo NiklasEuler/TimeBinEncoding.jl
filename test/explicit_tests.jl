@@ -3,7 +3,7 @@
  	M = 2
  	angles_1 = [0.5, 0] * π
  	angles_2 = [0, 0.25, 0] * π
-    angles = [angles_1,angles_2]
+    angles = [angles_1, angles_2]
 
     wf_coeffs_norm = normalize([0, 1])
 	Ψ_sp = insert_initial_state_sp(wf_coeffs_norm)
@@ -20,7 +20,7 @@
 	angles_2 = [0.25, 0.25, 0.25, 0.25, 0.25] * π
 	angles_3 = [0, 0, 0, 0, 0, 0] * π
 	angles_4 = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25] * π
-    angles = [angles_1,angles_2,angles_3,angles_4]
+    angles = [angles_1, angles_2, angles_3, angles_4]
 
     wf_coeffs_norm = normalize([0, 0, 1, 0])
 	Ψ_sp = insert_initial_state_sp(wf_coeffs_norm)
@@ -41,7 +41,7 @@ end
  	M = 2
  	angles_1 = [0.5, 0] * π
  	angles_2 = [0, 0.25, 0] * π
-    angles = [angles_1,angles_2]
+    angles = [angles_1, angles_2]
 
     ϕ = 0.0
 	wf_coeffs = [cis(2 * n * ϕ * π) for n in 0:N - 1]
@@ -59,7 +59,7 @@ end
 	angles_2 = [0.25, 0.25, 0.25, 0.25, 0.25] * π
 	angles_3 = [0, 0, 0, 0, 0, 0] * π
 	angles_4 = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25] * π
-    angles = [angles_1,angles_2,angles_3,angles_4]
+    angles = [angles_1, angles_2, angles_3, angles_4]
 
     #ϕ = 0.3
 	#wf_coeffs = [cis(2 * n * ϕ * π) for n in 0:N - 1]
@@ -85,7 +85,7 @@ end
 	# angles_1 = [0.25, 0.25] * π
 	# angles_2 = [0.25, 0.25, 0.25] * π
 
-	angles = [angles_1,angles_2]
+	angles = [angles_1, angles_2]
     @test explicit_fs_projection_sp(0, 0, angles) == ([], [])
     @test explicit_fs_projection_sp(0, 1, angles) == ([], [])
     @test all(explicit_fs_projection_sp(1, 0, angles) .≈
@@ -98,8 +98,8 @@ end
 end
 
 @testset "explicit_fs_projection" begin
-	N=2
-    M=2
+	N = 2
+    M = 2
 
     # angles_1 = [0.5, 0] * π
 	# angles_2 = [0, 0.25, 0] * π
@@ -107,7 +107,7 @@ end
 	angles_1 = [0.25, 0.25] * π
 	angles_2 = [0.25, 0.25, 0.25] * π
 
-	angles = [angles_1,angles_2]
+	angles = [angles_1, angles_2]
     j = lcmk2j(N + M, 0, 0, 0, 0)
     @test all(explicit_fs_projection(j, angles) .≈
         ([1], 1 / 4 .* Complex.([1])))

@@ -37,10 +37,14 @@ end
 	angles_4_exp = [0, 0, 0.5, 0.25, 0.5, 0, 0] * π
 	angles_5_exp = [0, 0, 0, 0, 0, 0, 0, 0] * π
 	angles_6_exp = [0, 0, 0, 0, 0.25, 0, 0, 0, 0] * π
-	angles_exp = [angles_1_exp,angles_2_exp,angles_3_exp,angles_4_exp,angles_5_exp,angles_6_exp]
+	angles_exp = [angles_1_exp, angles_2_exp, angles_3_exp, angles_4_exp, angles_5_exp,
+                    angles_6_exp
+                ]
 
 	M_exp = length(angles_exp)
-    j_out_modified = [lcmk2j(N + M_exp, 4, 0, 4, 0), lcmk2j(N + M_exp, 5, 1, 5, 1), lcmk2j(N + M_exp, 3, 0, 3, 0), lcmk2j(N + M_exp, 6, 1, 6, 1)]
+    j_out_modified = [lcmk2j(N + M_exp, 4, 0, 4, 0), lcmk2j(N + M_exp, 5, 1, 5, 1),
+                        lcmk2j(N + M_exp, 3, 0, 3, 0), lcmk2j(N + M_exp, 6, 1, 6, 1)
+                    ]
     result = @capture_out visualize_measurement_coherence_map(j_out_modified, angles_exp)
 
     @test "+⟨4 0 4 0|(SC)^M ρ (C^†S^†)^M) |4 0 4 0⟩

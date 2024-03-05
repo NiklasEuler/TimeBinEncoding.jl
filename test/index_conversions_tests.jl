@@ -12,7 +12,7 @@
     end
     @test j_arr == j_arr_reconstructed
     @test lcmk_arr[:, 1] == [0, 0, 0, 0]
-    @test lcmk_arr[:,end] == [N - 1, 1, N - 1, 1]
+    @test lcmk_arr[:, end] == [N - 1, 1, N - 1, 1]
     @test lcmk_arr[:, 77] == [3, 1, 3, 0]
     @test_throws ArgumentError j2lcmk(0, 1)
     @test_throws ArgumentError j2lcmk(N, 0)
@@ -40,7 +40,7 @@ end
     end
     @test j_arr == j_arr_reconstructed
     @test lm_arr[:, 1] == [0, 0]
-    @test lm_arr[:,end] == [N - 1, N - 1]
+    @test lm_arr[:, end] == [N - 1, N - 1]
     @test lm_arr[:, 13] == [2, 2]
     @test_throws ArgumentError j2lm(0, 1)
     @test_throws ArgumentError j2lm(N, 0)
@@ -64,7 +64,7 @@ end
     end
     @test j_arr == j_arr_reconstructed
     @test lc_arr[:, 1] == [0, 0]
-    @test lc_arr[:,end] == [N - 1, 1]
+    @test lc_arr[:, end] == [N - 1, 1]
     @test lc_arr[:, 6] == [2, 1]
     @test_throws ArgumentError j2lc(0)
     @test_throws ArgumentError lc2j(-1, 1)

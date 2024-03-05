@@ -63,7 +63,7 @@ function coherence_extraction(
             # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence, (j1, j2))
             # relevant coherence, so indices saved to list of extracted coherences.
-            push!(extracted_weights,weights[idx])
+            push!(extracted_weights, weights[idx])
 		elseif j1 == j2
 			pop_j_out_extracted -= pops[j1] * weights[idx]
             # non-contributing population. Can be removed exactly as exact value is known.
@@ -160,7 +160,8 @@ function angles_kth_neighbor_interference(N, k)
     for l in 1:N - k
         angles_measurement = [zeros(Float64, n) for n in N:N + k]
         angles_measurement[1][l] = 0.5  * π # send the early time bin into the long loop
-        angles_measurement[end][l+k] = 0.25 * π # interfere after k loops / k time bins travelled
+        angles_measurement[end][l+k] = 0.25 * π
+        # interfere after k loops / k time bins travelled
         angles[l] = angles_measurement
     end
 
