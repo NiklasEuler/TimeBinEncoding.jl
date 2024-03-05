@@ -9,12 +9,12 @@ basis index `j`.
 
 # Arguments
 - `N`: number of time bins in the basis
-- `l`: time bin index of the signal photon, `l` ∈ {0,1,…}, where `l` indicates the total
+- `l`: time bin index of the signal photon, `l` ∈ {0, 1,…}, where `l` indicates the total
     number of long roundtrips taken.
-- `c`: loop index of the signal photon, `c` ∈ {0,1}, where `c==0` means the short loop and
+- `c`: loop index of the signal photon, `c` ∈ {0, 1}, where `c==0` means the short loop and
     `c==1` means the long loop.
-- `m`: time bin index of the idler photon, `m` ∈ {0,1,…}, with the same encoding as above.
-- `k`: loop index of the idler photon, `k` ∈ {0,1}, with the same encoding as above.
+- `m`: time bin index of the idler photon, `m` ∈ {0, 1,…}, with the same encoding as above.
+- `k`: loop index of the idler photon, `k` ∈ {0, 1}, with the same encoding as above.
 
 See also `j2lcmk`, `lm2j`, `j2lm`, `lc2j`, `j2lc`.
 """
@@ -31,10 +31,10 @@ function lcmk2j(N, l, c, m, k)
     @argcheck l < N
     @argcheck m ≥ 0
     @argcheck m < N
-    @argcheck c ∈ [0,1]
-    @argcheck k ∈ [0,1]
+    @argcheck c in [0, 1]
+    @argcheck k in [0, 1]
 
-    return (l * n_loops + c) * N * n_loops + m * n_loops + k + 1
+    return (l * N_LOOPS + c) * N * N_LOOPS + m * N_LOOPS + k + 1
 end
 
 
@@ -51,17 +51,17 @@ function j2lcmk(N, j)
 
     @argcheck N > 0
     @argcheck j > 0
-    @argcheck j ≤ 4*N^2
+    @argcheck j ≤ N_LOOPS2 * N^2
 
-    l, j = divrem(j-1, n_loops2 * N)
-	#l = j ÷ (n_loops2 * N)
-	#j -= l * n_loops2 * N
-    c, j = divrem(j, n_loops * N)
-	#c = j ÷ (n_loops * N)
-	#j -= c * n_loops * N
-    m, k = divrem(j, n_loops)
-	#m = j ÷ n_loops
-	#j -= m * n_loops
+    l, j = divrem(j - 1, N_LOOPS2 * N)
+	#l = j ÷ (N_LOOPS2 * N)
+	#j -= l * N_LOOPS2 * N
+    c, j = divrem(j, N_LOOPS * N)
+	#c = j ÷ (N_LOOPS * N)
+	#j -= c * N_LOOPS * N
+    m, k = divrem(j, N_LOOPS)
+	#m = j ÷ N_LOOPS
+	#j -= m * N_LOOPS
 	#k = j
 	return l, c, m, k
 end
@@ -69,7 +69,7 @@ end
 """
     lm2j(N, l, m)
 
-Convert two indices `l`,`m` ∈ {0,…,N-1} to a joint index `j`.
+Convert two indices `l`,`m` ∈ {0,…, N - 1} to a joint index `j`.
 
 See also `j2lm`, lcmk2j`, `j2lcmk`, `lc2j`, `j2lc`.
 """
@@ -103,7 +103,7 @@ function j2lm(N, j) # inverse of lm2j
     @argcheck j > 0
     @argcheck j ≤ N^2
 
-    l, m = divrem(j-1, N)
+    l, m = divrem(j - 1, N)
     return l, m
 end
 
@@ -114,9 +114,9 @@ Convert the parameters of the single-photon state `|lc⟩` to its corresponding
 basis index `j`.
 
 # Arguments
-- `l`: time bin index of the photon, `l` ∈ {0,1,…}, where `l` indicates the total number of
+- `l`: time bin index of the photon, `l` ∈ {0, 1,…}, where `l` indicates the total number of
     long roundtrips taken.
-- `c`: loop index of the photon, `c` ∈ {0,1}, where `c==0` means the short loop and `c==1`
+- `c`: loop index of the photon, `c` ∈ {0, 1}, where `c==0` means the short loop and `c==1`
     means the long loop.
 
 See also `j2lc`, `lcmk2j`, `j2lcmk`, `lm2j`, `j2lm`.
@@ -127,7 +127,7 @@ function lc2j(l, c)
     c = convert(Int64, c)::Int64
 
     @argcheck l ≥ 0
-    @argcheck c ∈ [0,1]
+    @argcheck c in [0, 1]
     return l * 2 + c + 1
 end
 
@@ -142,7 +142,7 @@ function j2lc(j) # inverse of lm2j
     j = convert(Int64, j)::Int64
 
     @argcheck j > 0
-    l,c = divrem(j-1,2)
+    l, c  = divrem(j - 1, 2)
     return l, c
 end
 
@@ -150,10 +150,10 @@ end
     correlated_short_bins_idxs(N)
 
 Compute the joint indices `j` of the `|lcmk⟩` basis corresponding to `|i0i0⟩` for
-i ∈ {0,…,N-1}.
+i ∈ {0,…, N - 1}.
 """
 function correlated_short_bins_idxs(N)
     N = convert(Int64, N)::Int64
-    contr_j_idxs = [lcmk2j(N,i,0,i,0) for i in 0:N-1]
+    contr_j_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
     return contr_j_idxs
 end

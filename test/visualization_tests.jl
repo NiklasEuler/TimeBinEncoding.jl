@@ -1,46 +1,46 @@
 
 @testset "visualize_symbolic_ket_evolution_sp" begin
     M = 4
-    result = @capture_out visualize_symbolic_ket_evolution_sp(M,0)
+    result = @capture_out visualize_symbolic_ket_evolution_sp(M, 0)
 @test "The initial state |0,S⟩ after 4 roundtrips has evolved into the following contributions:
 
 (SC)^{4} |0,S⟩ =
-+ |0,S⟩⋅[ + cos(θ_0^1)cos(θ_0^2)cos(θ_0^3)cos(θ_0^4) ]
-+ |1,S⟩⋅[ - sin(θ_0^1)sin(θ_1^2)cos(θ_1^3)cos(θ_1^4) - cos(θ_0^1)sin(θ_0^2)sin(θ_1^3)cos(θ_1^4) - cos(θ_0^1)cos(θ_0^2)sin(θ_0^3)sin(θ_1^4) ]
-+ |1,L⟩⋅[ + i ⋅ cos(θ_0^1)cos(θ_0^2)cos(θ_0^3)sin(θ_0^4) ]
-+ |2,S⟩⋅[ - sin(θ_0^1)cos(θ_1^2)sin(θ_2^3)cos(θ_2^4) - cos(θ_0^1)sin(θ_0^2)cos(θ_1^3)sin(θ_2^4) + sin(θ_0^1)sin(θ_1^2)sin(θ_1^3)sin(θ_2^4) ]
-+ |2,L⟩⋅[ + i ⋅ cos(θ_0^1)cos(θ_0^2)sin(θ_0^3)cos(θ_1^4) - i ⋅ sin(θ_0^1)sin(θ_1^2)cos(θ_1^3)sin(θ_1^4) - i ⋅ cos(θ_0^1)sin(θ_0^2)sin(θ_1^3)sin(θ_1^4) ]
-+ |3,S⟩⋅[ - sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)sin(θ_3^4) ]
-+ |3,L⟩⋅[ + i ⋅ cos(θ_0^1)sin(θ_0^2)cos(θ_1^3)cos(θ_2^4) - i ⋅ sin(θ_0^1)sin(θ_1^2)sin(θ_1^3)cos(θ_2^4) - i ⋅ sin(θ_0^1)cos(θ_1^2)sin(θ_2^3)sin(θ_2^4) ]
-+ |4,L⟩⋅[ + i ⋅ sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)cos(θ_3^4) ]
++ |0,S⟩⋅[ + cos(θ_0^1)cos(θ_0^2)cos(θ_0^3)cos(θ_0^4)]
++ |1,S⟩⋅[ - sin(θ_0^1)sin(θ_1^2)cos(θ_1^3)cos(θ_1^4) - cos(θ_0^1)sin(θ_0^2)sin(θ_1^3)cos(θ_1^4) - cos(θ_0^1)cos(θ_0^2)sin(θ_0^3)sin(θ_1^4)]
++ |1,L⟩⋅[ + i ⋅ cos(θ_0^1)cos(θ_0^2)cos(θ_0^3)sin(θ_0^4)]
++ |2,S⟩⋅[ - sin(θ_0^1)cos(θ_1^2)sin(θ_2^3)cos(θ_2^4) - cos(θ_0^1)sin(θ_0^2)cos(θ_1^3)sin(θ_2^4) + sin(θ_0^1)sin(θ_1^2)sin(θ_1^3)sin(θ_2^4)]
++ |2,L⟩⋅[ + i ⋅ cos(θ_0^1)cos(θ_0^2)sin(θ_0^3)cos(θ_1^4) - i ⋅ sin(θ_0^1)sin(θ_1^2)cos(θ_1^3)sin(θ_1^4) - i ⋅ cos(θ_0^1)sin(θ_0^2)sin(θ_1^3)sin(θ_1^4)]
++ |3,S⟩⋅[ - sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)sin(θ_3^4)]
++ |3,L⟩⋅[ + i ⋅ cos(θ_0^1)sin(θ_0^2)cos(θ_1^3)cos(θ_2^4) - i ⋅ sin(θ_0^1)sin(θ_1^2)sin(θ_1^3)cos(θ_2^4) - i ⋅ sin(θ_0^1)cos(θ_1^2)sin(θ_2^3)sin(θ_2^4)]
++ |4,L⟩⋅[ + i ⋅ sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)cos(θ_3^4)]
 " == result
 end
 
-@testset "visualize_symbolic_final_state_projection_sp" begin
+@testset "visualize_symbolic_fs_projection_sp" begin
     M = 4
-    result = @capture_out visualize_symbolic_final_state_projection_sp(M, 3, 0)
+    result = @capture_out visualize_symbolic_fs_projection_sp(M, 3, 0)
     @test "|3,S⟩⟨3,S| (SC)^{4} |Ψ_init⟩ = |3,S⟩⋅{
-+ c_(0,S)⋅[ - sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)sin(θ_3^4) ]
-+ c_(1,S)⋅[ - sin(θ_1^1)cos(θ_2^2)sin(θ_3^3)cos(θ_3^4) - cos(θ_1^1)sin(θ_1^2)cos(θ_2^3)sin(θ_3^4) + sin(θ_1^1)sin(θ_2^2)sin(θ_2^3)sin(θ_3^4) ]
-+ c_(2,S)⋅[ - sin(θ_2^1)sin(θ_3^2)cos(θ_3^3)cos(θ_3^4) - cos(θ_2^1)sin(θ_2^2)sin(θ_3^3)cos(θ_3^4) - cos(θ_2^1)cos(θ_2^2)sin(θ_2^3)sin(θ_3^4) ]
-+ c_(3,S)⋅[ + cos(θ_3^1)cos(θ_3^2)cos(θ_3^3)cos(θ_3^4) ]
++ c_(0,S)⋅[ - sin(θ_0^1)cos(θ_1^2)cos(θ_2^3)sin(θ_3^4)]
++ c_(1,S)⋅[ - sin(θ_1^1)cos(θ_2^2)sin(θ_3^3)cos(θ_3^4) - cos(θ_1^1)sin(θ_1^2)cos(θ_2^3)sin(θ_3^4) + sin(θ_1^1)sin(θ_2^2)sin(θ_2^3)sin(θ_3^4)]
++ c_(2,S)⋅[ - sin(θ_2^1)sin(θ_3^2)cos(θ_3^3)cos(θ_3^4) - cos(θ_2^1)sin(θ_2^2)sin(θ_3^3)cos(θ_3^4) - cos(θ_2^1)cos(θ_2^2)sin(θ_2^3)sin(θ_3^4)]
++ c_(3,S)⋅[ + cos(θ_3^1)cos(θ_3^2)cos(θ_3^3)cos(θ_3^4)]
 }
 " == result
 end
 
 @testset "visualize_combined_measurement_coherence_map" begin
-	
+
     N = 4
-    angles_1_exp = [0.5,0.5,0,0]*π
-	angles_2_exp = [0,0,0,0,0]*π
-	angles_3_exp = [0,0,0.25,0.25,0,0]*π
-	angles_4_exp = [0,0,0.5,0.25,0.5,0,0]*π
-	angles_5_exp = [0,0,0,0,0,0,0,0]*π
-	angles_6_exp = [0,0,0,0,0.25,0,0,0,0]*π
+    angles_1_exp = [0.5, 0.5, 0, 0] * π
+	angles_2_exp = [0, 0, 0, 0, 0] * π
+	angles_3_exp = [0, 0, 0.25, 0.25, 0, 0] * π
+	angles_4_exp = [0, 0, 0.5, 0.25, 0.5, 0, 0] * π
+	angles_5_exp = [0, 0, 0, 0, 0, 0, 0, 0] * π
+	angles_6_exp = [0, 0, 0, 0, 0.25, 0, 0, 0, 0] * π
 	angles_exp = [angles_1_exp,angles_2_exp,angles_3_exp,angles_4_exp,angles_5_exp,angles_6_exp]
 
 	M_exp = length(angles_exp)
-    j_out_modified = [lcmk2j(N+M_exp,4,0,4,0), lcmk2j(N+M_exp,5,1,5,1),lcmk2j(N+M_exp,3,0,3,0), lcmk2j(N+M_exp,6,1,6,1)]
+    j_out_modified = [lcmk2j(N + M_exp, 4, 0, 4, 0), lcmk2j(N + M_exp, 5, 1, 5, 1), lcmk2j(N + M_exp, 3, 0, 3, 0), lcmk2j(N + M_exp, 6, 1, 6, 1)]
     result = @capture_out visualize_measurement_coherence_map(j_out_modified, angles_exp)
 
     @test "+⟨4 0 4 0|(SC)^M ρ (C^†S^†)^M) |4 0 4 0⟩
@@ -131,10 +131,10 @@ Useful extractable coherences:
 + ρ_[3 3]^[3 3] ⋅ 0.25
 " == result
 
-result = @capture_out visualize_measurement_coherence_map(lcmk2j(N+M_exp,8,0,8,0), angles_exp)
+result = @capture_out visualize_measurement_coherence_map(lcmk2j(N + M_exp, 8, 0, 8, 0), angles_exp)
 @test "⟨8 0 8 0|(SC)^M ρ (C^†S^†)^M) |8 0 8 0⟩ =\nUseful extractable coherences:\n" == result
 
-result = @capture_out visualize_measurement_coherence_map(lcmk2j(N+M_exp,3,0,4,0), angles_exp)
+result = @capture_out visualize_measurement_coherence_map(lcmk2j(N + M_exp, 3, 0, 4, 0), angles_exp)
 
 @test "⟨3 0 4 0|(SC)^M ρ (C^†S^†)^M) |3 0 4 0⟩ =
 + ρ_[0 0]^[0 0] ⋅ 0.0625
