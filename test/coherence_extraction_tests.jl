@@ -17,7 +17,7 @@
 	coherence_extraction(N, j_out_arr, ρ_pure, angles)
 	Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1/sqrt(N),N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
-	@test isapprox((@test_logs min_level=Logging.Warn compound_coherence_extraction(ρ_pure)), mes_fidelity, atol=1e-8)
+	@test isapprox((@test_logs min_level=Logging.Warn coherence_extraction(N, j_out_arr, ρ_pure, angles)), mes_fidelity, atol=1e-8)
 
 	angles_1 = [0.2,0.6,0.1,0]*π
 	angles_2 = [0,0.8,0.2,0,0]*π
@@ -25,6 +25,23 @@
 	angles_4 = [0,0,0.12,0.26,0.83,0,0]*π
 	angles = [angles_1,angles_2,angles_3,angles_4]
 	@test_throws ArgumentError coherence_extraction(N, j_out_arr, ρ_pure, angles)
+
+	N = 4
+	M = 2
+
+	angles_1_1 = [0.5,0,0.5,0]*π
+	angles_1_2 = [0,0.25,0,0.25,0]*π
+	angles_1 = [angles_1_1,angles_1_2]
+	j_01 = [lcmk2j(N+M,1,0,1,0),lcmk2j(N+M,2,1,2,1)]
+
+	extract_diagonal = false
+	
+	ϕ = 0
+	wf_coeffs = [cis(n * ϕ * π) for n in 0:N-1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+	ρ_pure = density_matrix(Ψ_init)
+	@test isapprox((@test_logs (:warn,"Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`.") min_level=Logging.Warn coherence_extraction(N, j_01, ρ_pure, angles_1; extract_diagonal)), 1/8, atol=1e-8)
 end
 
 @testset "compound coherence extraction" begin
