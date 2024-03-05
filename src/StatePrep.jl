@@ -7,7 +7,8 @@ export fidelity, purity
 """
     correlated_timebin_state(wf_coeffs::Vector)
 
-Convert `wf_coeffs` holding the coefficients of correlated two-photon time bin popluations to the `|l,m⟩' basis.
+Convert `wf_coeffs` holding the coefficients of correlated two-photon time bin popluations
+to the `|l,m⟩' basis.
 
 See also `insert_initial_state`, `density_matrix`.
 """
@@ -27,7 +28,8 @@ end
 """
     insert_initial_state(time_bin_state_vec::Vector)
 
-Insert the two-photon time-bin state in the `|l,m⟩' basis into the short loop by imbedding `|l,m⟩' → `|l,0,m,0⟩'.
+Insert the two-photon time-bin state in the `|l,m⟩' basis into the short loop by imbedding
+`|l,m⟩' → `|l,0,m,0⟩'.
 
 See also `insert_initial_state_sp`, `correlated_timebin_state`, `density_matrix`.
 """
@@ -45,7 +47,8 @@ end
 """
     insert_initial_state_sp(time_bin_state_vec::Vector)
 
-Insert the single-photon time-bin state in the `|l⟩' basis into the short loop by imbedding `|l⟩' → `|l,0⟩'.
+Insert the single-photon time-bin state in the `|l⟩' basis into the short loop by imbedding
+`|l⟩' → `|l,0⟩'.
 
 See also `insert_initial_state` `correlated_timebin_state`, `density_matrix`.
 """
@@ -69,7 +72,7 @@ See also `density_matrix_dephased`.
 function density_matrix(Ψ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     normalize!(Ψ) # normalization
-    
+
     ρ = kron(Ψ, Ψ')
     return ρ
 end
@@ -90,9 +93,9 @@ function density_matrix_dephased(Ψ, ϵ)
     N = Int64(sqrt(length(Ψ))/n_loops)::Int64
     @argcheck ϵ ≥ 0
     @argcheck ϵ ≤ 1
-    
+
     ρ_pure = density_matrix(Ψ)
-    ρ = (1-ϵ) * ρ_pure + ϵ * white_noise(N) 
+    ρ = (1-ϵ) * ρ_pure + ϵ * white_noise(N)
     return ρ
 end
 
@@ -100,7 +103,8 @@ end
 """
     white_noise(N)
 
-Compute a normalized dephased density matrix with equal populations for all short-short time bins.
+Compute a normalized dephased density matrix with equal populations for all short-short time
+bins.
 
 ρ_wn = 1/N^2 * ∑_i,j |i0j0⟩⟨i0j0|
 See also `density_matrix_dephased`.
@@ -134,4 +138,3 @@ Compute the purity of density matrix `ρ`.
 function purity(ρ)
     return Float64(real(sum(diag(ρ*ρ))))
 end
-
