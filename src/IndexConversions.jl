@@ -142,7 +142,7 @@ end
 """
     correlated_short_bins_idxs(N)
 
-Compute the joint indices `j` of the `|lcmk⟩` basis corresponding to `|i0i0⟩` for i ∈ {0,…,N-1}
+Compute the joint indices `j` of the `|lcmk⟩` basis corresponding to `|i0i0⟩` for i ∈ {0,…,N-1}.
 """
 function correlated_short_bins_idxs(N)
     N = convert(Int64, N)::Int64

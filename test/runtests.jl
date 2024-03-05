@@ -1,4 +1,5 @@
 using LinearAlgebra
+using Logging
 using SparseArrays
 using Suppressor
 using Random

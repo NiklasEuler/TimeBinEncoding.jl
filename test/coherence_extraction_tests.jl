@@ -1,4 +1,32 @@
 
+@testset "coherence_extraction_tests" begin
+	N = 4
+	M = 4
+    ϵ = 0.1
+    ϵ_angles = 0.05 * π
+	ϕ = 0
+    wf_coeffs = [cis.(2 * ϕ * k * π) for k in 1:N]
+	Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
+	ρ_pure = density_matrix(Ψ_init)
+	j_out_arr = [lcmk2j(N+M,3,0,3,0), lcmk2j(N+M,4,1,4,1)]
+	angles_1 = [0.5,0.5,0,0]*π
+	angles_2 = [0,0,0,0,0]*π
+	angles_3 = [0,0,0.25,0.25,0,0]*π
+	angles_4 = [0,0,0.25,0.25,0.25,0,0]*π
+	angles = [angles_1,angles_2,angles_3,angles_4]
+	coherence_extraction(N, j_out_arr, ρ_pure, angles)
+	Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1/sqrt(N),N)))
+	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
+	@test isapprox((@test_logs min_level=Logging.Warn compound_coherence_extraction(ρ_pure)), mes_fidelity, atol=1e-8)
+
+	angles_1 = [0.2,0.6,0.1,0]*π
+	angles_2 = [0,0.8,0.2,0,0]*π
+	angles_3 = [0,0.35,0.41,0.9,0,0]*π
+	angles_4 = [0,0,0.12,0.26,0.83,0,0]*π
+	angles = [angles_1,angles_2,angles_3,angles_4]
+	@test_throws ArgumentError coherence_extraction(N, j_out_arr, ρ_pure, angles)
+end
+
 @testset "compound coherence extraction" begin
     N = 8
     ϵ = 0.1
@@ -8,7 +36,7 @@
 	ρ_pure = density_matrix(Ψ_init)
     Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1/sqrt(N),N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
-    @test isapprox(compound_coherence_extraction(ρ_pure), mes_fidelity, atol=1e-8)
+    @test isapprox((@test_logs min_level=Logging.Warn compound_coherence_extraction(ρ_pure)), mes_fidelity, atol=1e-8)
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
     @test compound_coherence_extraction(ρ_mixed) ≤  compound_coherence_extraction(ρ_pure)
     @test compound_coherence_extraction(ρ_mixed, ϵ_angles) ≤ compound_coherence_extraction(ρ_mixed)

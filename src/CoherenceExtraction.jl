@@ -35,7 +35,6 @@ function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles), c
 	end
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     pops = Float64.(diag(ρ))
-    #contr_j_idxs = correlated_short_bins_idxs(N) # j indices of correlated time bins
     j1_arr, j2_arr, weights = explicit_final_state_coherence_map(j_out, angles) # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
@@ -45,7 +44,7 @@ function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles), c
 	for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if(j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2)) # check whether both j1 and j2 are correlated time bins
+		if j1 ∈ contr_j_idxs && j2 ∈ contr_j_idxs && (extract_diagonal || j1 ≠ j2) # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence,(j1,j2)) # relevant coherence, so indices saved to list of extracted coherences.
             push!(extracted_weights,weights[idx])
 		elseif j1 == j2
@@ -54,14 +53,14 @@ function coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles), c
 			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx]) # subtract non-contributing coherence bound.
 		end
 	end
-    if !all(extracted_weights .== extracted_weights[1])
-        weights_nonzero = extracted_weights[extracted_weights .≠ 0]
-        if !all(weights_nonzero .== weights_nonzero[1])
-            @warn "Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`."
-            weights_nonzero[1] = norm
-        else
-            throw(ArgumentError("The coherences scheduled for extraction have differing weights in the chosen final-state projectors and can thus not straight-forwardly be extracted. Please check input again."))
-        end
+    @argcheck extracted_weights ≠ []
+    n_contr_sched = length(contr_j_idxs)
+    n_extracted = length(extracted_weights)
+    if (n_extracted != n_contr_sched^2 && extract_diagonal) || (n_extracted != n_contr_sched*(n_contr_sched-1) && !extract_diagonal)
+        @warn "Some of the scheduled coherences have a vanishing weight in the given final-state projectors. Please check again and consider adapting the scheduled coherences in `contr_j_idxs`."
+    end
+    if !all(extracted_weights .≈ extracted_weights[1])
+        throw(ArgumentError("The coherences scheduled for extraction have differing weights in the chosen final-state projectors and can thus not straight-forwardly be extracted. Please check input again."))
     else
         norm = extracted_weights[1]
     end
@@ -81,14 +80,15 @@ function initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
     extract_diagonal = false # dont need the populations
     angles_arr = angles_kth_neighbor_interference(N, k)
     j_out_arr = [[lcmk2j(N+k+1,i,0,i,0),lcmk2j(N+k+1,i+1,1,i+1,1)] for i in 1:k:N-1]
+    j_contr_idxs = correlated_short_bins_idxs(N)
     for (idx, j) in enumerate(j_out_arr)
         φ_arr = zeros(Float64, N)
         φ_arr[idx+1] = π/2
         ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
         noisy_angles_real = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
         noisy_angles_imag = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
-        c_real = coherence_extraction(N, j, ρ, angles_arr[idx], noisy_angles_real; extract_diagonal=extract_diagonal)
-        c_imag = coherence_extraction(N, j, ρ_rotated, angles_arr[idx], noisy_angles_imag; extract_diagonal=extract_diagonal)
+        c_real = coherence_extraction(N, j, ρ, angles_arr[idx], noisy_angles_real, j_contr_idxs[[idx,idx+k]]; extract_diagonal=extract_diagonal)
+        c_imag = coherence_extraction(N, j, ρ_rotated, angles_arr[idx], noisy_angles_imag, j_contr_idxs[[idx,idx+k]]; extract_diagonal=extract_diagonal)
         c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
         nn_phases[idx+1] = ϕ_arr[argmax(c_contr)]
     end
@@ -127,17 +127,18 @@ function compound_coherence_extraction(ρ, ϵ_angles = 0.0)
     ϵ_angles = convert(Float64, ϵ_angles)::Float64
     N = Int64(sqrt(size(ρ)[1]/(n_loops2)))
 
-    contr_j_idxs = correlated_short_bins_idxs(N)
-    contr_pops = Float64(sum([ρ[j,j] for j in contr_j_idxs]))
+    contr_j_idxs_all = correlated_short_bins_idxs(N)
+    contr_pops = Float64(sum([ρ[j,j] for j in contr_j_idxs_all]))
     extract_diagonal = false
     extracted_cohereneces = contr_pops/N # populations contribution to fidelity
     for k in 1:N-1
         angles_k = angles_kth_neighbor_interference(N, k)
         j_out_k = [[lcmk2j(N+k+1,i,0,i,0),lcmk2j(N+k+1,i+1,1,i+1,1)] for i in k:1:N-1]
         for (idx, j_out) in enumerate(j_out_k)
+            contr_j_idxs = contr_j_idxs_all[[idx,idx+k]]
             angles = angles_k[idx]
             noisy_angles = noisy_angles_symmetric(angles, ϵ_angles)
-            coh = coherence_extraction(N, j_out, ρ, angles, noisy_angles; extract_diagonal=extract_diagonal)  # noisy extraction
+            coh = coherence_extraction(N, j_out, ρ, angles, noisy_angles, contr_j_idxs; extract_diagonal=extract_diagonal)  # noisy extraction
             extracted_cohereneces += coh
         end
     end
