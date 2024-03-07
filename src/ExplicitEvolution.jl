@@ -26,7 +26,7 @@ function explicit_ket_evolution_sp(l, angles)
 
     j_idx_arr, trigonometric_history_arr, angle_history_arr =
         symbolic_ket_evolution_sp(M, l)
-    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(
+    j_idx_arr_contr, coeff_arr = _symbolic_2_explicit_worker(
             angles, j_idx_arr, trigonometric_history_arr, angle_history_arr
         )
     return j_idx_arr_contr, coeff_arr
@@ -67,13 +67,13 @@ function explicit_fs_projection_sp(l, c, angles)
     deleteat!(j_idx_arr_fs, filter_idxs)
     deleteat!(trigonometric_history_arr_fs, filter_idxs)
     deleteat!(angle_history_arr_fs, filter_idxs)
-    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(
+    j_idx_arr_contr, coeff_arr = _symbolic_2_explicit_worker(
         angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
     )
     return j_idx_arr_contr, coeff_arr
 end
 
-function symbolic_2_explicit_worker(
+function _symbolic_2_explicit_worker(
     angles, j_idx_arr, trigonometric_history_arr, angle_history_arr
 )
     M = length(angles) # number of roundtrips
@@ -116,7 +116,7 @@ Evolve the two-photon state related to `j` according to `angles`, using a symbol
 - `coeff_arr`: vector of corresponding coefficients to the `j` indices given in
     `j_idx_arr_contr`.
 
-See also  `explicit_ket_evolution_sp`, `mesh_evolution`, `explicit_fs_projection`
+See also `explicit_ket_evolution_sp`, `mesh_evolution`, `explicit_fs_projection`.
 """
 function explicit_ket_evolution(j_init, angles)
     j_init = convert(Int64, j_init)::Int64
@@ -132,7 +132,7 @@ function explicit_ket_evolution(j_init, angles)
     j_idx_arr_l, coeff_arr_l = explicit_ket_evolution_sp(l_init, angles)
     j_idx_arr_m, coeff_arr_m = explicit_ket_evolution_sp(m_init, angles)
     j_idx_arr_contr, coeff_arr =
-        sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+        _sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
 
     return j_idx_arr_contr, coeff_arr
 end
@@ -143,23 +143,23 @@ function explicit_fs_projection(j_out, angles)
     M = length(angles) # number of roundtrips
     N = length(angles[1]) # initial number of time bins
     if M ≤ 6 # symbolic backend is faster, but too memory intensive for too many iterations
-        return explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
+        return _explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
     else
-        return explicit_fs_projection_mesh(N, M, j_out, angles)
+        return _explicit_fs_projection_mesh(N, M, j_out, angles)
     end
 end
 
-function explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
+function _explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
 
     j_idx_arr_l, coeff_arr_l = explicit_fs_projection_sp(l_out, c_out, angles)
     j_idx_arr_m, coeff_arr_m = explicit_fs_projection_sp(m_out, k_out, angles)
     j_idx_arr_contr, coeff_arr =
-        sp_2_two_photon(N, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+        _sp_2_two_photon(N, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
     return j_idx_arr_contr, coeff_arr
 end
 
-function explicit_fs_projection_mesh(N, M, j_out, angles)
+function _explicit_fs_projection_mesh(N, M, j_out, angles)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
@@ -193,7 +193,7 @@ function explicit_fs_projection_mesh(N, M, j_out, angles)
     return j_idx_arr_contr, coeff_arr
 end
 
-function sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+function _sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     for (idxl, jl) in enumerate(j_idx_arr_l)
@@ -271,6 +271,15 @@ function explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
 
     return j1_arr, j2_arr, weights
 end
+
+"""
+    explicit_fs_projection_expval(ρ_init, j_out::Int64, angles)
+    explicit_fs_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)
+
+
+TBW
+"""
+function explicit_fs_projection_expval end
 
 function explicit_fs_projection_expval(ρ_init, j_out::Int64, angles)
     j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)

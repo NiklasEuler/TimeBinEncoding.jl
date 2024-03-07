@@ -1,14 +1,9 @@
-export coin_operator, beam_splitter_operator, mesh_evolution
+export coin_operator, beam_splitter_operator
 export shift_timebins, shift_timebins_operator
-export shift_timebins_sp, shift_timebins_operator_sp, coin_operator_sp, mesh_evolution_sp
+export shift_timebins_sp, shift_timebins_operator_sp, coin_operator_sp
+export mesh_evolution
+export mesh_evolution_sp
 export phase_on_density_matrix
-
-const global N_LOOPS = 2
-# number of fiber loops. Saved as const to avoid magic numbers.
-const global N_LOOPS2 = 4
-# number of fiber loops squared. Saved as const to avoid magic numbers.
-global const WEIGHT_CUTOFF = 1e-16
-#Numerical cutoff value to determine wether a certain coefficient is ≈ 0
 
 """
     shift_timebins_sp(state_vec::Vector)
@@ -53,7 +48,7 @@ Shift the time bins of a two-photon pure state according to the loop index.
 Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches
 the type of `state_vec`.
 
-See also shift_timebins_sp, shift_j!.
+See also shift_timebins_sp, _shift_j!.
 """
 function shift_timebins end
 
@@ -62,7 +57,7 @@ function shift_timebins(state_vec::Vector)
     N = Int64(sqrt(length(state_vec) / (N_LOOPS2)))
     new_vec = zeros(ComplexF64, ((N + 1) * N_LOOPS)^2)
     for j in eachindex(state_vec)
-        shift_j!(N, j, state_vec, new_vec)
+        _shift_j!(N, j, state_vec, new_vec)
    end
 
     return new_vec
@@ -74,21 +69,21 @@ function shift_timebins(state_vec::SparseVector)
     N = Int64(sqrt(length(state_vec) / (N_LOOPS2)))
     new_vec = spzeros(ComplexF64, ((N + 1) * N_LOOPS)^2)
     for j in state_vec.nzind
-        shift_j!(N, j, state_vec, new_vec)
+        _shift_j!(N, j, state_vec, new_vec)
    end
 
     return new_vec
 end
 
 """
-    shift_j!(N, j, state_vec, new_vec)
+    _shift_j!(N, j, state_vec, new_vec)
 
 Shift the two-photon coefficient of index `j` from the old `state_vec` with `N` time bins to
 the new, longer `new_vec` state vector with `N + 1` timebins.
 
 See also `shift_timebins`, `shift_j_sp!`.
 """
-function shift_j!(N, j, state_vec, new_vec)
+function _shift_j!(N, j, state_vec, new_vec)
     l, c , m , k  = j2lcmk(N, j)
     shifted_j = lcmk2j(N + 1, l + c, c, m + k, k)
     # adapted system has one more time bin, so we need to put N + 1
@@ -102,7 +97,7 @@ end
 Shift the single-photon coefficient of index `j` from the old `state_vec` to the new, longer
 `new_vec` state vector.
 
-See also `shift_timebins`, `shift_j!`
+See also `shift_timebins`, `_shift_j!`
 """
 function shift_j_sp!(j, state_vec, new_vec)
     l, c  = j2lc(j)
@@ -121,8 +116,7 @@ See also `shift_timebins_operator`, `coin_operator_sp`, `mesh_evolution_sp`.
 """
 function shift_timebins_operator_sp(N)
     N = convert(Int64, N)::Int64
-    #s_diag = append!([[1, 0] for _ in 1:N]...)
-    #l_diag = append!([[0, 1] for _ in 1:N]...)
+
     s_diag = spzeros(2 * N)
 	s_diag[1:2:end - 1] .= 1
     # short bins remain unchanged, i.e. diagonal part of shift_operator_single_photon
@@ -232,7 +226,7 @@ function mesh_evolution end
 function mesh_evolution(initial_state::Vector, angles)
     state = convert(Vector{ComplexF64}, initial_state)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution(state, angles)
+    state = _iterative_mesh_evolution(state, angles)
     return state::Vector{ComplexF64}
 end
 
@@ -240,30 +234,32 @@ function mesh_evolution(initial_state::SparseVector, angles)
     state =
     convert(SparseVector{ComplexF64, Int64}, initial_state)::SparseVector{ComplexF64, Int64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution(state, angles)
+    state = _iterative_mesh_evolution(state, angles)
     return state::SparseVector{ComplexF64, Int64}
 end
 
 function mesh_evolution(initial_state, angles)
     state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution_ρ(state, angles)
+    state = _iterative_mesh_evolution(state, angles)
     return state
 end
 
 """
-    iterative_mesh_evolution(input_state, angles)
+    _iterative_mesh_evolution(input_state, angles)
 
 Iteratively apply the coin- and bin-shifting operators to the two-photon `input state`
-Vector.
+object.
 
-The return object `state` is either a SparseVector or a Vector type, depending on the type
-of `input_state`. The internal numerics are matching that state.
+The `input state` argument can be both a wave function in form of a Vector or SparseVector
+or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
+`state` matches the type of `input_state`. The internal numerics are type-specialized too.
 
-See also `iterative_mesh_evolution_density_matrix`, `iterative_mesh_evolution_sp`,
-`iterative_mesh_evolution_density_matrix_sp`.
+See also `mesh_evolution`, `iterative_mesh_evolution_sp`.
 """
-function iterative_mesh_evolution(input_state, angles)
+function _iterative_mesh_evolution end
+
+function _iterative_mesh_evolution(input_state::AbstractVector, angles)
     state = copy(input_state)
     for i in eachindex(angles)
         coin_op = coin_operator(angles[i])
@@ -274,18 +270,7 @@ function iterative_mesh_evolution(input_state, angles)
     return state
 end
 
-"""
-    iterative_mesh_evolution_ρ(input_state, angles)
-
-Iteratively apply the coin- and bin-shifting operators to the two-photon `input state`
-density matrix.
-
-The return object `state` is a Matrix object, independent of the type of `input_state`.
-
-See also `iterative_mesh_evolution`, `iterative_mesh_evolution_sp`,
-`iterative_mesh_evolution_density_matrix_sp`.
-"""
-function iterative_mesh_evolution_ρ(input_state, angles)
+function _iterative_mesh_evolution(input_state::AbstractMatrix, angles)
     state = copy(input_state)
     for i in eachindex(angles)
         coin_op = coin_operator(angles[i])
@@ -323,7 +308,7 @@ function mesh_evolution_sp end
 function mesh_evolution_sp(initial_state::Vector, angles)
     state = convert(Vector{ComplexF64}, initial_state)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution_sp(state, angles)
+    state = _iterative_mesh_evolution_sp(state, angles)
     return state
 end
 
@@ -331,14 +316,14 @@ function mesh_evolution_sp(initial_state::SparseVector, angles)
     state =
     convert(SparseVector{ComplexF64, Int64}, initial_state)::SparseVector{ComplexF64, Int64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution_sp(state, angles)
+    state = _iterative_mesh_evolution_sp(state, angles)
     return state
 end
 
-function mesh_evolution_sp(initial_state, angles)
+function mesh_evolution_sp(initial_state::AbstractMatrix, angles)
     state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = iterative_mesh_evolution_ρ_sp(state, angles)
+    state = _iterative_mesh_evolution_sp(state, angles)
     return state
 end
 
@@ -348,13 +333,15 @@ iterative_mesh_evolution_sp(input_state, angles)
 Iteratively apply the coin- and bin-shifting operators to the single-photon `input state`
 Vector.
 
-The return object `state` is either a SparseVector or a Vector type, depending on the type
-of `input_state`. The internal numerics are matching that state.
+The `input state` argument can be both a wave function in form of a Vector or SparseVector
+or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
+`state` matches the type of `input_state`. The internal numerics are type-specialized too.
 
-See also  `iterative_mesh_evolution_density_matrix_sp`, `iterative_mesh_evolution`,
-`iterative_mesh_evolution_density_matrix`.
+See also  `_iterative_mesh_evolution`, `mesh_evolution_sp`.
 """
-function iterative_mesh_evolution_sp(input_state, angles)
+function _iterative_mesh_evolution_sp end
+
+function _iterative_mesh_evolution_sp(input_state::AbstractVector, angles)
     state = copy(input_state)
     for i in eachindex(angles)
         coin_op = coin_operator_sp(angles[i])
@@ -365,50 +352,14 @@ function iterative_mesh_evolution_sp(input_state, angles)
     return state
 end
 
-"""
-    iterative_mesh_evolution_ρ_sp(input_state, angles)
-
-Iteratively apply the coin- and bin-shifting operators to the single-photon `input state`
-density matrix.
-
-The return object `state` is a Matrix object, independent of the type of `input_state`.
-
-See also `iterative_mesh_evolution_sp`, `iterative_mesh_evolution`,
-`iterative_mesh_evolution_density_matrix`.
-"""
-function iterative_mesh_evolution_ρ_sp(state, angles)
+function _iterative_mesh_evolution_sp(state::AbstractMatrix, angles)
     for i in eachindex(angles)
         coin_op = coin_operator_sp(angles[i])
         shift_op = shift_timebins_operator_sp(length(angles[i]))
+
         state = coin_op * state * coin_op' # apply beam splitters
         state = shift_op * state * shift_op' # apply time-bin shift operator
    end
 
     return state
-end
-
-
-"""
-    phase_on_density_matrix(ρ, φ_arr)
-
-Apply phases `φ_arr` to the correlated time bins of the density matrix `ρ`
-
-Returns a new density matrix `ρ` after phase application. Each time bin |ii⟩, i ∈ {0, 1,…}
-is subjected to phase `φ_arr[i + 1]`.
-
-See also `initial_state_phase_estimation`.
-"""
-function phase_on_density_matrix(ρ, φ_arr)
-    ρ_rot = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
-    φ_arr = convert(Vector{Float64}, φ_arr)::Vector{Float64}
-    N = ρ2N(ρ)
-
-    @argcheck length(φ_arr) == N
-
-    tb_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
-    for (idx1, j1) in enumerate(tb_idxs), (idx2, j2) in enumerate(tb_idxs)
-        ρ_rot[j1, j2] *= cis(φ_arr[idx1] - φ_arr[idx2])
-   end
-
-    return ρ_rot
 end

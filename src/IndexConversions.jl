@@ -54,15 +54,8 @@ function j2lcmk(N, j)
     @argcheck j ≤ N_LOOPS2 * N^2
 
     l, j = divrem(j - 1, N_LOOPS2 * N)
-	#l = j ÷ (N_LOOPS2 * N)
-	#j -= l * N_LOOPS2 * N
     c, j = divrem(j, N_LOOPS * N)
-	#c = j ÷ (N_LOOPS * N)
-	#j -= c * N_LOOPS * N
     m, k = divrem(j, N_LOOPS)
-	#m = j ÷ N_LOOPS
-	#j -= m * N_LOOPS
-	#k = j
 	return l, c, m, k
 end
 
@@ -128,6 +121,7 @@ function lc2j(l, c)
 
     @argcheck l ≥ 0
     @argcheck c in [0, 1]
+
     return l * 2 + c + 1
 end
 
@@ -142,6 +136,7 @@ function j2lc(j) # inverse of lm2j
     j = convert(Int64, j)::Int64
 
     @argcheck j > 0
+
     l, c  = divrem(j - 1, 2)
     return l, c
 end
@@ -154,6 +149,7 @@ i ∈ {0,…, N - 1}.
 """
 function correlated_short_bins_idxs(N)
     N = convert(Int64, N)::Int64
+
     contr_j_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
     return contr_j_idxs
 end

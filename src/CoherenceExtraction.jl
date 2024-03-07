@@ -6,7 +6,7 @@ export j_out_single_setup
 
 """
     coherence_extraction(
-        N, j_out, pops_init, pop_fs, angles,contr_j_idxs = correlated_short_bins_idxs(N);
+        N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
         extract_diagonal::Bool=true
     )
 
@@ -27,7 +27,7 @@ Extract the coherences between correlated time-bin populations.
 
 # Keyword Arguments
 
-- `extract_diagonal`: Bool flag to indicate whether state populations, i.e., diagonal
+- `extract_diagonal`::Bool: Bool flag to indicate whether state populations, i.e., diagonal
     elements of ρ, should be extracted from the coherence. Default is `true`.
 
 See also `compound_coherence_extraction`.
@@ -43,13 +43,15 @@ function coherence_extraction(
 		convert(Int64, j_out)::Int64
 	end
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+
     j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
     # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
 	extracted_coherence = []
     extracted_weights = Float64[]
-	for idx in eachindex(j1_arr)
+
+    for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
 		if j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2)
@@ -65,6 +67,7 @@ function coherence_extraction(
             # subtract non-contributing coherence bound.
 		end
 	end
+
     @argcheck extracted_weights ≠ []
     n_contr_sched = length(contr_j_idxs)
     n_extracted = length(extracted_weights)
@@ -81,17 +84,18 @@ function coherence_extraction(
     else
         norm = extracted_weights[1]
     end
+
 	pop_fs /= N * norm # normalization
 	return convert(Float64, pop_fs)#, extracted_coherence
 end
 
 """
-initial_state_phase_estimation(
-    ρ_init,
-    pops_init=populations(ρ_init),
-    angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
-    angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1)
-)
+    initial_state_phase_estimation(
+        ρ_init,
+        pops_init=populations(ρ_init),
+        angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
+        angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1)
+    )
 
 Compute the relative phases between the time bins of an initial states `ρ_init` with
 arbitrary but fixed phases and return the phase-corrected density matrix and measured
@@ -125,13 +129,14 @@ function initial_state_phase_estimation(
     j_out_arr = [[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
         for i in 1:k:N - 1]
     j_contr_idxs = correlated_short_bins_idxs(N) # all time bin j indices
+
     for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
         φ_arr = zeros(Float64, N)
-        φ_arr[idx + 1] = π / 2
+        φ_arr[idx + 1] = π / 2 # apply π / 2 phase shift to swap real and imaginary parts
         ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
+
         pop_fs_real = explicit_fs_projection_expval(ρ_init, j, angles_real[idx])
         pop_fs_imag = explicit_fs_projection_expval(ρ_rotated, j, angles_imag[idx])
-        # TODO Implement final state population sampling statistics
 
         c_real = coherence_extraction(
             N, j, pops_init, pop_fs_real, angles_k[idx], j_contr_idxs[[idx, idx + k]];
@@ -144,97 +149,19 @@ function initial_state_phase_estimation(
         c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
         nn_phases[idx + 1] = ϕ_arr[argmax(c_contr)]
     end
+
     relative_phases =  mod.(cumsum(nn_phases), 2 * π)
     ρ_corrected = phase_on_density_matrix(ρ, -1 * relative_phases)
     # reverse initial state phase profile
     return ρ_corrected, relative_phases
 end
 
-function ρ2N(ρ)
-    return Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
-end
-
-"""
-    angles_kth_neighbor_interference(N, k)
-    angles_kth_neighbor_interference(N, k, ϵ_angles)
-
-Return an Vector of complete angle settings to exclusively interfere all combination of two
-time bins with distance k.
-
-Can also be called with optional argument `ϵ_angles`, which adds uniform random noise to the
-angles.
-
-See also `noisy_angles_symmetric`.
-"""
-function angles_kth_neighbor_interference end
-
-function angles_kth_neighbor_interference(N, k)
-    N = convert(Int64, N)::Int64
-    k = convert(Int64, k)::Int64
-
-    @argcheck N ≥ 1
-    @argcheck k ≥ 1
-    @argcheck k < N
-
-    angles = Vector{Vector{Vector{Float64}}}(undef, N - k)
-    for i in 1:N - k
-        angles[i] = _angles_kth_neighbor(N, k, i)
-    end
-
-    return angles
-end
-
-function angles_kth_neighbor_interference(N, k, ϵ_angles)
-    N = convert(Int64, N)::Int64
-    k = convert(Int64, k)::Int64
-
-    @argcheck N ≥ 1
-    @argcheck k ≥ 1
-    @argcheck k < N
-
-    angles = Vector{Vector{Vector{Float64}}}(undef, N - k)
-    for i in 1:N - k
-        angles[i] = _angles_kth_neighbor(N, k, i, ϵ_angles)
-    end
-
-    return angles
-end
-
-function _angles_kth_neighbor(N, k, i)
-    angles_k_i = [zeros(Float64, n) for n in N:N + k]
-    angles_k_i[1][i] = 0.5  * π # send the early time bin into the long loop
-    angles_k_i[end][i+k] = 0.25 * π
-    # interfere after k loops / k time bins travelled
-    return angles_k_i
-end
-
-function _angles_kth_neighbor(N, k, i, ϵ_angles)
-    angles_k_i = _angles_kth_neighbor(N, k, i)
-    angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
-    return angles_k_i_noisy
-end
-
-"""
-    noisy_angles_symmetric(angles, ϵ_angles)
-
-Given a scheduled beam-splitter angle configuration `angles`, compute a noisy randomly
-distributed actual realization of that configuration.
-
-Each noisy angle `̂φ_i` is drawn symmetrically around its planned angle `φ_i`, i.e.,
-`̂φ_i ∼ U([φ_i-ϵ_angles, φ_i+ϵ_angles])`.
-
-See also `initial_state_phase_estimation`.
-"""
-function noisy_angles_symmetric(angles, ϵ_angles)
-    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    ϵ_angles = convert(Float64, ϵ_angles)::Float64
-    noisy_angles = [angles_m .+ ϵ_angles * 2 .* (rand(length(angles_m)) .- 1)
-        for angles_m in angles]
-    return noisy_angles
-end
-
 """
     compound_coherence_extraction(ρ, ϵ_angles = 0.0)
+
+# Return
+
+ - ``
 
 Extract all correlated time-bin coherences from state `ρ` by surgically interfering all
 two-time-bin combinations in a series of different mesh setups.
@@ -246,13 +173,16 @@ See also `coherence_extraction`, `noisy_angles_symmetric`.
 """
 function compound_coherence_extraction(pops_init, pops_fs_all)
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))::Int64
+    extract_diagonal = false
+
 
     contr_j_idxs_all = correlated_short_bins_idxs(N)
     contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs_all]))
-    extract_diagonal = false
     extracted_coherences = contr_pops / N # populations contribution to fidelity
+
     j_out_all = j_out_compound(N)
     angles_all = angles_compound(N)
+
     for k in 1:N - 1
         j_out_k = j_out_all[k] # all kth neighbor final state projector indices
         angles_k = angles_all[k] # all kth neighbor angle settings
@@ -260,8 +190,10 @@ function compound_coherence_extraction(pops_init, pops_fs_all)
         for (idx, j_out) in enumerate(j_out_k)
             contr_j_idxs = contr_j_idxs_all[[idx, idx + k]]
             # the two time bins to be extracted from data.
+
             angles = angles_k[idx]
             pop_fs = pop_fs_k[idx]
+
             coh = coherence_extraction(
                 N, j_out, pops_init, pop_fs, angles, contr_j_idxs;
                 extract_diagonal = extract_diagonal
@@ -273,22 +205,23 @@ function compound_coherence_extraction(pops_init, pops_fs_all)
     return extracted_coherences
 end
 
+"""
+    j_out_compound(N)
+
+Return all the final-state projector indices for the compound coherence-extraction scheme.
+
+At the lowest layer, always two indices are bundeled together in a Vector, corresponding to
+|i,S,i,S⟩ and |i + 1,L,i + 1,L⟩, respectively. One layer up, all of these Vector
+corresponding to the intereference of time bins with distance `k` in the initial state are
+grouped in a Vector. Finally, all such grouping for values `k` from 1 to N - 1 are collected
+in the outermost layer.
+
+See also `angles_compound`, `compound_coherence_extraction`, `j_out_single_setup`.
+"""
 function j_out_compound(N)
     j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
-        for i in k:1:N - 1] for k in 1:N - 1] # pairs of |lSlS⟩ and |l + 1Ll + 1L⟩
+        for i in k:1:N - 1] for k in 1:N - 1] # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩
     return j_out
-end
-
-function angles_compound end
-
-function angles_compound(N)
-    angles = [angles_kth_neighbor_interference(N, k) for k in 1:N - 1]
-    return angles
-end
-
-function angles_compound(N, ϵ_angles)
-    angles = [angles_kth_neighbor_interference(N, k, ϵ_angles) for k in 1:N - 1]
-    return angles
 end
 
 function pops_fs_compound(ρ_init, angles_compound)
@@ -300,6 +233,7 @@ function pops_fs_compound(ρ_init, angles_compound)
 
     j_out_all = j_out_compound(N)
     pops_out = [zeros(Float64, N - k) for k in 1:N - 1]
+
     for k in 1:N - 1
         j_out_k = j_out_all[k]
         angles_k = angles_compound[k]
@@ -313,77 +247,13 @@ function pops_fs_compound(ρ_init, angles_compound)
 end
 
 """
-    angles_single_setup(N)
+    j_out_single_setup(N)
 
-Return the angles for a specific beam-splitter setup resulting in full coherence information
-in every single readout time bin.
+Return all the final-state projector indices for the single-setup coherence-extraction
+scheme.
 
-The setup requires `M = 2(N - 1)` round trips and interferes every input state time bin with
-every other time bin in each of the non-vanishing output time bins.
+See also 'j_out_single_setup'.
 """
-function angles_single_setup(N)
-    N = convert(Int64, N)::Int64
-    @argcheck isinteger(log2(N))
-    M = 2 * (N - 1)
-    N_half = N ÷ 2
-    pow_half = log2(N_half)
-    angles_cascade = [zeros(Float64, n) for n in N:N + M - 1]
-    angles_cascade[1][1:N_half] .= π / 2
-    recursive_beam_splitter_array!(N_half, 1 + N_half, 1 + N_half, angles_cascade, "center")
-    for i in 2:N_half - 1 # 2 are already included in minimum structure
-        angles_cascade[N + i * 2][N + i] = π / 4
-    end
-
-    return angles_cascade
-end
-
-function recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
-    @argcheck branch in ["early", "center", "late"]
-
-    angles[m_idx][n_idx:n_idx + N_bs - 1] .= π / 4 # put original bs
-    if N_bs == 1 # can happen in the flanks, no further recursion
-        if branch == "early"
-            angles[m_idx + 1][[n_idx]] .= π / 2 # left flank transparent couplers
-        elseif branch == "late"
-            angles[m_idx + 1][[n_idx + 1]] .= π / 2 # right flank transparent couplers
-        end
-    elseif N_bs == 2
-        # smallest regular structure in the center, also appears in the flanks.
-        # no further recursion
-        angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
-        angles[m_idx + 1][[n_idx + 1]] .= π / 4
-        angles[m_idx + 3][[n_idx + 2]] .= π / 4
-        if branch == "early"
-            angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
-        elseif branch == "late"
-            angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
-        end
-    else
-        N_bs_half = Int64(N_bs / 2)
-        N_bs_quarter = Int64(N_bs / 4)
-        angles[m_idx + N_bs_half][n_idx:n_idx + N_bs_quarter - 1] .= π / 2
-        # left flank transparent couplers
-        angles[m_idx + N_bs_half][
-            n_idx + N_bs + N_bs_quarter:n_idx + N_bs + N_bs_half - 1] .= π / 2
-        # right flank transparent couplers
-        recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "early"
-        ) # left flank beam splitter array
-        recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs+N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "late"
-        ) # right flank beam splitter array
-        recursive_beam_splitter_array!(
-            N_bs_half, n_idx + N_bs_half, m_idx + N_bs_half, angles, "center"
-        )
-   end
-
-    return nothing
-end
-
 function j_out_single_setup(N)
     N = convert(Int64, N)::Int64
     @argcheck isinteger(log2(N))

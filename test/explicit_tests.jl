@@ -106,32 +106,45 @@ end
 
 	angles_1 = [0.25, 0.25] * π
 	angles_2 = [0.25, 0.25, 0.25] * π
-
 	angles = [angles_1, angles_2]
+
     j = lcmk2j(N + M, 0, 0, 0, 0)
     @test all(explicit_fs_projection(j, angles) .≈
         ([1], 1 / 4 .* Complex.([1])))
+
     j = lcmk2j(N + M, 1, 0, 1, 0)
     @test all(explicit_fs_projection(j, angles) .≈
         ([1, 3, 9, 11], 1 / 4 .* Complex.([1, -1, -1, 1])))
+
     j = lcmk2j(N + M, 2, 1, 2, 1)
     @test all(explicit_fs_projection(j, angles) .≈
         ([1, 3, 9, 11], 1 / 4 .* Complex.([-1, -1, -1, -1])))
+
     j = lcmk2j(N + M, 2, 1, 0, 0)
     @test all(explicit_fs_projection(j, angles) .≈
         ([1, 9], im / 4 .* Complex.([1, 1])))
 
-
     N = 4
     M = 2 * (N - 1)
+
     angles = angles_single_setup(N)
+    j_idx_arr_contr_all_symb = Vector{Int64}[]
+    j_idx_arr_contr_all_mesh = Vector{Int64}[]
+    coeff_arr_all_symb = Vector{ComplexF64}[]
+    coeff_arr_all_mesh = Vector{ComplexF64}[]
+
     for j in 1:TimeBinEncoding.N_LOOPS2 * (N + M)^2
         j_idx_arr_contr_symb, coeff_arr_symb =
-            TimeBinEncoding.explicit_fs_projection_symbolic_backend(N, M, j,
-            angles)
+            TimeBinEncoding._explicit_fs_projection_symbolic_backend(N, M, j, angles)
+        push!(j_idx_arr_contr_all_symb, j_idx_arr_contr_symb)
+        push!(coeff_arr_all_symb, coeff_arr_symb)
+
         j_idx_arr_contr_mesh, coeff_arr_mesh =
-            TimeBinEncoding.explicit_fs_projection_mesh(N, M, j, angles)
-        @test j_idx_arr_contr_symb == j_idx_arr_contr_mesh
-        @test coeff_arr_symb ≈ coeff_arr_mesh
+            TimeBinEncoding._explicit_fs_projection_mesh(N, M, j, angles)
+        push!(j_idx_arr_contr_all_mesh, j_idx_arr_contr_mesh)
+        push!(coeff_arr_all_mesh, coeff_arr_mesh)
     end
+
+    @test all(j_idx_arr_contr_all_symb .== j_idx_arr_contr_all_mesh)
+    @test all(coeff_arr_all_symb .≈ coeff_arr_all_mesh)
 end

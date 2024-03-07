@@ -35,8 +35,8 @@ function symbolic_ket_evolution_sp(M)
     angle_history_arr = copy(trigonometric_history_arr)
     j_idx_arr = [1, collect(1 + N_LOOPS:N_LOOPS * M)..., N_LOOPS * (M + 1)]
     for m in 1:M
-        symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
-        symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
+        _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
+        _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
     end
     deleteat!(trigonometric_history_arr, [N_LOOPS, length(trigonometric_history_arr) - 1])
     # remove undef matrices for the two empty bins
@@ -47,11 +47,11 @@ function symbolic_ket_evolution_sp(M)
 end
 
 """
-    symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
+    _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
 
 TBW
 """
-function symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
+function _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
     m = convert(Int64, m)::Int64 # current round trip index
     @argcheck m > 0
 
@@ -84,11 +84,11 @@ function symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
 end
 
 """
-    symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
+    _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
 
 TBW
 """
-function symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
+function _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
     M = convert(Int64, M)::Int64 # number of roundtrips
     m = convert(Int64, m)::Int64 # current round trip index
     @argcheck m > 0

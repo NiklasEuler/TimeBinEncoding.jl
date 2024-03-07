@@ -37,6 +37,7 @@ See also `insert_initial_state_sp`, `correlated_timebin_state`, `density_matrix`
 function insert_initial_state(time_bin_state_vec::Vector)
     N = Int64(sqrt(length(time_bin_state_vec)))
     full_state_vec = zeros(ComplexF64, length(time_bin_state_vec) * N_LOOPS2)
+
     for l in 0:N - 1, m in 0:N - 1
         j_time_bin = lm2j(N, l, m)
         j_full = lcmk2j(N, l, 0, m, 0) #insertion into the short-short ket |l0m0⟩
@@ -57,6 +58,7 @@ See also `insert_initial_state` `correlated_timebin_state`, `density_matrix`.
 function insert_initial_state_sp(time_bin_state_vec::Vector)
     N = Int64(length(time_bin_state_vec))
     full_state_vec = zeros(ComplexF64, length(time_bin_state_vec) * N_LOOPS)
+
     for l in 0:N - 1
         j_full = lc2j(l, 0) #insertion into the short ket |l0⟩
         full_state_vec[j_full] = time_bin_state_vec[l + 1]
@@ -94,6 +96,7 @@ function density_matrix_dephased(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     ϵ = convert(Float64, ϵ)::Float64
     N = Int64(sqrt(length(Ψ)) / N_LOOPS)::Int64
+
     @argcheck ϵ ≥ 0
     @argcheck ϵ ≤ 1
 
@@ -102,6 +105,32 @@ function density_matrix_dephased(Ψ, ϵ)
     return ρ
 end
 
+"""
+    phase_on_density_matrix(ρ, φ_arr)
+
+Apply phases `φ_arr` to the correlated time bins of the density matrix `ρ`
+
+Returns a new density matrix `ρ` after phase application. Each time bin |ii⟩, i ∈ {0, 1,…}
+is subjected to phase `φ_arr[i + 1]`.
+
+See also `initial_state_phase_estimation`.
+"""
+function phase_on_density_matrix(ρ, φ_arr)
+    ρ_rot = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
+    φ_arr = convert(Vector{Float64}, φ_arr)::Vector{Float64}
+    N = ρ2N(ρ)
+
+    @argcheck length(φ_arr) == N # number of phases should match number of time bins
+
+    tb_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
+    # all valid correlated initial-state time bins
+    for (idx1, j1) in enumerate(tb_idxs), (idx2, j2) in enumerate(tb_idxs)
+        ρ_rot[j1, j2] *= cis(φ_arr[idx1] - φ_arr[idx2])
+        # apply relative phase to every coherence
+   end
+
+    return ρ_rot
+end
 
 """
     white_noise(N)
@@ -110,6 +139,7 @@ Compute a normalized dephased density matrix with equal populations for all shor
 bins.
 
 ρ_wn = 1 / N^2 * ∑_i, j |i0j0⟩⟨i0j0|
+
 See also `density_matrix_dephased`.
 """
 function white_noise(N)
@@ -126,7 +156,7 @@ end
 """
     populations(ρ::Matrix)
 
-Compute the state populations of the density matrix `ρ`
+Return the state populations of the density matrix `ρ`.
 """
 function populations(ρ::Matrix)
     pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
@@ -151,4 +181,13 @@ Compute the purity of density matrix `ρ`.
 """
 function purity(ρ)
     return Float64(real(sum(diag(ρ * ρ))))
+end
+
+"""
+    ρ2N(ρ)
+
+Extract the time bin number `N` from the density matrix `ρ`.
+"""
+function ρ2N(ρ)
+    return Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
 end

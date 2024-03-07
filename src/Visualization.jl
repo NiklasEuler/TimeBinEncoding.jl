@@ -81,7 +81,7 @@ function visualize_measurement_coherence_map(j_out::Int64, angles, extract_diago
 	println("⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
         l_out, " ", c_out, " ", m_out, " ", k_out, "⟩ ="
     )
-    visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
     return nothing
 end
 
@@ -100,11 +100,11 @@ function visualize_measurement_coherence_map(
         )
     end
     println("=")
-    visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
     return nothing
 end
 
-function visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
+function _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
     contr_j_idxs = correlated_short_bins_idxs(N)
     extractable_correlated_coherences = []
     display_weights = round.(Real.(weights), digits=5)
