@@ -26,7 +26,7 @@ If the argument `l` is omitted, the evolution of `|0,S⟩` is returned.
     of each trajectory at each round trip. Each value corresponds to the current time-bin
     index `l` in the `|l,c⟩` basis at each round trip.
 
-    See also `symbolic_fs_projection_sp`.
+    See also [`symbolic_fs_projection_sp`](@ref).
 
 """
 function symbolic_ket_evolution_sp end
@@ -150,7 +150,7 @@ function symbolic_fs_projection_sp(M, l, c)
 
     @argcheck M > 0
 
-    return symbolic_fs_projection_worker_sp(M, l, c)
+    return _symbolic_fs_projection_worker_sp(M, l, c)
 end
 
 function symbolic_fs_projection_sp(M, j)

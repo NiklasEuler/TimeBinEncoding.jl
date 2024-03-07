@@ -18,8 +18,8 @@ Extract the coherences between correlated time-bin populations.
 - `j_out`: single `j` index or collection of `j` indices, indicating from which final state
     projections the coherences get extracted.
 - `pops_init`: Vector of the measured initial state population, given in the `|lcmk⟩` basis.
-- `pop_fs`: the measured population in the combination of final state projectors given by
-    `j_out`
+- `pop_fs`: Vector of measured final state population in the combination of final state
+    projectors given by `j_out`
 - `angles`: a Vector or Vectors of scheduled beam-splitter angles. The number of round trips
     matches `length(angles)`.
 - `contr_j_idxs`: Vector of `j` indices of states that should be extracted from the state.
@@ -30,7 +30,7 @@ Extract the coherences between correlated time-bin populations.
 - `extract_diagonal`::Bool: Bool flag to indicate whether state populations, i.e., diagonal
     elements of ρ, should be extracted from the coherence. Default is `true`.
 
-See also `compound_coherence_extraction`.
+See also [`compound_coherence_extraction`](@ref).
 """
 function coherence_extraction(
     N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
@@ -69,14 +69,17 @@ function coherence_extraction(
 	end
 
     @argcheck extracted_weights ≠ []
+
     n_contr_sched = length(contr_j_idxs)
     n_extracted = length(extracted_weights)
+
     if (n_extracted != n_contr_sched^2 && extract_diagonal) ||
          (n_extracted != n_contr_sched * (n_contr_sched - 1) && !extract_diagonal)
         @warn "Some of the scheduled coherences have a vanishing weight in the given "*
         "final-state projectors. Please check again and consider adapting the scheduled "*
         "coherences in `contr_j_idxs`."
     end
+
     if !all(extracted_weights .≈ extracted_weights[1])
         throw(ArgumentError("The coherences scheduled for extraction have differing "*
         "weights in the chosen final-state projectors and can thus not straight-forwardly "*
@@ -107,8 +110,8 @@ the initial state `ρ_init`. Furthermore, the phase estimation process can be mo
 have noisy beam-splitter angles. The entire noisy angle sets can be given for the real- and
 imaginary-part measurements each. The default here are the clean angles.
 
-See also `noisy_angles_symmetric`, `angles_kth_neighbor_interference`,
-`phase_on_density_matrix`.
+See also [`noisy_angles_symmetric`](@ref), [`angles_kth_neighbor_interference`](@ref),
+[`phase_on_density_matrix`](@ref).
 """
 function initial_state_phase_estimation(
     ρ_init,
@@ -157,19 +160,13 @@ function initial_state_phase_estimation(
 end
 
 """
-    compound_coherence_extraction(ρ, ϵ_angles = 0.0)
+    compound_coherence_extraction(pops_init, pops_fs_all)
 
-# Return
+Extract all correlated time-bin coherences from the intial- and final-state populations
+`pops_init` and `pops_fs_all` by surgically interfering all two-time-bin combinations in a
+series of different mesh setups.
 
- - ``
-
-Extract all correlated time-bin coherences from state `ρ` by surgically interfering all
-two-time-bin combinations in a series of different mesh setups.
-
-The process can also be simulated to be noisy by giving the symmetric, uniform random
-deviation on the beam-splitter angles `ϵ_angles`.
-
-See also `coherence_extraction`, `noisy_angles_symmetric`.
+See also [`coherence_extraction`](@ref), [`noisy_angles_symmetric`](@ref).
 """
 function compound_coherence_extraction(pops_init, pops_fs_all)
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))::Int64
@@ -216,7 +213,8 @@ corresponding to the intereference of time bins with distance `k` in the initial
 grouped in a Vector. Finally, all such grouping for values `k` from 1 to N - 1 are collected
 in the outermost layer.
 
-See also `angles_compound`, `compound_coherence_extraction`, `j_out_single_setup`.
+See also [`angles_compound`](@ref), [`compound_coherence_extraction`](@ref),
+[`j_out_single_setup`](@ref).
 """
 function j_out_compound(N)
     j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
@@ -224,6 +222,15 @@ function j_out_compound(N)
     return j_out
 end
 
+"""
+    pops_fs_compound(ρ_init, angles_compound)
+
+Compute all needed final-state populations for an initial state `ρ_init` for a complete set
+of measurements in the compound coherence extraction scheme. The `angles_compound` argument
+contains all beam-splitter angles to be used for the scheme.
+
+See also [`explicit_fs_projection_expval`](@ref), [`angles_compound`](@ref).
+"""
 function pops_fs_compound(ρ_init, angles_compound)
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
     angles_compound = convert(
@@ -252,7 +259,7 @@ end
 Return all the final-state projector indices for the single-setup coherence-extraction
 scheme.
 
-See also 'j_out_single_setup'.
+See also ['j_out_single_setup'](@ref).
 """
 function j_out_single_setup(N)
     N = convert(Int64, N)::Int64

@@ -8,7 +8,7 @@ time bins with distance k.
 Can also be called with optional argument `ϵ_angles`, which adds uniform random noise to the
 angles.
 
-See also `noisy_angles_symmetric`.
+See also [`noisy_angles_symmetric`](@ref).
 """
 function angles_kth_neighbor_interference end
 
@@ -73,11 +73,11 @@ distributed symmetrically around the targeted angles.
 - `angles`::Vector{Vector{Vector{Vector{Float64}}}}: Nested Vector of beam-splitter angles.
 At the lowest two levels, it contains complete sets of beam splitter configurations as
 Vector{Vector{Float64}}. All configurations that interfere initial-state time bins of
-distance `k` are collected into Vector{Vector{Vector{Float64}}}, which are then grouped into a
-final Vector{Vector{Vector{Vector{Float64}}}} for all allowed values of `k`
+distance `k` are collected into Vector{Vector{Vector{Float64}}}, which are then grouped into
+a final Vector{Vector{Vector{Vector{Float64}}}} for all allowed values of `k`
 
-See also `j_out_compound`, `compound_coherence_extraction`, `noisy_angles_symmetric`,
-`angles_single_setup`.
+See also [`j_out_compound`](@ref), [`compound_coherence_extraction`](@ref),
+[`noisy_angles_symmetric`](@ref), [`angles_single_setup`](@ref).
 """
 function angles_compound end
 
@@ -106,7 +106,7 @@ distributed actual realization of that configuration.
 Each noisy angle `̂φ_i` is drawn symmetrically around its planned angle `φ_i`, i.e.,
 `̂φ_i ∼ U([φ_i-ϵ_angles, φ_i+ϵ_angles])`.
 
-See also `initial_state_phase_estimation`.
+See also [`initial_state_phase_estimation`](@ref).
 """
 function noisy_angles_symmetric(angles, ϵ_angles)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}

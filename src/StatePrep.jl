@@ -10,7 +10,7 @@ export fidelity, purity, populations
 Convert `wf_coeffs` holding the coefficients of correlated two-photon time bin populations
 to the `|l, m ⟩' basis.
 
-See also `insert_initial_state`, `density_matrix`.
+See also [`insert_initial_state`](@ref), [`density_matrix`](@ref).
 """
 function correlated_timebin_state(wf_coeffs::Vector)
     wf_coeffs = convert(Vector{ComplexF64}, wf_coeffs)::Vector{ComplexF64}
@@ -32,7 +32,8 @@ end
 Insert the two-photon time-bin state in the `|l, m ⟩' basis into the short loop by imbedding
 `|l, m ⟩' → `|l, 0, m , 0⟩'.
 
-See also `insert_initial_state_sp`, `correlated_timebin_state`, `density_matrix`.
+See also [`insert_initial_state_sp`](@ref), [`correlated_timebin_state`](@ref),
+[`density_matrix`](@ref).
 """
 function insert_initial_state(time_bin_state_vec::Vector)
     N = Int64(sqrt(length(time_bin_state_vec)))
@@ -53,7 +54,8 @@ end
 Insert the single-photon time-bin state in the `|l⟩' basis into the short loop by imbedding
 `|l⟩' → `|l, 0⟩'.
 
-See also `insert_initial_state` `correlated_timebin_state`, `density_matrix`.
+See also [`insert_initial_state`](@ref), [`correlated_timebin_state`](@ref),
+[`density_matrix`](@ref).
 """
 function insert_initial_state_sp(time_bin_state_vec::Vector)
     N = Int64(length(time_bin_state_vec))
@@ -90,7 +92,7 @@ Compute a dephased density matrix `ρ` to the wave function `Ψ`.
 The dephasing is introduced as white noise in the short-short `|i0j0⟩` populations:
 ρ = (1-ϵ) * |Ψ⟩⟨Ψ| + ϵ/N^2 * ∑_i, j |i0j0⟩⟨i0j0|
 
-See also `density_matrix`, `white_noise`.
+See also [`density_matrix`](@ref), [`white_noise`](@ref).
 """
 function density_matrix_dephased(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
@@ -113,7 +115,7 @@ Apply phases `φ_arr` to the correlated time bins of the density matrix `ρ`
 Returns a new density matrix `ρ` after phase application. Each time bin |ii⟩, i ∈ {0, 1,…}
 is subjected to phase `φ_arr[i + 1]`.
 
-See also `initial_state_phase_estimation`.
+See also [`initial_state_phase_estimation`](@ref).
 """
 function phase_on_density_matrix(ρ, φ_arr)
     ρ_rot = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
@@ -140,7 +142,7 @@ bins.
 
 ρ_wn = 1 / N^2 * ∑_i, j |i0j0⟩⟨i0j0|
 
-See also `density_matrix_dephased`.
+See also [`density_matrix_dephased`](@ref).
 """
 function white_noise(N)
     ρ_noise = zeros(ComplexF64, N_LOOPS2 * N^2, N_LOOPS2 * N^2)

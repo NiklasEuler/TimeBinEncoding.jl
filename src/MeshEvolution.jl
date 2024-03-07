@@ -14,7 +14,7 @@ Shift the time bins of a single photon pure state according to the current loop 
 Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches
 the type of `state_vec`.
 
-See also shift_timebins.
+See also [`shift_timebins`](@ref).
 """
 function shift_timebins_sp end
 
@@ -48,7 +48,7 @@ Shift the time bins of a two-photon pure state according to the loop index.
 Accepts both a dense or sparse `state_vec` argument. The return type of the new_vec matches
 the type of `state_vec`.
 
-See also shift_timebins_sp, _shift_j!.
+See also [`shift_timebins_sp`](@ref), [`_shift_j!`](@ref).
 """
 function shift_timebins end
 
@@ -81,7 +81,7 @@ end
 Shift the two-photon coefficient of index `j` from the old `state_vec` with `N` time bins to
 the new, longer `new_vec` state vector with `N + 1` timebins.
 
-See also `shift_timebins`, `shift_j_sp!`.
+See also [`shift_timebins`](@ref), [`shift_j_sp!`](@ref).
 """
 function _shift_j!(N, j, state_vec, new_vec)
     l, c , m , k  = j2lcmk(N, j)
@@ -97,7 +97,7 @@ end
 Shift the single-photon coefficient of index `j` from the old `state_vec` to the new, longer
 `new_vec` state vector.
 
-See also `shift_timebins`, `_shift_j!`
+See also [`shift_timebins`](@ref), [`_shift_j!`](@ref).
 """
 function shift_j_sp!(j, state_vec, new_vec)
     l, c  = j2lc(j)
@@ -112,7 +112,8 @@ end
 Compute the matrix operator which shifts the time bins of a single-photon state with `N`
 time bins in the `|lc⟩` basis.
 
-See also `shift_timebins_operator`, `coin_operator_sp`, `mesh_evolution_sp`.
+See also [`shift_timebins_operator`](@ref), [`coin_operator_sp`](@ref),
+[`mesh_evolution_sp`](@ref).
 """
 function shift_timebins_operator_sp(N)
     N = convert(Int64, N)::Int64
@@ -135,7 +136,8 @@ end
 Compute the matrix operator which shifts the time bins of a two-photon state with `N` time
 bins in the `|lcmk⟩` basis.
 
-See also `shift_timebins_operator_sp`, `coin_operator`, `mesh_evolution`.
+See also [`shift_timebins_operator_sp`](@ref), [`coin_operator`](@ref),
+[`mesh_evolution`](@ref).
 """
 function shift_timebins_operator(N)
     shift_operator_single_photon = shift_timebins_operator_sp(N)
@@ -151,7 +153,7 @@ end
 Return the sparse 2x2 single-photon beam-splitter unitary parametrized by
 splitting angle `θ`.
 
-See also `coin_operator`, `coin_operator_sp`.
+See also [`coin_operator`](@ref), [`coin_operator_sp`](@ref).
 """
 function beam_splitter_operator(θ)
     θ = convert(Float64,θ)::Float64
@@ -172,7 +174,7 @@ round trip.
 The `angles` argument contains the values of the parameter `θ` for each time bin of that
 round trip.
 
-See also `beam_splitter_operator`, `coin_operator`.
+See also [`beam_splitter_operator`](@ref), [`coin_operator`](@ref).
 """
 function coin_operator_sp(angles::Vector)
     real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
@@ -191,7 +193,7 @@ round trip.
 The `angles` argument contains the values of the parameter `θ` for each time bin of that
 round trip.
 
-See also `beam_splitter_operator`, `coin_operator_sp`.
+See also [`beam_splitter_operator`](@ref), [`coin_operator_sp`](@ref).
 """
 function coin_operator(angles::Vector)
     coin_operator_single_photon = coin_operator_sp(angles)
@@ -219,7 +221,7 @@ For matrices, only a dense version is currently implemented.
 - `angles`: a vector or vectors of beam-splitter angles. The number of round trips matches
     `length(angles)`.
 
-See also `explicit_state_evolution`, `mesh_evolution_sp`.
+See also [`explicit_state_evolution`](@ref), [`mesh_evolution_sp`](@ref).
 """
 function mesh_evolution end
 
@@ -255,7 +257,7 @@ The `input state` argument can be both a wave function in form of a Vector or Sp
 or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
 `state` matches the type of `input_state`. The internal numerics are type-specialized too.
 
-See also `mesh_evolution`, `iterative_mesh_evolution_sp`.
+See also [`mesh_evolution`](@ref), [`iterative_mesh_evolution_sp`](@ref).
 """
 function _iterative_mesh_evolution end
 
@@ -301,7 +303,7 @@ For matrices, only a dense version is currently implemented.
 - `angles`: a vector or vectors of beam-splitter angles. The number of round trips matches
     `length(angles)`.
 
-See also `explicit_state_evolution`, `mesh_evolution`.
+See also [`explicit_state_evolution`](@ref), [`mesh_evolution`](@ref).
 """
 function mesh_evolution_sp end
 
@@ -337,7 +339,7 @@ The `input state` argument can be both a wave function in form of a Vector or Sp
 or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
 `state` matches the type of `input_state`. The internal numerics are type-specialized too.
 
-See also  `_iterative_mesh_evolution`, `mesh_evolution_sp`.
+See also  [`_iterative_mesh_evolution`](@ref), [`mesh_evolution_sp`](@ref).
 """
 function _iterative_mesh_evolution_sp end
 

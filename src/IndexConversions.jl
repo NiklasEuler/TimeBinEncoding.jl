@@ -16,7 +16,7 @@ basis index `j`.
 - `m`: time bin index of the idler photon, `m` ∈ {0, 1,…}, with the same encoding as above.
 - `k`: loop index of the idler photon, `k` ∈ {0, 1}, with the same encoding as above.
 
-See also `j2lcmk`, `lm2j`, `j2lm`, `lc2j`, `j2lc`.
+See also [`j2lcmk`](@ref), [`lm2j`](@ref), [`j2lm`](@ref), [`lc2j`](@ref), [`j2lc`](@ref).
 """
 function lcmk2j(N, l, c, m, k)
     # transforms the one index notation of basis elements to the two index notation
@@ -43,7 +43,7 @@ end
 
 Inverse function of `lcmk2j`.
 
-See also `lcmk2j`, `lm2j`, `j2lm`, `lc2j`, `j2lc`.
+See also [`lcmk2j`](@ref), [`lm2j`](@ref), [`j2lm`](@ref), [`lc2j`](@ref), [`j2lc`](@ref).
 """
 function j2lcmk(N, j)
     N = convert(Int64, N)::Int64
@@ -64,7 +64,7 @@ end
 
 Convert two indices `l`,`m` ∈ {0,…, N - 1} to a joint index `j`.
 
-See also `j2lm`, lcmk2j`, `j2lcmk`, `lc2j`, `j2lc`.
+See also [`j2lm`](@ref), [lcmk2j`](@ref), [`j2lcmk`](@ref), [`lc2j`](@ref), [`j2lc`](@ref).
 """
 function lm2j(N, l, m)
     # transforms the one index notation of basis elements to the two index notation
@@ -86,7 +86,7 @@ end
 
 Inverse function of `lm2j`.
 
-See also `j2lm`, lcmk2j`, `j2lcmk`, `lc2j`, `j2lc`.
+See also [`j2lm`](@ref), [`lcmk2j`](@ref), [`j2lcmk`](@ref), [`lc2j`](@ref), [`j2lc`](@ref).
 """
 function j2lm(N, j) # inverse of lm2j
     N = convert(Int64, N)::Int64
@@ -107,12 +107,12 @@ Convert the parameters of the single-photon state `|lc⟩` to its corresponding
 basis index `j`.
 
 # Arguments
-- `l`: time bin index of the photon, `l` ∈ {0, 1,…}, where `l` indicates the total number of
-    long roundtrips taken.
-- `c`: loop index of the photon, `c` ∈ {0, 1}, where `c==0` means the short loop and `c== 1`
-    means the long loop.
+- `l`: time bin index of the photon, `l ∈ {0, 1, …}`, where `l` indicates the total number
+    of long roundtrips taken.
+- `c`: loop index of the photon, `c ∈ {0, 1}`, where `c == 0` means the short loop and
+    `c == 1` means the long loop.
 
-See also `j2lc`, `lcmk2j`, `j2lcmk`, `lm2j`, `j2lm`.
+See also [`j2lc`](@ref), [`lcmk2j`](@ref), [`j2lcmk`](@ref), [`lm2j`](@ref), [`j2lm`](@ref).
 
 """
 function lc2j(l, c)
@@ -130,7 +130,7 @@ end
 
 Inverse function of `lc2j`.
 
-See also `lc2j`, `lcmk2j`, `j2lcmk`, `lm2j`, `j2lm`.
+See also [`lc2j`](@ref), [`lcmk2j`](@ref), [`j2lcmk`](@ref), [`lm2j`](@ref), [`j2lm`](@ref).
 """
 function j2lc(j) # inverse of lm2j
     j = convert(Int64, j)::Int64

@@ -15,8 +15,8 @@ Evolve the single-photon state `|l, 0⟩' according to `angles`, using a symboli
 - `coeff_arr`: vector of corresponding coefficients to the `j` indices given in
     `j_idx_arr_contr`.
 
-See also  `explicit_ket_evolution`, `explicit_fs_projection`,
-`explicit_fs_projection_sp`
+See also  [`explicit_ket_evolution`](@ref), [`explicit_fs_projection`](@ref),
+[`explicit_fs_projection_sp`](@ref).
 """
 function explicit_ket_evolution_sp(l, angles)
     l = convert(Int64, l)::Int64 # initial time bin index
@@ -44,8 +44,8 @@ state `|lc⟩` after evolution by `angles`.
 - `coeff_arr`: vector of corresponding coefficients to the `j` indices given in
     `j_idx_arr_contr`.
 
-See also `explicit_fs_projection`, `explicit_ket_evolution_sp`,
-`explicit_fs_coherence_map`
+See also [`explicit_fs_projection`](@ref), [`explicit_ket_evolution_sp`](@ref),
+[`explicit_fs_coherence_map`](@ref).
 """
 function explicit_fs_projection_sp(l, c, angles)
     l = convert(Int64, l)::Int64 # final state time bin index
@@ -116,7 +116,8 @@ Evolve the two-photon state related to `j` according to `angles`, using a symbol
 - `coeff_arr`: vector of corresponding coefficients to the `j` indices given in
     `j_idx_arr_contr`.
 
-See also `explicit_ket_evolution_sp`, `mesh_evolution`, `explicit_fs_projection`.
+See also [`explicit_ket_evolution_sp`](@ref), [`mesh_evolution`](@ref),
+[`explicit_fs_projection`](@ref).
 """
 function explicit_ket_evolution(j_init, angles)
     j_init = convert(Int64, j_init)::Int64
