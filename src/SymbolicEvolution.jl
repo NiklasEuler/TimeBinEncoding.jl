@@ -5,7 +5,29 @@ export symbolic_fs_projection_sp
     symbolic_ket_evolution_sp(M, l)
     symbolic_ket_evolution_sp(M)
 
-TBW
+Symbolically compute the evolution of the single-photon ket `|l,S⟩` through `M` roundtrips
+in the `|l,c⟩` basis.
+
+If the argument `l` is omitted, the evolution of `|0,S⟩` is returned.
+
+# Returns
+
+ -`j_idx_arr`::Vector{Int64}: All `j` indices of the `|l,c⟩` for which the state after
+    evolution has a potentially non-zero coefficient.
+ -`trigonometric_history_arr`::Vector{Matrix{Int64}}: Contains a Matrix for each index `j`
+    from `j_idx_arr` which keeps track at what times cos or sin function should be applied.
+    Each of the columns of each Matrix corresponds to one round trip in the fiber-loop
+    system. Each row marks the contributions of a single time-bin trajectory through the
+    lattice. A entry of 0 indicates a cos factor for that given round-trip index and
+    trajectory, whereas a value of 1 indicates a sin contribution, i.e., the photon changes
+    from the short to the long loop or vice versa.
+ -`angle_history_arr`:Vector{Matrix{Int64}}: Of the same shape as
+    `trigonometric_history_arr`. Every entry holds information about the temporal position
+    of each trajectory at each round trip. Each value corresponds to the current time-bin
+    index `l` in the `|l,c⟩` basis at each round trip.
+
+    See also `symbolic_fs_projection_sp`.
+
 """
 function symbolic_ket_evolution_sp end
 
@@ -28,15 +50,19 @@ end
 
 function symbolic_ket_evolution_sp(M)
     M = convert(Int64, M)::Int64 # number of roundtrips
+
     @argcheck M > 0
 
     trigonometric_history_arr = fill(Matrix{Int64}(undef, 0, M), N_LOOPS * (M + 1))
     trigonometric_history_arr[1] = fill(-1, 1, M)
+    # initiate with illegal value to track potential bugs
     angle_history_arr = copy(trigonometric_history_arr)
     j_idx_arr = [1, collect(1 + N_LOOPS:N_LOOPS * M)..., N_LOOPS * (M + 1)]
-    for m in 1:M
+    for m in 1:M # current round trip index
         _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
+        # perform symbolic beam splitter application
         _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
+        # perform symbolic time-bin shift
     end
     deleteat!(trigonometric_history_arr, [N_LOOPS, length(trigonometric_history_arr) - 1])
     # remove undef matrices for the two empty bins
@@ -53,6 +79,7 @@ TBW
 """
 function _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
     m = convert(Int64, m)::Int64 # current round trip index
+
     @argcheck m > 0
 
     for j in 1:N_LOOPS:m*N_LOOPS
@@ -91,6 +118,7 @@ TBW
 function _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
     M = convert(Int64, M)::Int64 # number of roundtrips
     m = convert(Int64, m)::Int64 # current round trip index
+
     @argcheck m > 0
     @argcheck m ≤ M
     @argcheck M > 0
@@ -99,6 +127,7 @@ function _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_
         trigonometric_history_arr[j] = trigonometric_history_arr[j - N_LOOPS]
         angle_history_arr[j] = angle_history_arr[j - N_LOOPS]
     end
+
     trigonometric_history_arr[N_LOOPS] = Matrix{Int64}(undef, 0, M)
     # reset 0L bin after shift
     angle_history_arr[N_LOOPS] = Matrix{Int64}(undef, 0, M)
@@ -112,33 +141,34 @@ end
 
 TBW
 """
+function symbolic_fs_projection_sp end
+
 function symbolic_fs_projection_sp(M, l, c)
     M = convert(Int64, M)::Int64 # number of roundtrips
     l = convert(Int64, l)::Int64 # final state time bin index
     c = convert(Int64, c)::Int64 # final state loop index
+
     @argcheck M > 0
+
     return symbolic_fs_projection_worker_sp(M, l, c)
 end
 
-"""
-    symbolic_fs_projection_sp(M, j)
-
-TBW
-"""
 function symbolic_fs_projection_sp(M, j)
     M = convert(Int64, M)::Int64 # number of roundtrips
     j = convert(Int64, j)::Int64 # final state ket index
+
     @argcheck M > 0
+
     l, c = j2lc(j)
-    return symbolic_fs_projection_worker_sp(M, l, c)
+    return _symbolic_fs_projection_worker_sp(M, l, c)
 end
 
 """
-    symbolic_fs_projection_worker_sp(M, l, c)
+    _symbolic_fs_projection_worker_sp(M, l, c)
 
 TBW
 """
-function symbolic_fs_projection_worker_sp(M, l, c)
+function _symbolic_fs_projection_worker_sp(M, l, c)
     trigonometric_history_arr_fs = Vector{Matrix{Int64}}(undef, 0)
     angle_history_arr_fs = copy(trigonometric_history_arr_fs)
     j_idx_arr_fs = Int64[]
@@ -152,6 +182,7 @@ function symbolic_fs_projection_worker_sp(M, l, c)
             startidx = max(l - M + 1, 0)
             endidx = l
         end
+
         for l_init in startidx:endidx
             j_idx_arr, trigonometric_history_arr, angle_history_arr =
                 symbolic_ket_evolution_sp(M, l_init)
