@@ -1,13 +1,13 @@
 export correlated_timebin_state, insert_initial_state, insert_initial_state_sp
 export density_matrix, density_matrix_dephased, white_noise
-export fidelity, purity
+export fidelity, purity, populations
 
 
 
 """
     correlated_timebin_state(wf_coeffs::Vector)
 
-Convert `wf_coeffs` holding the coefficients of correlated two-photon time bin popluations
+Convert `wf_coeffs` holding the coefficients of correlated two-photon time bin populations
 to the `|l, m ⟩' basis.
 
 See also `insert_initial_state`, `density_matrix`.
@@ -121,6 +121,16 @@ function white_noise(N)
    end
 
     return ρ_noise
+end
+
+"""
+    populations(ρ::Matrix)
+
+Compute the state populations of the density matrix `ρ`
+"""
+function populations(ρ::Matrix)
+    pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
+    return pops
 end
 
 """

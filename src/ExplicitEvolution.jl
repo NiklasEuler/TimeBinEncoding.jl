@@ -26,8 +26,7 @@ function explicit_ket_evolution_sp(l, angles)
 
     j_idx_arr, trigonometric_history_arr, angle_history_arr =
         symbolic_ket_evolution_sp(M, l)
-    j_idx_arr_contr, coeff_arr =
-        symbolic_2_explicit_worker(
+    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(
             angles, j_idx_arr, trigonometric_history_arr, angle_history_arr
         )
     return j_idx_arr_contr, coeff_arr
@@ -68,10 +67,9 @@ function explicit_fs_projection_sp(l, c, angles)
     deleteat!(j_idx_arr_fs, filter_idxs)
     deleteat!(trigonometric_history_arr_fs, filter_idxs)
     deleteat!(angle_history_arr_fs, filter_idxs)
-    j_idx_arr_contr, coeff_arr =
-        symbolic_2_explicit_worker(
-            angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
-        )
+    j_idx_arr_contr, coeff_arr = symbolic_2_explicit_worker(
+        angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
+    )
     return j_idx_arr_contr, coeff_arr
 end
 

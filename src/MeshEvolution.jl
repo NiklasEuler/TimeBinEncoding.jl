@@ -401,7 +401,7 @@ See also `initial_state_phase_estimation`.
 function phase_on_density_matrix(ρ, φ_arr)
     ρ_rot = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
     φ_arr = convert(Vector{Float64}, φ_arr)::Vector{Float64}
-    N = Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
+    N = ρ2N(ρ)
 
     @argcheck length(φ_arr) == N
 

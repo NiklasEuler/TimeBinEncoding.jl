@@ -1,11 +1,14 @@
-export coherence_extraction, compound_coherence_extraction, initial_state_phase_estimation
+export coherence_extraction, initial_state_phase_estimation
 export angles_kth_neighbor_interference, noisy_angles_symmetric, angles_single_setup
+export angles_compound, j_out_compound, compound_coherence_extraction, pops_fs_compound
 export j_out_single_setup
 
 
 """
-    coherence_extraction(N, j_out, ρ, angles, noisy_angles=copy(angles),
-        contr_j_idxs = correlated_short_bins_idxs(N); extract_diagonal::Bool=true)
+    coherence_extraction(
+        N, j_out, pops_init, pop_fs, angles,contr_j_idxs = correlated_short_bins_idxs(N);
+        extract_diagonal::Bool=true
+    )
 
 Extract the coherences between correlated time-bin populations.
 
@@ -14,13 +17,11 @@ Extract the coherences between correlated time-bin populations.
 - `N`: the number of time bins in the initial state `ρ`.
 - `j_out`: single `j` index or collection of `j` indices, indicating from which final state
     projections the coherences get extracted.
-- `ρ`: the initial state density matrix from which the coherences are extracted, given in
-    the `|lcmk⟩` basis.
-- `angles`: a vector or vectors of scheduled beam-splitter angles. The number of round trips
+- `pops_init`: Vector of the measured initial state population, given in the `|lcmk⟩` basis.
+- `pop_fs`: the measured population in the combination of final state projectors given by
+    `j_out`
+- `angles`: a Vector or Vectors of scheduled beam-splitter angles. The number of round trips
     matches `length(angles)`.
-- `noisy_angles`: a vector or vectors of actually realized noisy beam-splitter angles used
-    to simulate the measured population. Same shape as `angles`. By default, `noisy_angles`
-    is just a copy of `angles`, so no noise is applied.
 - `contr_j_idxs`: Vector of `j` indices of states that should be extracted from the state.
     Default value is `correlated_short_bins_idxs(N)`, which is all correlated time bins.
 
@@ -32,12 +33,7 @@ Extract the coherences between correlated time-bin populations.
 See also `compound_coherence_extraction`.
 """
 function coherence_extraction(
-    N,
-    j_out,
-    ρ,
-    angles,
-    noisy_angles = copy(angles),
-    contr_j_idxs = correlated_short_bins_idxs(N);
+    N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
     extract_diagonal::Bool=true
 )
     N = convert(Int64, N)::Int64
@@ -47,13 +43,10 @@ function coherence_extraction(
 		convert(Int64, j_out)::Int64
 	end
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    pops = Float64.(diag(ρ))
     j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
     # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
-	pop_j_out_extracted = explicit_fs_projection_expval(ρ, j_out, noisy_angles)
-    # actual measured value based on noisy angles
 	extracted_coherence = []
     extracted_weights = Float64[]
 	for idx in eachindex(j1_arr)
@@ -65,10 +58,10 @@ function coherence_extraction(
             # relevant coherence, so indices saved to list of extracted coherences.
             push!(extracted_weights, weights[idx])
 		elseif j1 == j2
-			pop_j_out_extracted -= pops[j1] * weights[idx]
+			pop_fs -= pops_init[j1] * weights[idx]
             # non-contributing population. Can be removed exactly as exact value is known.
 		else
-			pop_j_out_extracted -= sqrt(pops[j1]*pops[j2]) * abs(weights[idx])
+			pop_fs -= sqrt(pops_init[j1]*pops_init[j2]) * abs(weights[idx])
             # subtract non-contributing coherence bound.
 		end
 	end
@@ -88,50 +81,66 @@ function coherence_extraction(
     else
         norm = extracted_weights[1]
     end
-	pop_j_out_extracted /= N * norm # normalization
-	return convert(Float64, pop_j_out_extracted)#, extracted_coherence
+	pop_fs /= N * norm # normalization
+	return convert(Float64, pop_fs)#, extracted_coherence
 end
 
-
 """
-    initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
+initial_state_phase_estimation(
+    ρ_init,
+    pops_init=populations(ρ_init),
+    angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
+    angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1)
+)
 
 Compute the relative phases between the time bins of an initial states `ρ_init` with
 arbitrary but fixed phases and return the phase-corrected density matrix and measured
 relative phases.
 
-Optionally, the phase estimation process can be modelled to have noisy beam-splitter angles.
-This can be done by setting `ϵ_angles` to a non-zero value, which draws every beam splitter
-angle `θ_i` from the interval `[θ_i-ϵ_angles, θ_i+ϵ_angles]`.
+Optionally, the measured initial state populations can be given as a parameter, taking
+finite sampling statistics into consideration. The default value are the true populations of
+the initial state `ρ_init`. Furthermore, the phase estimation process can be modelled to
+have noisy beam-splitter angles. The entire noisy angle sets can be given for the real- and
+imaginary-part measurements each. The default here are the clean angles.
 
 See also `noisy_angles_symmetric`, `angles_kth_neighbor_interference`,
 `phase_on_density_matrix`.
 """
-function initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
+function initial_state_phase_estimation(
+    ρ_init,
+    pops_init=populations(ρ_init),
+    angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
+    angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1)
+)
     # TODO: Change function to more general noise source, perhaps with noisy angles given
     # directly as a parameter
     ρ = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
-    ϵ_angles = convert(Float64, ϵ_angles)::Float64
-    N = Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
+    N = ρ2N(ρ_init) # extract time-bin number from density matrix
 
     ϕ_arr = (0:0.00001:2) * π
     nn_phases = zeros(Float64, N)
     k = 1 # nearest neigbour phase measurements suffice
     extract_diagonal = false # dont need the populations
-    angles_arr = angles_kth_neighbor_interference(N, k)
+    angles_k = angles_kth_neighbor_interference(N, k)
     j_out_arr = [[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
         for i in 1:k:N - 1]
-    j_contr_idxs = correlated_short_bins_idxs(N)
-    for (idx, j) in enumerate(j_out_arr)
+    j_contr_idxs = correlated_short_bins_idxs(N) # all time bin j indices
+    for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
         φ_arr = zeros(Float64, N)
         φ_arr[idx + 1] = π / 2
         ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
-        noisy_angles_real = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
-        noisy_angles_imag = noisy_angles_symmetric(angles_arr[idx], ϵ_angles)
-        c_real = coherence_extraction(N, j, ρ, angles_arr[idx], noisy_angles_real,
-            j_contr_idxs[[idx, idx + k]]; extract_diagonal=extract_diagonal)
-        c_imag = coherence_extraction(N, j, ρ_rotated, angles_arr[idx], noisy_angles_imag,
-            j_contr_idxs[[idx, idx + k]]; extract_diagonal=extract_diagonal)
+        pop_fs_real = explicit_fs_projection_expval(ρ_init, j, angles_real[idx])
+        pop_fs_imag = explicit_fs_projection_expval(ρ_rotated, j, angles_imag[idx])
+        # TODO Implement final state population sampling statistics
+
+        c_real = coherence_extraction(
+            N, j, pops_init, pop_fs_real, angles_k[idx], j_contr_idxs[[idx, idx + k]];
+            extract_diagonal=extract_diagonal
+        )
+        c_imag = coherence_extraction(
+            N, j, pops_init, pop_fs_imag, angles_k[idx], j_contr_idxs[[idx, idx + k]];
+            extract_diagonal=extract_diagonal
+        )
         c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
         nn_phases[idx + 1] = ϕ_arr[argmax(c_contr)]
     end
@@ -141,13 +150,24 @@ function initial_state_phase_estimation(ρ_init, ϵ_angles=0.0)
     return ρ_corrected, relative_phases
 end
 
+function ρ2N(ρ)
+    return Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
+end
 
 """
     angles_kth_neighbor_interference(N, k)
+    angles_kth_neighbor_interference(N, k, ϵ_angles)
 
 Return an Vector of complete angle settings to exclusively interfere all combination of two
 time bins with distance k.
+
+Can also be called with optional argument `ϵ_angles`, which adds uniform random noise to the
+angles.
+
+See also `noisy_angles_symmetric`.
 """
+function angles_kth_neighbor_interference end
+
 function angles_kth_neighbor_interference(N, k)
     N = convert(Int64, N)::Int64
     k = convert(Int64, k)::Int64
@@ -157,15 +177,41 @@ function angles_kth_neighbor_interference(N, k)
     @argcheck k < N
 
     angles = Vector{Vector{Vector{Float64}}}(undef, N - k)
-    for l in 1:N - k
-        angles_measurement = [zeros(Float64, n) for n in N:N + k]
-        angles_measurement[1][l] = 0.5  * π # send the early time bin into the long loop
-        angles_measurement[end][l+k] = 0.25 * π
-        # interfere after k loops / k time bins travelled
-        angles[l] = angles_measurement
+    for i in 1:N - k
+        angles[i] = _angles_kth_neighbor(N, k, i)
     end
 
     return angles
+end
+
+function angles_kth_neighbor_interference(N, k, ϵ_angles)
+    N = convert(Int64, N)::Int64
+    k = convert(Int64, k)::Int64
+
+    @argcheck N ≥ 1
+    @argcheck k ≥ 1
+    @argcheck k < N
+
+    angles = Vector{Vector{Vector{Float64}}}(undef, N - k)
+    for i in 1:N - k
+        angles[i] = _angles_kth_neighbor(N, k, i, ϵ_angles)
+    end
+
+    return angles
+end
+
+function _angles_kth_neighbor(N, k, i)
+    angles_k_i = [zeros(Float64, n) for n in N:N + k]
+    angles_k_i[1][i] = 0.5  * π # send the early time bin into the long loop
+    angles_k_i[end][i+k] = 0.25 * π
+    # interfere after k loops / k time bins travelled
+    return angles_k_i
+end
+
+function _angles_kth_neighbor(N, k, i, ϵ_angles)
+    angles_k_i = _angles_kth_neighbor(N, k, i)
+    angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
+    return angles_k_i_noisy
 end
 
 """
@@ -198,31 +244,72 @@ deviation on the beam-splitter angles `ϵ_angles`.
 
 See also `coherence_extraction`, `noisy_angles_symmetric`.
 """
-function compound_coherence_extraction(ρ, ϵ_angles = 0.0)
-    ρ = convert(Matrix{ComplexF64}, copy(ρ))::Matrix{ComplexF64}
-    ϵ_angles = convert(Float64, ϵ_angles)::Float64
-    N = Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
+function compound_coherence_extraction(pops_init, pops_fs_all)
+    N = Int64(sqrt(length(pops_init) / N_LOOPS2))::Int64
 
     contr_j_idxs_all = correlated_short_bins_idxs(N)
-    contr_pops = Float64(sum([ρ[j, j] for j in contr_j_idxs_all]))
+    contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs_all]))
     extract_diagonal = false
-    extracted_cohereneces = contr_pops/N # populations contribution to fidelity
+    extracted_coherences = contr_pops / N # populations contribution to fidelity
+    j_out_all = j_out_compound(N)
+    angles_all = angles_compound(N)
     for k in 1:N - 1
-        angles_k = angles_kth_neighbor_interference(N, k)
-        j_out_k = [[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
-            for i in k:1:N - 1] # pairs of |lSlS⟩ and |l + 1Ll + 1L⟩
+        j_out_k = j_out_all[k] # all kth neighbor final state projector indices
+        angles_k = angles_all[k] # all kth neighbor angle settings
+        pop_fs_k = pops_fs_all[k] # all kth neighbor final state populations
         for (idx, j_out) in enumerate(j_out_k)
             contr_j_idxs = contr_j_idxs_all[[idx, idx + k]]
             # the two time bins to be extracted from data.
             angles = angles_k[idx]
-            noisy_angles = noisy_angles_symmetric(angles, ϵ_angles) # compute noisy angles
-            coh = coherence_extraction(N, j_out, ρ, angles, noisy_angles, contr_j_idxs;
-                extract_diagonal = extract_diagonal)  # noisy extraction
-            extracted_cohereneces += coh
+            pop_fs = pop_fs_k[idx]
+            coh = coherence_extraction(
+                N, j_out, pops_init, pop_fs, angles, contr_j_idxs;
+                extract_diagonal = extract_diagonal
+            ) # noisy extraction
+            extracted_coherences += coh
         end
     end
 
-    return extracted_cohereneces
+    return extracted_coherences
+end
+
+function j_out_compound(N)
+    j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
+        for i in k:1:N - 1] for k in 1:N - 1] # pairs of |lSlS⟩ and |l + 1Ll + 1L⟩
+    return j_out
+end
+
+function angles_compound end
+
+function angles_compound(N)
+    angles = [angles_kth_neighbor_interference(N, k) for k in 1:N - 1]
+    return angles
+end
+
+function angles_compound(N, ϵ_angles)
+    angles = [angles_kth_neighbor_interference(N, k, ϵ_angles) for k in 1:N - 1]
+    return angles
+end
+
+function pops_fs_compound(ρ_init, angles_compound)
+    ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
+    angles_compound = convert(
+        Vector{Vector{Vector{Vector{Float64}}}}, angles_compound
+    )::Vector{Vector{Vector{Vector{Float64}}}}
+    N = ρ2N(ρ_init)
+
+    j_out_all = j_out_compound(N)
+    pops_out = [zeros(Float64, N - k) for k in 1:N - 1]
+    for k in 1:N - 1
+        j_out_k = j_out_all[k]
+        angles_k = angles_compound[k]
+        for (idx, j_out) in enumerate(j_out_k)
+            angles = angles_k[idx]
+            pops_out[k][idx] = explicit_fs_projection_expval(ρ_init, j_out, angles)
+        end
+    end
+
+    return pops_out
 end
 
 """

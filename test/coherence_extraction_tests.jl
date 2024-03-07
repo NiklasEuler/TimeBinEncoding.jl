@@ -4,46 +4,60 @@
 	M = 4
     ϵ = 0.1
     ϵ_angles = 0.05 * π
-	ϕ = 0
+
+    ϕ = 0
     wf_coeffs = [cis.(2 * ϕ * k * π) for k in 1:N]
 	Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
 	ρ_pure = density_matrix(Ψ_init)
+    pops_pure = populations(ρ_pure)
+
+    Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
+	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
+
 	j_out_arr = [lcmk2j(N + M, 3, 0, 3, 0), lcmk2j(N + M, 4, 1, 4, 1)]
 	angles_1 = [0.5, 0.5, 0, 0] * π
 	angles_2 = [0, 0, 0, 0, 0] * π
 	angles_3 = [0, 0, 0.25, 0.25, 0, 0] * π
 	angles_4 = [0, 0, 0.25, 0.25, 0.25, 0, 0] * π
 	angles = [angles_1, angles_2, angles_3, angles_4]
-	coherence_extraction(N, j_out_arr, ρ_pure, angles)
-	Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
-	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
-	@test isapprox((@test_logs min_level=Logging.Warn coherence_extraction(N, j_out_arr,
-        ρ_pure, angles)), mes_fidelity, atol = 1e-8)
+
+    #coherence_extraction(N, j_out_arr, ρ_pure, angles)
+
+    pop_fs = explicit_fs_projection_expval(ρ_pure, j_out_arr, angles)
+
+    @test isapprox((@test_logs min_level=Logging.Warn coherence_extraction(N, j_out_arr,
+    pops_pure, pop_fs, angles)), mes_fidelity, atol = 1e-8)
+
 	angles_1 = [0.2, 0.6, 0.1, 0] * π
 	angles_2 = [0, 0.8, 0.2, 0, 0] * π
 	angles_3 = [0, 0.35, 0.41, 0.9, 0, 0] * π
 	angles_4 = [0, 0, 0.12, 0.26, 0.83, 0, 0] * π
 	angles = [angles_1, angles_2, angles_3, angles_4]
-	@test_throws ArgumentError coherence_extraction(N, j_out_arr, ρ_pure, angles)
+    pop_fs = explicit_fs_projection_expval(ρ_pure, j_out_arr, angles)
+	@test_throws ArgumentError coherence_extraction(N, j_out_arr, pops_pure, pop_fs, angles)
 
 	N = 4
 	M = 2
+
+    ϕ = 0
+	wf_coeffs = [cis(n * ϕ * π) for n in 0:N - 1]
+	tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+	ρ_pure = density_matrix(Ψ_init)
+    pops_pure = populations(ρ_pure)
+
 	angles_1_1 = [0.5, 0, 0.5, 0] * π
 	angles_1_2 = [0, 0.25, 0, 0.25, 0] * π
 	angles_1 = [angles_1_1, angles_1_2]
 	j_01 = [lcmk2j(N + M, 1, 0, 1, 0), lcmk2j(N + M, 2, 1, 2, 1)]
 
 	extract_diagonal = false
+    pop_fs = explicit_fs_projection_expval(ρ_pure, j_01, angles_1)
 
-	ϕ = 0
-	wf_coeffs = [cis(n * ϕ * π) for n in 0:N - 1]
-	tb_state = correlated_timebin_state(wf_coeffs)
-	Ψ_init = insert_initial_state(tb_state)
-	ρ_pure = density_matrix(Ψ_init)
 	@test isapprox((@test_logs (:warn, "Some of the scheduled coherences have a vanishing "*
         "weight in the given final-state projectors. Please check again and consider "*
         "adapting the scheduled coherences in `contr_j_idxs`.") min_level =
-        Logging.Warn coherence_extraction(N, j_01, ρ_pure, angles_1;
+        Logging.Warn coherence_extraction(N, j_01, pops_pure, pop_fs, angles_1;
         extract_diagonal=extract_diagonal)), 1 / 8, atol = 1e-8)
 end
 
@@ -51,17 +65,37 @@ end
     N = 8
     ϵ = 0.1
     ϵ_angles = 0.05 * π
-    wf_coeffs = cis.(2 * rand(N) * π)
-	Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
+    ϕ = 0.00
+
+    wf_coeffs = [cis(n * ϕ * π) for n in 0:N - 1]
+    Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
 	ρ_pure = density_matrix(Ψ_init)
+    pops_pure = populations(ρ_pure)
+
     Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
-    @test isapprox((@test_logs min_level=Logging.Warn compound_coherence_extraction(ρ_pure)
-        ), mes_fidelity, atol = 1e-8)
+
+    angles_compound_all = angles_compound(N)
+    pops_fs_all_pure = pops_fs_compound(ρ_pure, angles_compound_all)
+    @test isapprox(
+        (@test_logs min_level=Logging.Warn compound_coherence_extraction(
+            pops_pure, pops_fs_all_pure
+        )),
+        mes_fidelity,
+        atol = 1e-8
+    )
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
-    @test compound_coherence_extraction(ρ_mixed) ≤ compound_coherence_extraction(ρ_pure)
-    @test compound_coherence_extraction(ρ_mixed, ϵ_angles) ≤
-        compound_coherence_extraction(ρ_mixed)
+    pops_mixed = populations(ρ_mixed)
+
+    pops_fs_all_mixed = pops_fs_compound(ρ_mixed, angles_compound_all)
+
+    angles_compound_all_noisy = angles_compound(N, ϵ_angles)
+    pops_fs_all_pure_noisy = pops_fs_compound(ρ_pure, angles_compound_all_noisy)
+
+    @test compound_coherence_extraction(pops_mixed, pops_fs_all_mixed) ≤
+        compound_coherence_extraction(pops_pure, pops_fs_all_pure)
+    @test compound_coherence_extraction(pops_pure, pops_fs_all_pure_noisy) ≤
+        compound_coherence_extraction(pops_pure, pops_fs_all_pure)
 end
 
 @testset "angles_single_setup" begin

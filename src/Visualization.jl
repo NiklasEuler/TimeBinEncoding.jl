@@ -10,8 +10,8 @@ TBW
 function visualize_symbolic_ket_evolution_sp(M, l_init)
     j_idx_arr, trigonometric_history_arr, angle_history_arr =
         symbolic_ket_evolution_sp(M, l_init)
-    println("The initial state |$l_init,S⟩ after $(
-    M) roundtrips has evolved into the following contributions:")
+    println("The initial state |$l_init,S⟩ after $(M) "*
+        "roundtrips has evolved into the following contributions:")
     println("")
     println("(SC)^{$M} |$l_init,S⟩ =")
     cs = ["S", "L"]
@@ -34,8 +34,8 @@ function visualize_symbolic_fs_projection_sp(M, l_fs, c_fs)
     j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs =
         symbolic_fs_projection_sp(M, l_fs, c_fs)
     cs = ["S", "L"]
-    println("|$l_fs,$(cs[c_fs + 1])⟩⟨$l_fs,$(cs[c_fs + 1])| (SC)^{$M} |Ψ_init⟩ = |$(
-        l_fs),$(cs[c_fs + 1])⟩⋅{")
+    println("|$l_fs,$(cs[c_fs + 1])⟩⟨$l_fs,$(cs[c_fs + 1])| (SC)^{$M} |Ψ_init⟩ = |$(l_fs)"*
+        ",$(cs[c_fs + 1])⟩⋅{")
     for (i, j) in enumerate(j_idx_arr_fs)
         l_init, c_init = j2lc(j)
         print("+ c_($l_init,$(cs[c_init + 1]))⋅[")
