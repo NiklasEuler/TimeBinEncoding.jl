@@ -126,4 +126,6 @@ end
 
     @test isapprox(pops_mixed_sampled, pops_mixed, atol = 1e-3)
     @test sum(pops_mixed_sampled) ≈ 1
+
+    @test isapprox(sample_populations(0.67, n_samples), 0.67, atol = 1e-3)
 end
