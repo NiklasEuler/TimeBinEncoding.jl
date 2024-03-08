@@ -109,35 +109,17 @@ See also [`noisy_angles_symmetric`](@ref), [`angles_kth_neighbor_interference`](
 [`phase_on_density_matrix`](@ref).
 """
 function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
-
-#=     ρ_init,
-    pops_init=populations(ρ_init),
-    angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
-    angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1)
-) =#
-    # TODO: Change function to more general noise source, perhaps with noisy angles given
-    # directly as a parameter
-    #ρ = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
-
-    #N = ρ2N(ρ_init) # extract time-bin number from density matrix
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))
     # extract time-bin number from population number
     ϕ_arr = (0:0.00001:2) * π
     nn_phases = zeros(Float64, N)
-    k = 1 # nearest neigbour phase measurements suffice
+    k = 1 # nearest neigbor phase measurements suffice
     extract_diagonal = false # dont need the populations
     angles_k = angles_kth_neighbor_interference(N, k)
     j_out_arr = j_out_phase_estimation(N)
     j_contr_idxs = correlated_short_bins_idxs(N) # all time bin j indices
 
     for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
-        #= φ_arr = zeros(Float64, N)
-        φ_arr[idx + 1] = π / 2 # apply π / 2 phase shift to swap real and imaginary parts
-        ρ_rotated = phase_on_density_matrix(ρ, φ_arr)
-
-        pop_fs_real = explicit_fs_pop(ρ_init, j, angles_real[idx])
-        pop_fs_imag = explicit_fs_pop(ρ_rotated, j, angles_imag[idx])
- =#
         c_real = coherence_extraction(
             N, j, pops_init, pops_fs_real[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
             extract_diagonal=extract_diagonal
