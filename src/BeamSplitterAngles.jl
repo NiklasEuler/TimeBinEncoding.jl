@@ -1,3 +1,8 @@
+export angles_kth_neighbor_interference, noisy_angles_symmetric
+export angles_compound, angles_single_setup
+
+
+
 """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
@@ -59,8 +64,8 @@ function _angles_kth_neighbor(N, k, i, ϵ_angles)
 end
 
 """
-    compound_angles(N)
-    compound_angles(N, ϵ_angles)
+    angles_compound(N)
+    angles_compound(N, ϵ_angles)
 
 Return the set of all beam-splitter configurations `angles` needed for compound coherence
 extraction.
@@ -76,19 +81,19 @@ Vector{Vector{Float64}}. All configurations that interfere initial-state time bi
 distance `k` are collected into Vector{Vector{Vector{Float64}}}, which are then grouped into
 a final Vector{Vector{Vector{Vector{Float64}}}} for all allowed values of `k`
 
-See also [`compound_j_out`](@ref), [`compound_coherence_extraction`](@ref),
+See also [`j_out_compound`](@ref), [`coherence_extraction_compound`](@ref),
 [`noisy_angles_symmetric`](@ref), [`angles_single_setup`](@ref).
 """
-function compound_angles end
+function angles_compound end
 
-function compound_angles(N)
+function angles_compound(N)
     N = convert(Int64, N)::Int64
 
     angles = [angles_kth_neighbor_interference(N, k) for k in 1:N - 1]
     return angles:: Vector{Vector{Vector{Vector{Float64}}}}
 end
 
-function compound_angles(N, ϵ_angles)
+function angles_compound(N, ϵ_angles)
     N = convert(Int64, N)::Int64
     ϵ_angles = convert(Float64, ϵ_angles)::Float64
 

@@ -83,18 +83,27 @@ end
 	ρ_pure = density_matrix(Ψ_init)
     pops_pure = populations(ρ_pure)
 
-    ρ_corrected, relative_phases_auto = initial_state_phase_estimation(ρ_pure)
+    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_pure)
+    relative_phases = initial_state_phase_estimation(pops_pure, pops_fs_real, pops_fs_imag)
+    ρ_corrected = phase_on_density_matrix(ρ_pure, -1 * relative_phases)
 
-    angles_compound_all = compound_angles(N)
+    angles_compound_all = angles_compound(N)
     pops_fs_all_pure = pops_fs_compound(ρ_corrected, angles_compound_all)
 
     @test isapprox(
-        compound_coherence_extraction(pops_pure, pops_fs_all_pure), 1.0, atol = 1e-8
+        coherence_extraction_compound(pops_pure, pops_fs_all_pure), 1.0, atol = 1e-8
     )
+
     ρ_nophase = density_matrix(
         insert_initial_state(correlated_timebin_state((2 + 3 * im) * ones(N)))
     )
-	ρ_nocorrect, relative_phases = initial_state_phase_estimation(ρ_nophase)
+    pops_nophase = populations(ρ_nophase)
+
+    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_nophase)
+    relative_phases =
+        initial_state_phase_estimation(pops_nophase, pops_fs_real, pops_fs_imag)
+    ρ_nocorrect = phase_on_density_matrix(ρ_nophase, -1 * relative_phases)
+
     @test relative_phases ≈ zeros(Float64, N)
     @test ρ_nocorrect ≈ ρ_nophase
 end

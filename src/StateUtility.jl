@@ -1,6 +1,6 @@
 export correlated_timebin_state, insert_initial_state, insert_initial_state_sp
 export density_matrix, density_matrix_dephased, white_noise
-export fidelity, purity, populations
+export fidelity, purity, populations, sample_populations
 
 
 
@@ -212,14 +212,27 @@ function populations(ρ::Matrix, n_samples)
 end
 
 """
-    sample_populations(pops, n_samples)
+    sample_populations(pop::Real, n_samples)
+    sample_populations(pops::Vector{<:Real}, n_samples)
 
 Return an approximate normalized reconstruction of the original distribution `pops` based on
 the measurement statistics generated with `n_samples` random samples.
 
+Accepts also a single (unnormalized) argument `pop` as a standalone probability to sample
+from.
+
 See also [`populations`](@ref).
 """
-function sample_populations(pops, n_samples)
+function sample_populations end
+
+function sample_populations(pop::Real, n_samples)
+    pops = [pop, 1 - pop]
+    pops_sampled = sample_populations(pops, n_samples)
+    pop_sampled = pops_sampled[1]
+    return pop_sampled
+end
+
+function sample_populations(pops::Vector{<:Real}, n_samples)
     n_samples = convert(Int64, n_samples)::Int64 # number of measurements
     pops_measured = zero(pops)
     samples_ordered =

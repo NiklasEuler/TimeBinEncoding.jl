@@ -1,7 +1,7 @@
 export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evolution
 export explicit_fs_projection_sp, explicit_fs_projection,
     explicit_fs_coherence_map, explicit_add_fs_projection
-export explicit_fs_projection_expval
+export explicit_fs_pop
 
 
 """
@@ -318,29 +318,29 @@ function explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
 end
 
 """
-    explicit_fs_projection_expval(ρ_init, j_out::Int64, angles)
-    explicit_fs_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)
+    explicit_fs_pop(ρ_init, j_out::Int64, angles)
+    explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
 
 
 TBW
 """
-function explicit_fs_projection_expval end
+function explicit_fs_pop end
 
-function explicit_fs_projection_expval(ρ_init, j_out::Int64, angles)
+function explicit_fs_pop(ρ_init, j_out::Int64, angles)
     j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
-    return _expval_calculation(ρ_init, j1_arr, j2_arr, weights)
+    return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
-function explicit_fs_projection_expval(ρ_init, j_out_arr::Vector{Int64}, angles)
+function explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
     exp_val = 0.0
     for j_out in j_out_arr
-        exp_val += explicit_fs_projection_expval(ρ_init, j_out, angles)
+        exp_val += explicit_fs_pop(ρ_init, j_out, angles)
    end
 
     return exp_val
 end
 
-function _expval_calculation(ρ_init, j1_arr, j2_arr, weights)
+function expval_calculation(ρ_init, j1_arr, j2_arr, weights)
     exp_val = 0.0
     for i in eachindex(j1_arr)
         j1 = j1_arr[i]

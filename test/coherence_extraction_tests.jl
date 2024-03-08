@@ -23,7 +23,7 @@
 
     #coherence_extraction(N, j_out_arr, ρ_pure, angles)
 
-    pop_fs = explicit_fs_projection_expval(ρ_pure, j_out_arr, angles)
+    pop_fs = explicit_fs_pop(ρ_pure, j_out_arr, angles)
 
     @test isapprox((@test_logs min_level=Logging.Warn coherence_extraction(N, j_out_arr,
     pops_pure, pop_fs, angles)), mes_fidelity, atol = 1e-8)
@@ -33,7 +33,7 @@
 	angles_3 = [0, 0.35, 0.41, 0.9, 0, 0] * π
 	angles_4 = [0, 0, 0.12, 0.26, 0.83, 0, 0] * π
 	angles = [angles_1, angles_2, angles_3, angles_4]
-    pop_fs = explicit_fs_projection_expval(ρ_pure, j_out_arr, angles)
+    pop_fs = explicit_fs_pop(ρ_pure, j_out_arr, angles)
 	@test_throws ArgumentError coherence_extraction(N, j_out_arr, pops_pure, pop_fs, angles)
 
 	N = 4
@@ -52,7 +52,7 @@
 	j_01 = [lcmk2j(N + M, 1, 0, 1, 0), lcmk2j(N + M, 2, 1, 2, 1)]
 
 	extract_diagonal = false
-    pop_fs = explicit_fs_projection_expval(ρ_pure, j_01, angles_1)
+    pop_fs = explicit_fs_pop(ρ_pure, j_01, angles_1)
 
 	@test isapprox((@test_logs (:warn, "Some of the scheduled coherences have a vanishing "*
         "weight in the given final-state projectors. Please check again and consider "*
@@ -75,10 +75,10 @@ end
     Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
 
-    angles_compound_all = compound_angles(N)
+    angles_compound_all = angles_compound(N)
     pops_fs_all_pure = pops_fs_compound(ρ_pure, angles_compound_all)
     @test isapprox(
-        (@test_logs min_level=Logging.Warn compound_coherence_extraction(
+        (@test_logs min_level=Logging.Warn coherence_extraction_compound(
             pops_pure, pops_fs_all_pure
         )),
         mes_fidelity,
@@ -89,13 +89,13 @@ end
 
     pops_fs_all_mixed = pops_fs_compound(ρ_mixed, angles_compound_all)
 
-    angles_compound_all_noisy = compound_angles(N, ϵ_angles)
+    angles_compound_all_noisy = angles_compound(N, ϵ_angles)
     pops_fs_all_pure_noisy = pops_fs_compound(ρ_pure, angles_compound_all_noisy)
 
-    @test compound_coherence_extraction(pops_mixed, pops_fs_all_mixed) ≤
-        compound_coherence_extraction(pops_pure, pops_fs_all_pure)
-    @test compound_coherence_extraction(pops_pure, pops_fs_all_pure_noisy) ≤
-        compound_coherence_extraction(pops_pure, pops_fs_all_pure)
+    @test coherence_extraction_compound(pops_mixed, pops_fs_all_mixed) ≤
+        coherence_extraction_compound(pops_pure, pops_fs_all_pure)
+    @test coherence_extraction_compound(pops_pure, pops_fs_all_pure_noisy) ≤
+        coherence_extraction_compound(pops_pure, pops_fs_all_pure)
 end
 
 @testset "angles_single_setup" begin
@@ -154,7 +154,7 @@ end
     @test_throws ArgumentError angles_single_setup(N)
 end
 
-@testset "single_setup_j_out" begin
+@testset "j_out_single_setup" begin
     N = 8
     M_mod = 14
     j_mod_arr = [lcmk2j(N + M_mod, 7, 0, 7, 0), lcmk2j(N + M_mod, 14, 1, 14, 1),
@@ -162,10 +162,10 @@ end
         lcmk2j(N + M_mod, 9, 0, 9, 0), lcmk2j(N + M_mod, 12, 1, 12, 1),
         lcmk2j(N + M_mod, 10, 0, 10, 0), lcmk2j(N + M_mod, 11, 1, 11, 1),
     ]
-    j_arr = single_setup_j_out(N)
+    j_arr = j_out_single_setup(N)
     @test all([j in j_arr for j in j_mod_arr])
     @test all([j in j_mod_arr for j in j_arr])
 
     N = 10
-    @test_throws ArgumentError single_setup_j_out(N)
+    @test_throws ArgumentError j_out_single_setup(N)
 end
