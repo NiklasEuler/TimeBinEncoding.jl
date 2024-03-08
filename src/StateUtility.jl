@@ -185,15 +185,17 @@ end
 
 """
     populations(ρ::Matrix)
+    populations(ρ::Matrix, n_samples)
 
 Return the state populations of the density matrix `ρ`.
+
+Optionally, the populations can be subjected to finite statistics. This is achieved through
+the optional `n_samples` function argument, which specifies the number of simulated samples
+used for the reconstruction of the population distribution.
+
+See also [`sample_populations`](@ref)
 """
 function populations end
-
-function populations(ρ::Matrix)
-    pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
-    return pops
-end
 
 function populations(ρ::Matrix)
     pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
@@ -209,15 +211,26 @@ function populations(ρ::Matrix, n_samples)
     return measured_pops
 end
 
+"""
+    sample_populations(pops, n_samples)
+
+Return an approximate normalized reconstruction of the original distribution `pops` based on
+the measurement statistics generated with `n_samples` random samples.
+
+See also [`populations`](@ref).
+"""
 function sample_populations(pops, n_samples)
-    n_samples = convert(Int64, n_samples)::Int64
+    n_samples = convert(Int64, n_samples)::Int64 # number of measurements
     pops_measured = zero(pops)
     samples_ordered =
         sample(collect(1:length(pops)), ProbabilityWeights(pops), n_samples, ordered=true)
+        # vector of n_sample entries, each entry being the j index of the measured outcome
     count_map_samples = collect(countmap(samples_ordered))
+    # vector of pairs, the first entry being the j index and the second the count number in
+    # the simulated measurement
 
     for count_pair in count_map_samples
-        pops_measured[count_pair.first] = count_pair.second/n_samples
+        pops_measured[count_pair.first] = count_pair.second/n_samples # normalization
     end
 
     return pops_measured

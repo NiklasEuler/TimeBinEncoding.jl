@@ -103,7 +103,7 @@ end
 @testset "populations" begin
     N = 8
     ϵ = 0.1
-    n_samples = 1e6
+    n_samples = 1e7
 
     wf_coeffs = cis.(2 * rand(N) * π)
 	Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
@@ -111,9 +111,10 @@ end
 
     pops_mixed = populations(ρ_mixed)
     @test sum(pops_mixed) ≈ 1
-    @test diag(ρ_mixed) .≈ pops_mixed
+    @test diag(ρ_mixed) ≈ pops_mixed
     @test typeof(pops_mixed) <: Vector{Float64}
     pops_mixed_sampled = populations(ρ_mixed, n_samples)
 
     @test isapprox(pops_mixed_sampled, pops_mixed, atol = 1e-3)
+    @test sum(pops_mixed_sampled) ≈ 1
 end
