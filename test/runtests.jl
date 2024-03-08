@@ -25,7 +25,7 @@ Random.seed!(8675309) # / Jenny
     end
 
     @testset "state_prep_tests" begin
-        include("state_prep_tests.jl")
+        include("state_utility_tests.jl")
     end
 
     @testset "symbolic_tests" begin

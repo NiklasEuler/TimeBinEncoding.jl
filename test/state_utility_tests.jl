@@ -85,7 +85,7 @@ end
 
     ρ_corrected, relative_phases_auto = initial_state_phase_estimation(ρ_pure)
 
-    angles_compound_all = angles_compound(N)
+    angles_compound_all = compound_angles(N)
     pops_fs_all_pure = pops_fs_compound(ρ_corrected, angles_compound_all)
 
     @test isapprox(
@@ -97,4 +97,23 @@ end
 	ρ_nocorrect, relative_phases = initial_state_phase_estimation(ρ_nophase)
     @test relative_phases ≈ zeros(Float64, N)
     @test ρ_nocorrect ≈ ρ_nophase
+end
+
+
+@testset "populations" begin
+    N = 8
+    ϵ = 0.1
+    n_samples = 1e6
+
+    wf_coeffs = cis.(2 * rand(N) * π)
+	Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
+	ρ_mixed = density_matrix(Ψ_init)
+
+    pops_mixed = populations(ρ_mixed)
+    @test sum(pops_mixed) ≈ 1
+    @test diag(ρ_mixed) .≈ pops_mixed
+    @test typeof(pops_mixed) <: Vector{Float64}
+    pops_mixed_sampled = populations(ρ_mixed, n_samples)
+
+    @test isapprox(pops_mixed_sampled, pops_mixed, atol = 1e-3)
 end

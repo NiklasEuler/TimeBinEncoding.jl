@@ -75,7 +75,7 @@ end
     Ψ_mes =  insert_initial_state(correlated_timebin_state(fill(1 / sqrt(N), N)))
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
 
-    angles_compound_all = angles_compound(N)
+    angles_compound_all = compound_angles(N)
     pops_fs_all_pure = pops_fs_compound(ρ_pure, angles_compound_all)
     @test isapprox(
         (@test_logs min_level=Logging.Warn compound_coherence_extraction(
@@ -89,7 +89,7 @@ end
 
     pops_fs_all_mixed = pops_fs_compound(ρ_mixed, angles_compound_all)
 
-    angles_compound_all_noisy = angles_compound(N, ϵ_angles)
+    angles_compound_all_noisy = compound_angles(N, ϵ_angles)
     pops_fs_all_pure_noisy = pops_fs_compound(ρ_pure, angles_compound_all_noisy)
 
     @test compound_coherence_extraction(pops_mixed, pops_fs_all_mixed) ≤
@@ -154,7 +154,7 @@ end
     @test_throws ArgumentError angles_single_setup(N)
 end
 
-@testset "j_out_single_setup" begin
+@testset "single_setup_j_out" begin
     N = 8
     M_mod = 14
     j_mod_arr = [lcmk2j(N + M_mod, 7, 0, 7, 0), lcmk2j(N + M_mod, 14, 1, 14, 1),
@@ -162,10 +162,10 @@ end
         lcmk2j(N + M_mod, 9, 0, 9, 0), lcmk2j(N + M_mod, 12, 1, 12, 1),
         lcmk2j(N + M_mod, 10, 0, 10, 0), lcmk2j(N + M_mod, 11, 1, 11, 1),
     ]
-    j_arr = j_out_single_setup(N)
+    j_arr = single_setup_j_out(N)
     @test all([j in j_arr for j in j_mod_arr])
     @test all([j in j_mod_arr for j in j_arr])
 
     N = 10
-    @test_throws ArgumentError j_out_single_setup(N)
+    @test_throws ArgumentError single_setup_j_out(N)
 end

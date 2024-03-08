@@ -154,17 +154,6 @@ function white_noise(N)
 
     return ρ_noise
 end
-
-"""
-    populations(ρ::Matrix)
-
-Return the state populations of the density matrix `ρ`.
-"""
-function populations(ρ::Matrix)
-    pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
-    return pops
-end
-
 """
     fidelity(Ψ::Vector,ρ::Matrix)
 
@@ -192,4 +181,44 @@ Extract the time bin number `N` from the density matrix `ρ`.
 """
 function ρ2N(ρ)
     return Int64(sqrt(size(ρ)[1] / (N_LOOPS2)))
+end
+
+"""
+    populations(ρ::Matrix)
+
+Return the state populations of the density matrix `ρ`.
+"""
+function populations end
+
+function populations(ρ::Matrix)
+    pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
+    return pops
+end
+
+function populations(ρ::Matrix)
+    pops = convert(Vector{Float64}, diag(ρ))::Vector{Float64}
+
+    @argcheck sum(pops) ≈ 1 # unity check
+
+    return pops
+end
+
+function populations(ρ::Matrix, n_samples)
+    pops = populations(ρ::Matrix)
+    measured_pops = sample_populations(pops, n_samples)
+    return measured_pops
+end
+
+function sample_populations(pops, n_samples)
+    n_samples = convert(Int64, n_samples)::Int64
+    pops_measured = zero(pops)
+    samples_ordered =
+        sample(collect(1:length(pops)), ProbabilityWeights(pops), n_samples, ordered=true)
+    count_map_samples = collect(countmap(samples_ordered))
+
+    for count_pair in count_map_samples
+        pops_measured[count_pair.first] = count_pair.second/n_samples
+    end
+
+    return pops_measured
 end

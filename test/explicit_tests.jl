@@ -140,7 +140,7 @@ end
         push!(coeff_arr_all_symb, coeff_arr_symb)
 
         j_idx_arr_contr_mesh, coeff_arr_mesh =
-            TimeBinEncoding._explicit_fs_projection_mesh(N, M, j, angles)
+            TimeBinEncoding._explicit_fs_projection_mesh_backend(N, M, j, angles)
         push!(j_idx_arr_contr_all_mesh, j_idx_arr_contr_mesh)
         push!(coeff_arr_all_mesh, coeff_arr_mesh)
     end

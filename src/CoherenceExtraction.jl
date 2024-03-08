@@ -1,7 +1,7 @@
 export coherence_extraction, initial_state_phase_estimation
 export angles_kth_neighbor_interference, noisy_angles_symmetric, angles_single_setup
-export angles_compound, j_out_compound, compound_coherence_extraction, pops_fs_compound
-export j_out_single_setup
+export compound_angles, compound_j_out, compound_coherence_extraction, pops_fs_compound
+export single_setup_j_out
 
 
 """
@@ -177,8 +177,8 @@ function compound_coherence_extraction(pops_init, pops_fs_all)
     contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs_all]))
     extracted_coherences = contr_pops / N # populations contribution to fidelity
 
-    j_out_all = j_out_compound(N)
-    angles_all = angles_compound(N)
+    j_out_all = compound_j_out(N)
+    angles_all = compound_angles(N)
 
     for k in 1:N - 1
         j_out_k = j_out_all[k] # all kth neighbor final state projector indices
@@ -203,7 +203,7 @@ function compound_coherence_extraction(pops_init, pops_fs_all)
 end
 
 """
-    j_out_compound(N)
+    compound_j_out(N)
 
 Return all the final-state projector indices for the compound coherence-extraction scheme.
 
@@ -213,37 +213,37 @@ corresponding to the intereference of time bins with distance `k` in the initial
 grouped in a Vector. Finally, all such grouping for values `k` from 1 to N - 1 are collected
 in the outermost layer.
 
-See also [`angles_compound`](@ref), [`compound_coherence_extraction`](@ref),
-[`j_out_single_setup`](@ref).
+See also [`compound_angles`](@ref), [`compound_coherence_extraction`](@ref),
+[`single_setup_j_out`](@ref).
 """
-function j_out_compound(N)
+function compound_j_out(N)
     j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
         for i in k:1:N - 1] for k in 1:N - 1] # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩
     return j_out
 end
 
 """
-    pops_fs_compound(ρ_init, angles_compound)
+    pops_fs_compound(ρ_init, angles_all=compound_angles(ρ2N(ρ_init)))
 
 Compute all needed final-state populations for an initial state `ρ_init` for a complete set
-of measurements in the compound coherence extraction scheme. The `angles_compound` argument
+of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`explicit_fs_projection_expval`](@ref), [`angles_compound`](@ref).
+See also [`explicit_fs_projection_expval`](@ref), [`compound_angles`](@ref).
 """
-function pops_fs_compound(ρ_init, angles_compound)
+function pops_fs_compound(ρ_init, angles_all=compound_angles(ρ2N(ρ_init)))
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
-    angles_compound = convert(
-        Vector{Vector{Vector{Vector{Float64}}}}, angles_compound
+    angles_all = convert(
+        Vector{Vector{Vector{Vector{Float64}}}}, angles_all
     )::Vector{Vector{Vector{Vector{Float64}}}}
     N = ρ2N(ρ_init)
 
-    j_out_all = j_out_compound(N)
+    j_out_all = compound_j_out(N)
     pops_out = [zeros(Float64, N - k) for k in 1:N - 1]
 
     for k in 1:N - 1
         j_out_k = j_out_all[k]
-        angles_k = angles_compound[k]
+        angles_k = angles_all[k]
         for (idx, j_out) in enumerate(j_out_k)
             angles = angles_k[idx]
             pops_out[k][idx] = explicit_fs_projection_expval(ρ_init, j_out, angles)
@@ -254,14 +254,14 @@ function pops_fs_compound(ρ_init, angles_compound)
 end
 
 """
-    j_out_single_setup(N)
+    single_setup_j_out(N)
 
 Return all the final-state projector indices for the single-setup coherence-extraction
 scheme.
 
-See also ['j_out_single_setup'](@ref).
+See also ['compound_j_out'](@ref).
 """
-function j_out_single_setup(N)
+function single_setup_j_out(N)
     N = convert(Int64, N)::Int64
     @argcheck isinteger(log2(N))
     N_half = Int64(N/2)
