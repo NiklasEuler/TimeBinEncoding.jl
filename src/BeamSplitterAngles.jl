@@ -1,6 +1,5 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
-export angles_compound, angles_single_setup
-
+export angles_phase_estimation, angles_compound, angles_single_setup
 
 
 """
@@ -61,6 +60,50 @@ function _angles_kth_neighbor(N, k, i, ϵ_angles)
     angles_k_i = _angles_kth_neighbor(N, k, i)
     angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
     return angles_k_i_noisy
+end
+
+
+"""
+    angles_phase_estimation(N::Real)
+    angles_phase_estimation(N::Real, ϵ_angles)
+    angles_phase_estimation(ρ_init::AbstractMatrix)
+
+Return the set of all beam-splitter configurations `angles` needed for phase estimation.
+
+Optionally, `ϵ_angles` can be given as an argument, returning uniform random angles
+distributed symmetrically around the targeted angles. Futhermore, for convenience, the
+function can instead of `N` also be called with a `ρ_init` argument to simply the use in
+default argument usage.
+
+# Returns
+
+- `angles`::Vector{Vector{Vector{Float64}}}: Nested Vector of beam-splitter angles.
+At the lowest two levels, it contains complete sets of beam splitter configurations as
+Vector{Vector{Float64}}. All configurations that interfere initial-state time bins of
+distance `k = 1` are collected into Vector{Vector{Vector{Float64}}}.
+
+See also [`angles_single_setup`](@ref), [`angles_compound`](@ref), [`j_out_compound`](@ref),
+[`coherence_extraction_compound`](@ref), [`noisy_angles_symmetric`](@ref).
+"""
+function angles_phase_estimation end
+
+function angles_phase_estimation(N::Real)
+    N = convert(Int64, N)::Int64
+    angles = angles_kth_neighbor_interference(N, 1) # nearest neighbor phase estimation
+    return angles
+end
+
+function angles_phase_estimation(N::Real, ϵ_angles)
+    N = convert(Int64, N)::Int64
+    angles = angles_kth_neighbor_interference(N, 1, ϵ_angles)
+    # noisy nearest neighbor phase estimation
+    return angles
+end
+
+function angles_phase_estimation(ρ_init::AbstractMatrix)
+    N = ρ2N(ρ_init)
+    angles =  angles_phase_estimation(N::Real)
+    return angles
 end
 
 """

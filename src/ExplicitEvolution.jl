@@ -271,7 +271,26 @@ end
     explicit_fs_coherence_map(j_out::Int64, angles)
     explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
 
-TBW
+Compute the indicies and weights of all initial-state coherences that contribute to the two-
+photon state corresponding to `j_out` in the |lcmk⟩⟨l'c'm'k'|`
+basis after evolution by `angles`.
+
+Depending on the number of roundtrips, either a fully numerical backend based on the mesh
+evolution or a analytical backend is used, see [`explicit_fs_projection`](@ref). If
+`j_out_arr` is given, the list of all coherences contributing to the the combined set of
+final state projectors is returned.
+
+
+# Returns
+- `j1_arr`: vector of `j` indices for the ket part of all coherences contributing with a
+    nonzero contribution to `|lcmk⟩⟨lcmk|` after evolution with `angles`, where `|lcmk⟩`
+    corresponds to `j_out` or one of the `j` indices given in j_out_arr.
+- `j2_arr`: like `j1_arr`, except it contains the vector of `j` indices for the bra part of
+    contributing coherences.
+- `weights`: vector of corresponding coefficients to the `|j1⟩⟨j2|` contributions given by
+    `j1_arr` and `j2_arr` vectors.
+
+See also [`explicit_fs_pop`](@ref), [`explicit_fs_projection`](@ref).
 """
 function explicit_fs_coherence_map end
 
@@ -322,7 +341,14 @@ end
     explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
 
 
-TBW
+Compute the expectation value `⟨lcmk|U ρ_init U^†|lcmk⟩`, where `j_out` corresponds to
+`|lcmk⟩` and `U` is the unitary time evolution operator defined through the beam-splitter
+configuration in `angles`.
+
+Alternatively, instead of a singular `j_out`, a vector of `j_out_arr` can be provided, in
+which case the sum of all expectation values is returned.
+
+See also [`explicit_fs_coherence_map`](@ref), [`expval_calculation`](@ref).
 """
 function explicit_fs_pop end
 
@@ -340,6 +366,14 @@ function explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
     return exp_val
 end
 
+"""
+    expval_calculation(ρ_init, j1_arr, j2_arr, weights)
+
+Compute the weighted average of the coherences `|j1⟩⟨j2|` of `ρ_init` specified by the
+`j1_arr` and `j2_arr` vectors and weighted by `weights` in the `|lcmk⟩` basis.
+
+See also [`explicit_fs_pop`](@ref).
+"""
 function expval_calculation(ρ_init, j1_arr, j2_arr, weights)
     exp_val = 0.0
     for i in eachindex(j1_arr)
