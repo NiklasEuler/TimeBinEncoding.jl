@@ -48,6 +48,11 @@ function symbolic_ket_evolution_sp(M, l)
     return j_idx_arr, trigonometric_history_arr, angle_history_arr
 end
 
+"""
+    symbolic_ket_evolution_sp(M)
+
+TBW
+"""
 function symbolic_ket_evolution_sp(M)
     M = convert(Int64, M)::Int64 # number of roundtrips
 
@@ -72,11 +77,6 @@ function symbolic_ket_evolution_sp(M)
     return j_idx_arr, trigonometric_history_arr, angle_history_arr
 end
 
-"""
-    _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
-
-TBW
-"""
 function _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
     m = convert(Int64, m)::Int64 # current round trip index
 
@@ -110,11 +110,6 @@ function _symbolic_ket_coin_sp!(m, trigonometric_history_arr, angle_history_arr)
     return nothing
 end
 
-"""
-    _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
-
-TBW
-"""
 function _symbolic_ket_shift_sp!(M, m, trigonometric_history_arr, angle_history_arr)
     M = convert(Int64, M)::Int64 # number of roundtrips
     m = convert(Int64, m)::Int64 # current round trip index
@@ -163,11 +158,6 @@ function symbolic_fs_projection_sp(M, j)
     return _symbolic_fs_projection_worker_sp(M, l, c)
 end
 
-"""
-    _symbolic_fs_projection_worker_sp(M, l, c)
-
-TBW
-"""
 function _symbolic_fs_projection_worker_sp(M, l, c)
     trigonometric_history_arr_fs = Vector{Matrix{Int64}}(undef, 0)
     angle_history_arr_fs = copy(trigonometric_history_arr_fs)
