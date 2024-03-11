@@ -133,23 +133,49 @@ function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
     end
 
     relative_phases =  mod.(cumsum(nn_phases), 2 * π)
-    # reverse initial state phase profile
     return relative_phases
 end
 
+"""
+    j_out_phase_estimation(N)
+
+Return the vector of all necessary `j` indices for a phase-estimation measurement scheme of
+an initial state with `N` time bins.
+
+The returned vector contains vectors with two `j` entries each, corresponding to the two
+kets `|i,S,i,S⟩` and `|i+1,L,i+1,L⟩`, for i in 1:N-1.
+
+See also [`j_out_compound`](@ref), [`j_out_single_setup`](@ref), [angles]
+[`initial_state_phase_estimation`](@ref), [`pops_fs_phase_estimation`](@ref).
+"""
 function j_out_phase_estimation(N)
     k = 1 # nearest neigbour phase measurements suffice
     j_out_arr = [[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
-        for i in 1:k:N - 1]
+        for i in 1:k:N - k]
     return j_out_arr
 end
 
+"""
+    function pops_fs_phase_estimation(
+        ρ_init,
+        angles_real=aangles_phase_estimation(ρ_init),
+        angles_imag=angles_phase_estimation(ρ_init),
+    )
+
+Compute the final state populations measured for the iniital state `ρ_init` in an optionally
+noisy setup, given through the two sets of optional mesaurement angles `angles_real` and
+`angles_imag`.
+
+Their default values are the noiseless angles for nearest-neighbor time-bin interference.
+
+See also [`pops_fs_compound`, [`initial_state_phase_estimation`](@ref)]
+"""
 function pops_fs_phase_estimation(
         ρ_init,
-        angles_real=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
-        angles_imag=angles_kth_neighbor_interference(ρ2N(ρ_init), 1),
+        angles_real=angles_phase_estimation(ρ_init),
+        angles_imag=angles_phase_estimation(ρ_init),
 )
-    N = ρ2N(ρ_init)
+    N = ρ2N(ρ_init) # extract N from ρ_init
 
     j_out_arr = j_out_phase_estimation(N)
     pop_fs_real = zeros(Float64, length(j_out_arr))
@@ -239,7 +265,8 @@ Compute all needed final-state populations for an initial state `ρ_init` for a 
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
+See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
+[`angles_compound`](@ref).
 """
 function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
@@ -269,7 +296,7 @@ end
 Return all the final-state projector indices for the single-setup coherence-extraction
 scheme.
 
-See also ['j_out_compound'](@ref).
+See also ['j_out_compound'](@ref), ['j_out_phase_estimation'](@ref).
 """
 function j_out_single_setup(N)
     N = convert(Int64, N)::Int64
