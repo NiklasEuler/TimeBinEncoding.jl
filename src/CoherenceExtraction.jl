@@ -168,7 +168,8 @@ noisy setup, given through the two sets of optional mesaurement angles `angles_r
 
 Their default values are the noiseless angles for nearest-neighbor time-bin interference.
 
-See also [`pops_fs_compound`, [`initial_state_phase_estimation`](@ref)]
+See also [`pops_fs_compound`](@ref), [`initial_state_phase_estimation`](@ref),
+[`angles_phase_estimation`](@ref).
 """
 function pops_fs_phase_estimation(
         ρ_init,
