@@ -154,6 +154,58 @@ end
     @test_throws ArgumentError angles_single_setup(N)
 end
 
+ @testset "angles_phase_estimation" begin
+    N = 4
+    angles_12_1 = [0.5, 0, 0, 0] * π
+    angles_12_2 = [0, 0.25, 0, 0, 0] * π
+    angles_12 = [angles_12_1, angles_12_2]
+
+    angles_23_1 = [0, 0.5, 0, 0] * π
+    angles_23_2 = [0, 0, 0.25, 0, 0] * π
+    angles_23 = [angles_23_1, angles_23_2]
+
+    angles_34_1 = [0, 0, 0.5, 0] * π
+    angles_34_2 = [0, 0, 0, 0.25, 0] * π
+    angles_34 = [angles_34_1, angles_34_2]
+
+    angles_all = [angles_12, angles_23, angles_34]
+
+    @test all(angles_all .≈ angles_phase_estimation(N))
+ end
+
+@testset "angles_compound" begin
+    N = 4
+    angles_compound_all = angles_compound(N)
+    angles_k1 = angles_phase_estimation(N)
+    @test all(angles_compound_all[1] .≈ angles_k1)
+
+    angles_13_1 = [0.5, 0, 0, 0] * π
+    angles_13_2 = [0, 0, 0, 0, 0] * π
+    angles_13_3 = [0, 0, 0.25, 0, 0, 0] * π
+
+    angles_13 = [angles_13_1, angles_13_2, angles_13_3]
+
+    angles_24_1 = [0, 0.5, 0, 0] * π
+    angles_24_2 = [0, 0, 0, 0, 0] * π
+    angles_24_3 = [0, 0, 0, 0.25, 0, 0] * π
+
+    angles_24 = [angles_24_1, angles_24_2, angles_24_3]
+
+    angles_k2 = [angles_13, angles_24]
+
+    @test all(angles_compound_all[2] .≈ angles_k2)
+
+    angles_14_1 = [0.5, 0, 0, 0] * π
+    angles_14_2 = [0, 0, 0, 0, 0] * π
+    angles_14_3 = [0, 0, 0, 0, 0, 0] * π
+    angles_14_4 = [0, 0, 0, 0.25, 0, 0, 0] * π
+    angles_14 = [angles_14_1, angles_14_2, angles_14_3, angles_14_4]
+
+    angles_k3 = [angles_14]
+
+    @test all(angles_compound_all[3] .≈ angles_k3)
+end
+
 @testset "j_out_single_setup" begin
     N = 8
     M_mod = 14
