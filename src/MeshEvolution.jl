@@ -33,7 +33,7 @@ function shift_timebins_sp(state_vec::SparseVector)
         convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
     new_vec = spzeros(ComplexF64, length(state_vec)+N_LOOPS)
     for j in state_vec.nzind
-        shift_j_sp!(j, state_vec, new_vec)
+        _shift_j_sp!(j, state_vec, new_vec)
    end
 
     return new_vec
@@ -81,7 +81,7 @@ end
 Shift the two-photon coefficient of index `j` from the old `state_vec` with `N` time bins to
 the new, longer `new_vec` state vector with `N + 1` timebins.
 
-See also [`shift_timebins`](@ref), [`shift_j_sp!`](@ref).
+See also [`shift_timebins`](@ref), [`_shift_j_sp!`](@ref).
 """
 function _shift_j!(N, j, state_vec, new_vec)
     l, c , m , k  = j2lcmk(N, j)
@@ -92,14 +92,14 @@ function _shift_j!(N, j, state_vec, new_vec)
 end
 
 """
-    shift_j_sp!(j, state_vec, new_vec)
+    _shift_j_sp!(j, state_vec, new_vec)
 
 Shift the single-photon coefficient of index `j` from the old `state_vec` to the new, longer
 `new_vec` state vector.
 
 See also [`shift_timebins`](@ref), [`_shift_j!`](@ref).
 """
-function shift_j_sp!(j, state_vec, new_vec)
+function _shift_j_sp!(j, state_vec, new_vec)
     l, c  = j2lc(j)
     shifted_j = lc2j(l+c, c)
     new_vec[shifted_j] = state_vec[j]
@@ -330,7 +330,7 @@ function mesh_evolution_sp(initial_state::AbstractMatrix, angles)
 end
 
 """
-iterative_mesh_evolution_sp(input_state, angles)
+_iterative_mesh_evolution_sp(input_state, angles)
 
 Iteratively apply the coin- and bin-shifting operators to the single-photon `input state`
 Vector.
