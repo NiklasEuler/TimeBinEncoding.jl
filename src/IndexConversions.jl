@@ -1,5 +1,6 @@
 export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
 export lcmk2j_identical, j2lcmk_identical
+export lcmk2j_super_identical, j_super2lcmk_identical
 
 
 """
@@ -256,43 +257,26 @@ function j2lcmk_identical(N, j)
 	return l, c, m, k
 end
 
+function j_super2lcmk_identical(N, j_super)
+    N = convert(Int64, N)::Int64
+    j_super = convert(Int64, j_super)::Int64
 
-#= function lcmk2j_identical(N, l, c, m, k)
-    if l == m && c == 1 && k == 0
-        throw(ArgumentError("For identical time bins, the loop indices must be ordered due
-        to indistinguishability."))
-    end
+    d_hilbert_space = N * (2 * N + 1)
+    j1, j2 = j2lm(d_hilbert_space, j_super)
+    l1, c1 , m1 , k1  = j2lcmk_identical(N, j1 + 1) # +1 for 1-based indexing
+    l2, c2 , m2 , k2  = j2lcmk_identical(N, j2 + 1) # +1 for 1-based indexing
 
-    j = lcmk2j(N, l, c, m, k)
-
-    idx_correction = -1 * l
-    # for each timebin there is one less possible index due to indistinguishability
-
-    if m ≥ l && c == 1 # possibly one additional index shift in current m cycle
-        idx_correction -= 1
-    end
-
-    return Int(j + idx_correction)
+    return l1, c1, m1, k1, l2, c2, m2, k2
 
 end
 
-function j2lcmk_identical(N, j)
+function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
 
-    l_temp, c_temp, m_temp, k_temp = j2lcmk(N, j)
-    idx_correction = l_temp
-    # for each timebin there is one less possible index due to indistinguishability
+    j1 = lcmk2j_identical(N, l1, c1, m1, k1)
+    j2 = lcmk2j_identical(N, l2, c2, m2, k2)
 
-    l_temp, c_temp, m_temp, k_temp = j2lcmk(N, j + idx_correction)
-    # correct for clear shift at this point
+    d_hilbert_space = N * (2 * N + 1)
+    j_super = lm2j(d_hilbert_space, j1 - 1, j2 - 1) # -1 for 0-based indexing
 
-    idx_correction = l_temp # update in case of correction pushing over l_temp
-
-    if m_temp ≥ l_temp && c_temp == 1
-    # possibly one additional index shift in current m cycle
-        idx_correction += 1
-    end
-
-    l, c, m, k = j2lcmk(N, j + idx_correction) # final indices
-	return l, c,  m, k
+    return j_super
 end
-=#

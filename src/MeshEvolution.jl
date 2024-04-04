@@ -7,6 +7,8 @@ export phase_on_density_matrix
 export coin_operator_sp_identical, coin_operator_identical
 export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
 export mesh_evolution_sp_identical
+export mesh_evolution_identical
+
 
 """
     shift_timebins_sp(state_vec::Vector)
@@ -440,8 +442,6 @@ function shift_timebins_sp_identical(state_vec::SparseVector)
     return new_vec
 end
 
-
-
 function _shift_j_sp_identical!(N, j, state_vec, new_vec)
     l, c , m , k  = j2lcmk_identical(N, j)
     l_shift = l + c
@@ -457,7 +457,58 @@ function _shift_j_sp_identical!(N, j, state_vec, new_vec)
     return nothing
 end
 
+function shift_timebins end
 
+function shift_timebins_identical(state_vec::Vector)
+    d_hilbert_space = Int(sqrt(length(state_vec)))
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
+    d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1)) # square for two species
+    new_vec = zeros(ComplexF64, d_hilbert_space_shifted^2)
+    for j_super in eachindex(state_vec)
+        _shift_j_identical!(N, j_super, state_vec, new_vec)
+   end
+
+    return new_vec
+end
+
+function shift_timebins_identical(state_vec::SparseVector)
+    d_hilbert_space = Int(sqrt(length(state_vec)))
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    state_vec =
+        convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
+    d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1))
+    new_vec = spzeros(ComplexF64, d_hilbert_space_shifted^2)
+    for j_super in state_vec.nzind
+        _shift_j_identical!(N, j_super, state_vec, new_vec)
+    end
+
+    return new_vec
+end
+
+function _shift_j_identical!(N, j_super, state_vec, new_vec)
+    l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N, j_super)
+    l_shift1 = l1 + c1
+    m_shift1 = m1 + k1
+    if l_shift1 == m_shift1 && c1 > k1
+        j_shift1 = lcmk2j_identical(N + 1, l_shift1, k1, m_shift1, c1)
+    else
+        j_shift1 = lcmk2j_identical(N + 1, l_shift1, c1, m_shift1, k1)
+    end
+    l_shift2 = l2 + c2
+    m_shift2 = m2 + k2
+    if l_shift2 == m_shift2 && c2 > k2
+        j_shift2 = lcmk2j_identical(N + 1, l_shift2, k2, m_shift2, c2)
+    else
+        j_shift2 = lcmk2j_identical(N + 1, l_shift2, c2, m_shift2, k2)
+    end
+    d_hilbert_space_shift = (N + 1) * (2 * (N + 1) + 1)
+    j_shift = lm2j(d_hilbert_space_shift, j_shift1, j_shift2)
+    # adapted system has one more time bin, so we need to put N + 1
+    new_vec[j_shift] = state_vec[j_super]
+
+    return nothing
+end
 
 function shift_timebins_operator_sp_identical(N)
     N = convert(Int64, N)::Int64
@@ -468,7 +519,7 @@ function shift_timebins_operator_sp_identical(N)
         spzeros(Int64, d_hilbert_space_shifted, d_hilbert_space_shifted)
 
 	for j in 1:d_hilbert_space
-        l,c,m,k = j2lcmk_identical(N, j)
+        l, c, m, k = j2lcmk_identical(N, j)
         l_shift = l + c
         m_shift = m + k
         if l_shift  == m_shift && c > k
@@ -535,6 +586,67 @@ function _iterative_mesh_evolution_sp_identical(state::AbstractMatrix, angles)
         coin_op = coin_operator_sp_identical(angles[i])
         shift_op = shift_timebins_operator_sp_identical(length(angles[i]))
 
+        state = coin_op * state * coin_op' # apply beam splitters
+        state = shift_op * state * shift_op' # apply time-bin shift operator
+   end
+
+    return state
+end
+
+function mesh_evolution_identical end
+
+function mesh_evolution_identical(initial_state::Vector, angles)
+    state = convert(Vector{ComplexF64}, initial_state)::Vector{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_identical(state, angles)
+    return state::Vector{ComplexF64}
+end
+
+function mesh_evolution_identical(initial_state::SparseVector, angles)
+    state =
+    convert(SparseVector{ComplexF64, Int64}, initial_state)::SparseVector{ComplexF64, Int64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_identical(state, angles)
+    return state::SparseVector{ComplexF64, Int64}
+end
+
+function mesh_evolution_identical(initial_state, angles)
+    state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_identical(state, angles)
+    return state
+end
+
+"""
+    _iterative_mesh_evolution(input_state, angles)
+
+Iteratively apply the coin- and bin-shifting operators to the two-photon `input state`
+object.
+
+The `input state` argument can be both a wave function in form of a Vector or SparseVector
+or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
+`state` matches the type of `input_state`. The internal numerics are type-specialized too.
+
+See also [`mesh_evolution`](@ref), [`iterative_mesh_evolution_sp`](@ref).
+"""
+function _iterative_mesh_evolution end
+
+function _iterative_mesh_evolution_identical(input_state::AbstractVector, angles)
+    state = copy(input_state)
+    for i in eachindex(angles)
+        coin_op = coin_operator_identical(angles[i])
+        state = coin_op * state # apply beam splitters
+        state = shift_timebins_identical(state) # shift time bins accordingly
+   end
+
+    return state
+end
+
+function _iterative_mesh_evolution_identical(input_state::AbstractMatrix, angles)
+    state = copy(input_state)
+    for i in eachindex(angles)
+        coin_op = coin_operator_identical(angles[i])
+        shift_op = shift_timebins_operator_identical(length(angles[i]))
         state = coin_op * state * coin_op' # apply beam splitters
         state = shift_op * state * shift_op' # apply time-bin shift operator
    end
