@@ -2,6 +2,7 @@ export coherence_extraction
 export j_out_phase_estimation, initial_state_phase_estimation, pops_fs_phase_estimation
 export j_out_compound, coherence_extraction_compound, pops_fs_compound
 export j_out_single_setup
+export coherence_extraction_identical
 
 
 """
@@ -308,4 +309,78 @@ function j_out_single_setup(N)
 	j_long = [lcmk2j(N + M, i, 1, i, 1) for i in N - 1 + N_half:2 * (N - 1)]
 	j_arr = append!(j_short, j_long)
     return j_arr
+end
+
+
+function coherence_extraction_identical(
+    N,
+    j_out,
+    pops_init,
+    pop_fs,
+    angles,
+    contr_j_idxs=correlated_short_bins_idxs_identical(N),
+    projector_weights=ones(Float64, length(j_out));
+    extract_diagonal::Bool=true
+)
+    N = convert(Int64, N)::Int64
+    j_out = try
+		convert(Vector{Int64}, j_out)::Vector{Int64}
+	catch
+		convert(Int64, j_out)::Int64
+	end
+
+    projector_weights = try
+		convert(Vector{Int64}, j_out)::Vector{Int64}
+	catch
+		convert(Int64, j_out)::Int64
+	end
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map_identical(j_out, angles, projector_weights)
+        # extraction based on assumed ideal angles
+    @argcheck weights ≠ []
+
+	extracted_coherence = []
+    extracted_weights = Float64[]
+
+    for idx in eachindex(j1_arr)
+		j1 = j1_arr[idx]
+		j2 = j2_arr[idx]
+		if j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2)
+            # check whether both j1 and j2 are correlated time bins
+			push!(extracted_coherence, (j1, j2))
+            # relevant coherence, so indices saved to list of extracted coherences.
+            push!(extracted_weights, weights[idx])
+		elseif j1 == j2
+			pop_fs -= pops_init[j1] * weights[idx]
+            # non-contributing population. Can be removed exactly as exact value is known.
+		else
+			pop_fs -= sqrt(pops_init[j1]*pops_init[j2]) * abs(weights[idx])
+            # subtract non-contributing coherence bound.
+		end
+	end
+
+    @argcheck extracted_weights ≠ []
+
+    n_contr_sched = length(contr_j_idxs)
+    n_extracted = length(extracted_weights)
+
+    if (n_extracted != n_contr_sched^2 && extract_diagonal) ||
+         (n_extracted != n_contr_sched * (n_contr_sched - 1) && !extract_diagonal)
+        @warn "Some of the scheduled coherences have a vanishing weight in the given "*
+        "final-state projectors. Please check again and consider adapting the scheduled "*
+        "coherences in `contr_j_idxs`."
+    end
+
+    if !all(extracted_weights .≈ extracted_weights[1])
+        throw(ArgumentError("The coherences scheduled for extraction have differing "*
+        "weights in the chosen final-state projectors and can thus not straight-forwardly "*
+        "be extracted. Please check input again."))
+    else
+        norm = extracted_weights[1]
+    end
+
+	pop_fs /= norm # normalization of the extracted coherences
+	return convert(Float64, pop_fs)#, extracted_coherence
 end

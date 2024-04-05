@@ -97,7 +97,7 @@ See also [`density_matrix`](@ref), [`white_noise`](@ref).
 function density_matrix_dephased(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     ϵ = convert(Float64, ϵ)::Float64
-    N = Int64(length(Ψ))::Int64
+    N = Int64(sqrt(length(Ψ)) / N_LOOPS)::Int64
 
     @argcheck ϵ ≥ 0
     @argcheck ϵ ≤ 1

@@ -503,7 +503,7 @@ function _shift_j_identical!(N, j_super, state_vec, new_vec)
         j_shift2 = lcmk2j_identical(N + 1, l_shift2, c2, m_shift2, k2)
     end
     d_hilbert_space_shift = (N + 1) * (2 * (N + 1) + 1)
-    j_shift = lm2j(d_hilbert_space_shift, j_shift1, j_shift2)
+    j_shift = lm2j(d_hilbert_space_shift, j_shift1 - 1, j_shift2 - 1)
     # adapted system has one more time bin, so we need to put N + 1
     new_vec[j_shift] = state_vec[j_super]
 
@@ -617,18 +617,7 @@ function mesh_evolution_identical(initial_state, angles)
     return state
 end
 
-"""
-    _iterative_mesh_evolution(input_state, angles)
 
-Iteratively apply the coin- and bin-shifting operators to the two-photon `input state`
-object.
-
-The `input state` argument can be both a wave function in form of a Vector or SparseVector
-or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
-`state` matches the type of `input_state`. The internal numerics are type-specialized too.
-
-See also [`mesh_evolution`](@ref), [`iterative_mesh_evolution_sp`](@ref).
-"""
 function _iterative_mesh_evolution end
 
 function _iterative_mesh_evolution_identical(input_state::AbstractVector, angles)

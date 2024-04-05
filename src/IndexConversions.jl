@@ -1,6 +1,6 @@
 export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
 export lcmk2j_identical, j2lcmk_identical
-export lcmk2j_super_identical, j_super2lcmk_identical
+export lcmk2j_super_identical, j_super2lcmk_identical, correlated_short_bins_idxs_identical
 
 
 """
@@ -191,6 +191,19 @@ function correlated_short_bins_idxs(N)
     N = convert(Int64, N)::Int64
 
     contr_j_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
+    return contr_j_idxs
+end
+
+function correlated_short_bins_idxs_identical(N)
+    contr_j_idxs = Int64[]
+    N = convert(Int64, N)::Int64
+
+    for i in 0:N - 1
+        for j in i:N - 1
+            push!(contr_j_idxs, lcmk2j_super_identical(N, i, 0, j, 0, i, 0, j, 0))
+        end
+    end
+
     return contr_j_idxs
 end
 
