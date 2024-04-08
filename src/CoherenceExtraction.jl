@@ -318,7 +318,7 @@ function coherence_extraction_identical(
     pops_init,
     pop_fs,
     angles,
-    contr_j_idxs=correlated_short_bins_idxs_identical(N),
+    contr_j_tuples=correlated_short_bins_tuples_identical(N),
     projector_weights=ones(Float64, length(j_out));
     extract_diagonal::Bool=true
 )
@@ -330,10 +330,11 @@ function coherence_extraction_identical(
 	end
 
     projector_weights = try
-		convert(Vector{Int64}, j_out)::Vector{Int64}
+		convert(Vector{Float64}, projector_weights)::Vector{Float64}
 	catch
-		convert(Int64, j_out)::Int64
+		convert(Float64, projector_weights)::Float64
 	end
+
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
 
     j1_arr, j2_arr, weights =
@@ -347,7 +348,7 @@ function coherence_extraction_identical(
     for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2)
+		if (j1,j2) in contr_j_tuples && (extract_diagonal || j1 ≠ j2)
             # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence, (j1, j2))
             # relevant coherence, so indices saved to list of extracted coherences.
@@ -357,20 +358,28 @@ function coherence_extraction_identical(
             # non-contributing population. Can be removed exactly as exact value is known.
 		else
 			pop_fs -= sqrt(pops_init[j1]*pops_init[j2]) * abs(weights[idx])
+            if sqrt(pops_init[j1]*pops_init[j2]) * abs(weights[idx]) != 0.0
+
+                #println(
+                    #"Subtracting: (",j1, " ", j2, ") ", sqrt(pops_init[j1]*pops_init[j2]) *
+                    #abs(weights[idx])
+                #)
+            end
             # subtract non-contributing coherence bound.
 		end
 	end
 
     @argcheck extracted_weights ≠ []
 
-    n_contr_sched = length(contr_j_idxs)
+    n_contr_sched = length(contr_j_tuples)
     n_extracted = length(extracted_weights)
 
-    if (n_extracted != n_contr_sched^2 && extract_diagonal) ||
-         (n_extracted != n_contr_sched * (n_contr_sched - 1) && !extract_diagonal)
+    #println(extracted_weights)
+
+    if (n_extracted != n_contr_sched )
         @warn "Some of the scheduled coherences have a vanishing weight in the given "*
         "final-state projectors. Please check again and consider adapting the scheduled "*
-        "coherences in `contr_j_idxs`."
+        "coherences in `contr_j_tuples`."
     end
 
     if !all(extracted_weights .≈ extracted_weights[1])
@@ -380,6 +389,8 @@ function coherence_extraction_identical(
     else
         norm = extracted_weights[1]
     end
+
+    #println(extracted_coherence)
 
 	pop_fs /= norm # normalization of the extracted coherences
 	return convert(Float64, pop_fs)#, extracted_coherence
