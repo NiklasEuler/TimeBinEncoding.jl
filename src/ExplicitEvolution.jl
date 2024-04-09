@@ -422,6 +422,8 @@ function _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles)
     m1_init_max = min(N - 1, m1)
     l2_init_max = min(N - 1, l2)
     m2_init_max = min(N - 1, m2)
+    # due to symmetry in the two species, could consider only one half of the states
+    # would have to consider (j1, j2) and (j2, j1) in the end
 
     for l1_init in l1_init_min:l1_init_max, m1_init in l1_init:m1_init_max
         for l2_init in l2_init_min:l2_init_max, m2_init in l2_init:m2_init_max

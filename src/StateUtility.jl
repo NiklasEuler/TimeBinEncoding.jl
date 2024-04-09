@@ -172,14 +172,16 @@ end
 
 function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
-    ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
+    #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
+    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
     for l in 0:N - 1, m in l:N - 1
         for p in 0:N - 1, q in p:N - 1
             j = lcmk2j_super_identical(N, l, 0, m, 0, p, 0, q, 0)
-            ρ_noise[j, j] = 1
+            ρ_diag[j] = 1
         end
    end
-   ρ_noise /= sum(diag(ρ_noise))
+   ρ_diag /= sum(ρ_diag)
+   ρ_noise = Diagonal(ρ_diag)
 
    return ρ_noise
 end
