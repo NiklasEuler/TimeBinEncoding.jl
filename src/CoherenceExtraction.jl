@@ -329,12 +329,15 @@ function coherence_extraction_identical(
 		convert(Int64, j_out)::Int64
 	end
 
+    if length(j_out) == 1
+        projector_weights = projector_weights[1]
+    end
+
     projector_weights = try
 		convert(Vector{Float64}, projector_weights)::Vector{Float64}
 	catch
 		convert(Float64, projector_weights)::Float64
 	end
-
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
 
     j1_arr, j2_arr, weights =
@@ -344,7 +347,6 @@ function coherence_extraction_identical(
 
 	extracted_coherence = []
     extracted_weights = Float64[]
-
     for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
@@ -374,8 +376,6 @@ function coherence_extraction_identical(
     n_contr_sched = length(contr_j_tuples)
     n_extracted = length(extracted_weights)
 
-    #println(extracted_weights)
-
     if (n_extracted != n_contr_sched )
         @warn "Some of the scheduled coherences have a vanishing weight in the given "*
         "final-state projectors. Please check again and consider adapting the scheduled "*
@@ -383,15 +383,18 @@ function coherence_extraction_identical(
     end
 
     if !all(extracted_weights .≈ extracted_weights[1])
-        throw(ArgumentError("The coherences scheduled for extraction have differing "*
+        @warn "The coherences scheduled for extraction have differing "*
         "weights in the chosen final-state projectors and can thus not straight-forwardly "*
-        "be extracted. Please check input again."))
+        "be extracted. Please check input again."
+        norm = 1 #minimum(extracted_weights) #maximum(extracted_weights)
+        # solution for now, but not ideal.
+        # Better solution would compute sensible normalization.
     else
         norm = extracted_weights[1]
     end
 
-    #println(extracted_coherence)
 
 	pop_fs /= norm # normalization of the extracted coherences
+
 	return convert(Float64, pop_fs)#, extracted_coherence
 end
