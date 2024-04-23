@@ -73,40 +73,72 @@ end
 
 function visualize_measurement_coherence_map end
 
-function visualize_measurement_coherence_map(j_out::Int64, angles, extract_diagonal=true)
+function visualize_measurement_coherence_map(
+    j_out::Int64, angles, extract_diagonal=true, off_l=0, off_m=0)
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
     j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out, angles)
 
+    if(off_l != 0 || off_m != 0)
+        println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
+    end
+
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
 	println("⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
         l_out, " ", c_out, " ", m_out, " ", k_out, "⟩ ="
     )
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, off_l, off_m)
     return nothing
 end
 
 function visualize_measurement_coherence_map(
-    j_out_arr::Vector{Int64}, angles, extract_diagonal=true
+    j_out_arr::Vector{Int64},
+    angles,
+    extract_diagonal=true,
+    projector_weights=ones(Float64, length(j_out_arr)),
+    off_l=0,
+    off_m=0
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
-    j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out_arr, angles)
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map(j_out_arr, angles, projector_weights)
 
-    for j_out in j_out_arr
+    if(off_l != 0 || off_m != 0)
+        println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
+    end
+
+    for (j_idx, j_out) in enumerate(j_out_arr)
         l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
-        println("+⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
-            l_out, " ", c_out, " ", m_out, " ", k_out, "⟩"
+        c_str = c_out == 0 ? "S" : "L"
+        k_str = k_out == 0 ? "S" : "L"
+        sign_str = sign(projector_weights[j_idx]) == 1 ? "+" : "-"
+        prefactor_str = sign_str * " " * string(abs(projector_weights[j_idx]))
+
+        println(prefactor_str, " ⟨", l_out, " ", c_str, " ", m_out, " ", k_str,
+            "|(SC)^M ρ (C^†S^†)^M) |", l_out, " ", c_str, " ", m_out, " ", k_str, "⟩"
         )
     end
+
     println("=")
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, off_l, off_m)
+
     return nothing
 end
 
-function _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
+
+
+function _visualize_coherence(
+    N,
+    j1_arr,
+    j2_arr,
+    weights,
+    extract_diagonal=true,
+    off_l=0,
+    off_m=0
+)
     contr_j_idxs = correlated_short_bins_idxs(N)
     extractable_correlated_coherences = []
     display_weights = round.(Real.(weights), digits=5)
@@ -116,6 +148,18 @@ function _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
         j2 = j2_arr[i]
 		l1, c1, m1, k1 = j2lcmk(N, j1)
 		l2, c2, m2, k2 = j2lcmk(N, j2)
+
+        l1 -= off_l
+        l2 -= off_l
+        m1 -= off_m
+        m2 -= off_m
+        if(l1 < 0 || l2 < 0 || m1 < 0 || m2 < 0)
+            continue
+        end
+
+        j1 = lcmk2j(N, l1, c1, m1, k1)
+        j2 = lcmk2j(N, l2, c2, m2, k2)
+
         if(j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2))
             push!(extractable_correlated_coherences, i)
         end
@@ -127,7 +171,9 @@ function _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal=true)
         j2 = j2_arr[i]
 		l1, c1, m1, k1 = j2lcmk(N, j1)
 		l2, c2, m2, k2 = j2lcmk(N, j2)
-        println("+ ρ_[", l1, " ", m1, "]^[", l2, " ", m2, "] ⋅ ", display_weights[i])
+        println("+ ρ_[", l1 - off_l, " ", m1 - off_m, "]^[", l2 - off_l, " ", m2 - off_m,
+            "] ⋅ ", display_weights[i]
+        )
    end
 
     return nothing
@@ -177,6 +223,7 @@ function visualize_measurement_coherence_map_identical(
         k2_str = k2 == 0 ? "S" : "L"
         sign_str = sign(projector_weights[j_idx]) == 1 ? "+" : "-"
         prefactor_str = sign_str * " " * string(abs(projector_weights[j_idx]))
+
         println(prefactor_str, " ⟨", l1, " ", c1_str, " ", m1, " ", k1_str, " ", l2, " ",
             c2_str, " ", m2, " ", k2_str, "|(SC)^M ρ (C^†S^†)^M) |", l1, " ", c1_str, " ",
             m1, " ", k1_str, " ", l2," ", c2_str, " ", m2, " ", k2_str, "⟩ ="

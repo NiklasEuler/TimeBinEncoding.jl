@@ -269,8 +269,13 @@ function explicit_state_evolution(Ψ_init::AbstractVector, angles)
 end
 
 """
-    explicit_fs_coherence_map(j_out::Int64, angles)
-    explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
+    explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
+    explicit_fs_coherence_map(
+        j_out_arr::Vector{Int64},
+        angles,
+        projector_weights=projector_weights=ones(Float64, length(j_out_arr)),
+
+    )
 
 Compute the indicies and weights of all initial-state coherences that contribute to the two-
 photon state corresponding to `j_out` in the |lcmk⟩⟨l'c'm'k'|`
@@ -295,17 +300,23 @@ See also [`explicit_fs_pop`](@ref), [`explicit_fs_projection`](@ref).
 """
 function explicit_fs_coherence_map end
 
-function explicit_fs_coherence_map(j_out::Int64, angles)
+function explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles)
     n_contr = length(j_idx_arr_contr)
     j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
     j2_arr = repeat(j_idx_arr_contr, n_contr)
-    weights = kron(coeff_arr, conj.(coeff_arr))
+    weights = kron(coeff_arr, conj.(coeff_arr)) * projector_weight
     return j1_arr, j2_arr, weights
 end
 
-function explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
+function explicit_fs_coherence_map(
+    j_out_arr::Vector{Int64},
+    angles,
+    projector_weights=ones(Float64, length(j_out_arr))
+)
+    @argcheck length(j_out_arr) == length(projector_weights)
+
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     #M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
@@ -314,14 +325,14 @@ function explicit_fs_coherence_map(j_out_arr::Vector{Int64}, angles)
     j2_arr = Int64[]
     weights = ComplexF64[]
     weight_vec = SparseVector(d_hilbert_space^2, Int64[], ComplexF64[])
-    for j_out in j_out_arr
+    for (projector_idx, j_out) in enumerate(j_out_arr)
         j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles)
         for (idx1, j1) in enumerate(j_idx_arr_contr)
             for (idx2, j2) in enumerate(j_idx_arr_contr)
                 weight = kron(coeff_arr[idx1], conj(coeff_arr[idx2]))
                 j_coh = lm2j(d_hilbert_space, j1 - 1, j2 - 1)
                 # convert to one index notation
-                weight_vec[j_coh] += weight
+                weight_vec[j_coh] += weight * projector_weights[projector_idx]
             end
         end
     end

@@ -1,7 +1,6 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
-export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
-
+export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins_04
 """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
@@ -241,14 +240,6 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
     return nothing
 end
 
-function angles4bins(N, l, m, p, q)
-    angles_01 = angles4bins_01(N, l, m, p, q)
-    angles_02 = angles4bins_02(N, l, m, p, q)
-    angles_03 = angles4bins_03(N, l, m, p, q)
-    return angles_01, angles_02, angles_03
-
-end
-
 function angles4bins_01(N, l, m, p, q)
 	angles = [zeros(i) for i in N:N + q - l]
 	angles[1][[l + 1, p + 1]] .= 0.5
@@ -278,4 +269,12 @@ function angles4bins_03(N, l, m, p, q)
 	angles[end][q + 1] = 0.25
 	angles *= π
 	return angles
+end
+
+function angles4bins(N, l, m, p, q)
+    angles_01 = angles4bins_01(N, l, m, p, q)
+    angles_02 = angles4bins_02(N, l, m, p, q)
+    angles_03 = angles4bins_03(N, l, m, p, q)
+
+    return angles_01, angles_02, angles_03
 end
