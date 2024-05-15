@@ -80,7 +80,7 @@ function visualize_measurement_coherence_map(
 
     j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out, angles)
 
-    if(off_l != 0 || off_m != 0)
+    if off_l != 0 || off_m != 0
         println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
     end
 

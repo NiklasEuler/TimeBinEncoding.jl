@@ -144,6 +144,7 @@ end
 
 """
     explicit_fs_projection(j_out, angles)
+    explicit_fs_projection(j_out, angles, phases)
 
 Compute the indicies and weights of all initial states that contribute to the two-photon
 state corresponding to index `j_out` in the |lcmk⟩` basis after evolution by `angles`.
@@ -154,6 +155,9 @@ based on [`_explicit_fs_projection_symbolic_backend`](@ref). This is done as the
 implementation is faster for large `M` and uses less Memory, but performs worse for smaller
 systems.
 
+If `phases` is given, the coefficients of the initial state are multiplied by the corre-
+sponding phase factors.
+
 # Returns
 - `j_idx_arr_contr`: vector of `j` indices with nonzero contribution to `|lcmk⟩` after
     evolution.
@@ -163,29 +167,41 @@ systems.
 See also [`explicit_fs_projection_sp`](@ref), [`explicit_ket_evolution`](@ref),
 [`explicit_fs_coherence_map`](@ref).
 """
-function explicit_fs_projection(j_out, angles)
+function explicit_fs_projection end
+
+function explicit_fs_projection(j_out, angles, phases)
     j_out = convert(Int64, j_out)::Int64 # two-photon bin index in the |l, c , m , k > basis
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     M = length(angles) # number of roundtrips
     N = length(angles[1]) # initial number of time bins
     if M ≤ 6 # symbolic backend is faster, but too memory intensive for too many iterations
-        return _explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
+        return _explicit_fs_projection_symbolic_backend(N, M, j_out, angles, phases)
     else
-        return _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
+        return _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases)
     end
 end
 
-function _explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
+function explicit_fs_projection(j_out, angles)
+    N = length(angles[1]) # initial number of time bins
+    phases = ones(Float64, N)
+    return explicit_fs_projection(j_out, angles, phases)
+end
+
+
+function _explicit_fs_projection_symbolic_backend(
+    N, M, j_out, angles, phases=ones(Float64, N)
+)
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
 
     j_idx_arr_l, coeff_arr_l = explicit_fs_projection_sp(l_out, c_out, angles)
     j_idx_arr_m, coeff_arr_m = explicit_fs_projection_sp(m_out, k_out, angles)
     j_idx_arr_contr, coeff_arr =
-        _sp_2_two_photon(N, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+        _sp_2_two_photon(N, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m, phases)
     return j_idx_arr_contr, coeff_arr
 end
 
-function _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
+function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
+    @argcheck abs2.(phases) ≈ ones(Float64, N)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
@@ -207,7 +223,7 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
         j_init = lcmk2j(N, l_init, 0, m_init, 0)
         #single_ket = zeros(ComplexF64, N_LOOPS2 * N^2)
         single_ket = spzeros(ComplexF64, N_LOOPS2 * N^2)
-        single_ket[j_init] = 1.0
+        single_ket[j_init] = phases[l_init + 1] * phases[m_init + 1]
         single_ket_evolved = mesh_evolution(single_ket, angles)
         coeff = single_ket_evolved[j_out]
         if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
@@ -219,15 +235,18 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
     return j_idx_arr_contr, coeff_arr
 end
 
-function _sp_2_two_photon(n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m)
+function _sp_2_two_photon(
+    n_bins, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m, phases=ones(Float64, n_bins)
+)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
+    @argcheck abs2.(phases) ≈ ones(Float64, n_bins)
     for (idxl, jl) in enumerate(j_idx_arr_l)
         l, c  = j2lc(jl)
         for (idxm, jm) in enumerate(j_idx_arr_m)
             m, k  = j2lc(jm)
             j = lcmk2j(n_bins, l, c, m, k)
-            coeff = coeff_arr_l[idxl] * coeff_arr_m[idxm]
+            coeff = coeff_arr_l[idxl] * coeff_arr_m[idxm] * phases[l + 1] * phases[m + 1]
             if coeff ≠ 0
                 push!(coeff_arr, coeff)
                 push!(j_idx_arr_contr, j)
@@ -300,13 +319,21 @@ See also [`explicit_fs_pop`](@ref), [`explicit_fs_projection`](@ref).
 """
 function explicit_fs_coherence_map end
 
-function explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
+function explicit_fs_coherence_map(j_out::Int64, angles, phases::Vector, projector_weight=1)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles)
+    j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
     n_contr = length(j_idx_arr_contr)
     j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
     j2_arr = repeat(j_idx_arr_contr, n_contr)
     weights = kron(coeff_arr, conj.(coeff_arr)) * projector_weight
+    return j1_arr, j2_arr, weights
+end
+
+function explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
+    N = length(angles[1]) # initial number of time bins
+    phases = ones(Float64, N)
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map(j_out, angles, phases, projector_weight)
     return j1_arr, j2_arr, weights
 end
 
