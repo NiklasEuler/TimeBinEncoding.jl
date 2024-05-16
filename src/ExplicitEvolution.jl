@@ -288,17 +288,25 @@ function explicit_state_evolution(Ψ_init::AbstractVector, angles)
 end
 
 """
-    explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
+    explicit_fs_coherence_map(
+        j_out::Int64,
+        angles,
+        projector_weight=1
+        phases=ones(Float64, length(angles[1])),
+    )
     explicit_fs_coherence_map(
         j_out_arr::Vector{Int64},
         angles,
-        projector_weights=projector_weights=ones(Float64, length(j_out_arr)),
-
+        projector_weights=ones(Float64, length(j_out_arr)),
+        phases=ones(Float64, length(angles[1])),
     )
 
 Compute the indicies and weights of all initial-state coherences that contribute to the two-
 photon state corresponding to `j_out` in the |lcmk⟩⟨l'c'm'k'|`
 basis after evolution by `angles`.
+
+When `phases` is given, the coherences of the inital state are multiplied by the corre-
+sponding phase factors."
 
 Depending on the number of roundtrips, either a fully numerical backend based on the mesh
 evolution or a analytical backend is used, see [`explicit_fs_projection`](@ref). If
@@ -319,29 +327,31 @@ See also [`explicit_fs_pop`](@ref), [`explicit_fs_projection`](@ref).
 """
 function explicit_fs_coherence_map end
 
-function explicit_fs_coherence_map(j_out::Int64, angles, phases::Vector, projector_weight=1)
+function explicit_fs_coherence_map(j_out::Int64, angles, phases::Vector)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
     n_contr = length(j_idx_arr_contr)
     j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
     j2_arr = repeat(j_idx_arr_contr, n_contr)
-    weights = kron(coeff_arr, conj.(coeff_arr)) * projector_weight
+    weights = kron(coeff_arr, conj.(coeff_arr))
     return j1_arr, j2_arr, weights
 end
 
-function explicit_fs_coherence_map(j_out::Int64, angles, projector_weight=1)
+function explicit_fs_coherence_map(j_out::Int64, angles)
     N = length(angles[1]) # initial number of time bins
     phases = ones(Float64, N)
     j1_arr, j2_arr, weights =
-        explicit_fs_coherence_map(j_out, angles, phases, projector_weight)
+        explicit_fs_coherence_map(j_out, angles, phases)
     return j1_arr, j2_arr, weights
 end
 
 function explicit_fs_coherence_map(
     j_out_arr::Vector{Int64},
     angles,
-    projector_weights=ones(Float64, length(j_out_arr))
+    projector_weights=ones(Float64, length(j_out_arr)),
+    phases=ones(Float64, length(angles[1]))
 )
+    @argcheck length(phases) == length(angles[1])
     @argcheck length(j_out_arr) == length(projector_weights)
 
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
@@ -353,7 +363,7 @@ function explicit_fs_coherence_map(
     weights = ComplexF64[]
     weight_vec = SparseVector(d_hilbert_space^2, Int64[], ComplexF64[])
     for (projector_idx, j_out) in enumerate(j_out_arr)
-        j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles)
+        j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
         for (idx1, j1) in enumerate(j_idx_arr_contr)
             for (idx2, j2) in enumerate(j_idx_arr_contr)
                 weight = kron(coeff_arr[idx1], conj(coeff_arr[idx2]))
@@ -363,6 +373,7 @@ function explicit_fs_coherence_map(
             end
         end
     end
+
     for j_coh in weight_vec.nzind
         j1, j2 = j2lm(d_hilbert_space, j_coh)
         j1 += 1 # correct for base 1 indexing

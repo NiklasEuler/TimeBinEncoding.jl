@@ -74,11 +74,17 @@ end
 function visualize_measurement_coherence_map end
 
 function visualize_measurement_coherence_map(
-    j_out::Int64, angles, extract_diagonal=true, off_l=0, off_m=0)
+    j_out::Int64,
+    angles,
+    extract_diagonal=true,
+    phases=ones(Float64, length(angles[1]))::Vector,
+    off_l=0,
+    off_m=0,
+)
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
-    j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out, angles)
+    j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out, angles, phases)
 
     if off_l != 0 || off_m != 0
         println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
@@ -88,7 +94,7 @@ function visualize_measurement_coherence_map(
 	println("⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
         l_out, " ", c_out, " ", m_out, " ", k_out, "⟩ ="
     )
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, off_l, off_m)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
     return nothing
 end
 
@@ -97,6 +103,7 @@ function visualize_measurement_coherence_map(
     angles,
     extract_diagonal=true,
     projector_weights=ones(Float64, length(j_out_arr)),
+    phases=ones(Float64, length(angles[1]))::Vector,
     off_l=0,
     off_m=0
 )
@@ -104,7 +111,7 @@ function visualize_measurement_coherence_map(
     N = length(angles[1]) # initial number of time bins
 
     j1_arr, j2_arr, weights =
-        explicit_fs_coherence_map(j_out_arr, angles, projector_weights)
+        explicit_fs_coherence_map(j_out_arr, angles, projector_weights, phases)
 
     if(off_l != 0 || off_m != 0)
         println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
@@ -123,7 +130,7 @@ function visualize_measurement_coherence_map(
     end
 
     println("=")
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, off_l, off_m)
+    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
 
     return nothing
 end
@@ -136,12 +143,18 @@ function _visualize_coherence(
     j2_arr,
     weights,
     extract_diagonal=true,
+    phases=ones(Float64, N),
     off_l=0,
     off_m=0
 )
     contr_j_idxs = correlated_short_bins_idxs(N)
     extractable_correlated_coherences = []
-    display_weights = round.(Real.(weights), digits=5)
+    if phases == ones(Float64, N)
+        display_weights = round.(Real.(weights), digits=5)
+    else
+        display_weights = round.(weights, digits=5)
+    end
+
 
 	for i in eachindex(j1_arr)
         j1 = j1_arr[i]
@@ -153,7 +166,14 @@ function _visualize_coherence(
         l2 -= off_l
         m1 -= off_m
         m2 -= off_m
-        if(l1 < 0 || l2 < 0 || m1 < 0 || m2 < 0)
+
+        if l1 < 0 || l2 < 0 || m1 < 0 || m2 < 0
+            continue
+        end
+        if l1 >= N - off_m || l2 >= N - off_m
+            continue
+        end
+        if m1 >= N - off_l || m2 >= N - off_l
             continue
         end
 
