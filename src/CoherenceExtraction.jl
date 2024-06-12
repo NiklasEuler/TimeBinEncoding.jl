@@ -36,7 +36,7 @@ See also [`coherence_extraction_compound`](@ref).
 function coherence_extraction(
     N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
     extract_diagonal::Bool=true
-)
+) # CHANGE add projector weights
     N = convert(Int64, N)::Int64
     j_out = try
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -207,6 +207,7 @@ series of different mesh setups.
 See also [`coherence_extraction`](@ref), [`noisy_angles_symmetric`](@ref).
 """
 function coherence_extraction_compound(pops_init, pops_fs_all)
+    #CHANGE add projector weights
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))::Int64
     extract_diagonal = false
 
@@ -254,7 +255,7 @@ in the outermost layer.
 See also [`angles_compound`](@ref), [`coherence_extraction_compound`](@ref),
 [`j_out_single_setup`](@ref).
 """
-function j_out_compound(N)
+function j_out_compound(N) # CHANGE
     j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
         for i in k:1:N - 1] for k in 1:N - 1] # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩
     return j_out
@@ -271,6 +272,7 @@ See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
 [`angles_compound`](@ref).
 """
 function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+    # Add projector weights to explicit_fs_pop
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
     angles_all = convert(
         Vector{Vector{Vector{Vector{Float64}}}}, angles_all

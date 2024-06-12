@@ -410,11 +410,16 @@ function explicit_fs_pop(ρ_init, j_out::Int64, angles)
     return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
-function explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
+function explicit_fs_pop(
+    ρ_init,
+    j_out_arr::Vector{Int64},
+    angles,
+    projector_weights=ones(Float64, length(j_out_arr))
+)
     exp_val = 0.0
-    for j_out in j_out_arr
-        exp_val += explicit_fs_pop(ρ_init, j_out, angles)
-   end
+    for (j_idx, j_out) in enumerate(j_out_arr)
+        exp_val += explicit_fs_pop(ρ_init, j_out, angles) * projector_weights[j_idx]
+    end
 
     return exp_val
 end
