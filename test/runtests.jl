@@ -8,6 +8,11 @@ using TimeBinEncoding
 
 Random.seed!(8675309) # / Jenny
 @testset "All tests" begin
+
+    @testset "beam_splitter_tests" begin
+        include("beam_splitter_tests.jl")
+    end
+
     @testset "coherence_extraction_tests" begin
         include("coherence_extraction_tests.jl")
     end

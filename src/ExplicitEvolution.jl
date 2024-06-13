@@ -389,8 +389,12 @@ end
 
 """
     explicit_fs_pop(ρ_init, j_out::Int64, angles)
-    explicit_fs_pop(ρ_init, j_out_arr::Vector{Int64}, angles)
-
+    explicit_fs_pop(
+        ρ_init,
+        j_out_arr::Vector{Int64},
+        angles,
+        projector_weights=ones(Float64, length(j_out_arr))
+    )
 
 Compute the expectation value `⟨lcmk|U ρ_init U^†|lcmk⟩`, where `j_out` corresponds to
 `|lcmk⟩` and `U` is the unitary time evolution operator defined through the beam-splitter
