@@ -143,11 +143,8 @@ See also [`j2lc`](@ref), [`lcmk2j`](@ref), [`j2lcmk`](@ref), [`lm2j`](@ref), [`j
 
 """
 function lc2j(l, c)
-    l = convert(Int64, l)::Int64
-    c = convert(Int64, c)::Int64
 
-    @argcheck l ≥ 0
-    @argcheck c in [0, 1]
+    l,c = _lc2j_input_sanity_check(l, c)
 
     return l * 2 + c + 1
 end
