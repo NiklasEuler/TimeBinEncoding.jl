@@ -34,9 +34,15 @@ Extract the coherences between correlated time-bin populations.
 See also [`coherence_extraction_compound`](@ref).
 """
 function coherence_extraction(
-    N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
+    N,
+    j_out,
+    pops_init,
+    pop_fs,
+    angles,
+    contr_j_idxs = correlated_short_bins_idxs(N),
+    projector_weights=ones(Float64, length(j_out));
     extract_diagonal::Bool=true
-) # CHANGE add projector weights
+)
     N = convert(Int64, N)::Int64
     j_out = try
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -45,7 +51,18 @@ function coherence_extraction(
 	end
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
 
-    j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
+    if length(j_out) == 1
+        projector_weights = projector_weights[1]
+    end
+
+    projector_weights = try
+		convert(Vector{Float64}, projector_weights)::Vector{Float64}
+	catch
+		convert(Float64, projector_weights)::Float64
+	end
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+
+    j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles, projector_weights)
     # extraction based on assumed ideal angles
     @argcheck weights ≠ []
 
@@ -218,6 +235,7 @@ function coherence_extraction_compound(pops_init, pops_fs_all)
 
     j_out_all = j_out_compound(N)
     angles_all = angles_compound(N)
+    projector_weights = [1, 1, -1, -1] # correlated outcomes minues anti-correlated outcomes
 
     for k in 1:N - 1
         j_out_k = j_out_all[k] # all kth neighbor final state projector indices
@@ -231,7 +249,7 @@ function coherence_extraction_compound(pops_init, pops_fs_all)
             pop_fs = pop_fs_k[idx]
 
             coh = coherence_extraction(
-                N, j_out, pops_init, pop_fs, angles, contr_j_idxs;
+                N, j_out, pops_init, pop_fs, angles, contr_j_idxs, projector_weights;
                 extract_diagonal = extract_diagonal
             ) # noisy extraction
             extracted_coherences += coh
@@ -246,18 +264,28 @@ end
 
 Return all the final-state projector indices for the compound coherence-extraction scheme.
 
-At the lowest layer, always two indices are bundeled together in a Vector, corresponding to
-|i,S,i,S⟩ and |i + 1,L,i + 1,L⟩, respectively. One layer up, all of these Vector
-corresponding to the intereference of time bins with distance `k` in the initial state are
-grouped in a Vector. Finally, all such grouping for values `k` from 1 to N - 1 are collected
-in the outermost layer.
+At the lowest layer, always four indices are bundeled together in a Vector, corresponding to
+|i,S,i,S⟩ and |i + 1,L,i + 1,L⟩ and the two mixtures |i,S,i+1,L⟩ and |i+1,L,i,S⟩,
+respectively. One layer up, all of these Vector corresponding to the intereference of time
+bins with distance `k` in the initial state are grouped in a Vector. Finally, all such
+grouping for values `k` from 1 to N - 1 are collected in the outermost layer.
 
 See also [`angles_compound`](@ref), [`coherence_extraction_compound`](@ref),
 [`j_out_single_setup`](@ref).
 """
-function j_out_compound(N) # CHANGE
-    j_out = [[[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
-        for i in k:1:N - 1] for k in 1:N - 1] # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩
+function j_out_compound(N)
+    j_out = [
+        [
+            [
+                lcmk2j(N + k + 1, i, 0, i, 0),
+                lcmk2j(N + k + 1, i + 1, 1, i + 1, 1),
+                lcmk2j(N + k + 1, i, 0, i + 1, 1),
+                lcmk2j(N + k + 1, i + 1, 1, i, 0)
+            ]
+            for i in k:1:N - 1
+        ]
+        for k in 1:N - 1
+    ] # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩ and mixtures |i,S,i+1,L⟩ and |i+1,L,i,S⟩
     return j_out
 end
 
