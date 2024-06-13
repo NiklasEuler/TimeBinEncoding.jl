@@ -5,6 +5,7 @@ export mesh_evolution
 export mesh_evolution_sp
 export phase_on_density_matrix
 
+
 """
     shift_timebins_sp(state_vec::Vector)
     shift_timebins_sp(state_vec::SparseVector)
@@ -101,7 +102,7 @@ See also [`shift_timebins`](@ref), [`_shift_j!`](@ref).
 """
 function _shift_j_sp!(j, state_vec, new_vec)
     l, c  = j2lc(j)
-    shifted_j = lc2j(l+c, c)
+    shifted_j = lc2j(l + c, c)
     new_vec[shifted_j] = state_vec[j]
     return nothing
 end
@@ -141,8 +142,8 @@ See also [`shift_timebins_operator_sp`](@ref), [`coin_operator`](@ref),
 """
 function shift_timebins_operator(N)
     shift_operator_single_photon = shift_timebins_operator_sp(N)
-    tensor_coin_operator = kron(shift_operator_single_photon, shift_operator_single_photon)
-    return tensor_coin_operator::SparseMatrixCSC{Float64, Int64}
+    tensor_shift_operator = kron(shift_operator_single_photon, shift_operator_single_photon)
+    return tensor_shift_operator::SparseMatrixCSC{Float64, Int64}
 end
 
 

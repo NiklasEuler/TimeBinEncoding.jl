@@ -3,7 +3,6 @@ export density_matrix, density_matrix_dephased, white_noise
 export fidelity, purity, populations, sample_populations
 
 
-
 """
     correlated_timebin_state(wf_coeffs::Vector)
 
@@ -154,6 +153,7 @@ function white_noise(N)
 
     return ρ_noise
 end
+
 """
     fidelity(Ψ::Vector,ρ::Matrix)
 

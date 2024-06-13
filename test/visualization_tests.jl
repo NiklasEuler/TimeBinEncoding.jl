@@ -47,10 +47,10 @@ end
                     ]
     result = @capture_out visualize_measurement_coherence_map(j_out_modified, angles_exp)
 
-    @test "+⟨4 0 4 0|(SC)^M ρ (C^†S^†)^M) |4 0 4 0⟩
-+⟨5 1 5 1|(SC)^M ρ (C^†S^†)^M) |5 1 5 1⟩
-+⟨3 0 3 0|(SC)^M ρ (C^†S^†)^M) |3 0 3 0⟩
-+⟨6 1 6 1|(SC)^M ρ (C^†S^†)^M) |6 1 6 1⟩
+    @test "+ 1.0 ⟨4 S 4 S|(SC)^M ρ (C^†S^†)^M) |4 S 4 S⟩
++ 1.0 ⟨5 L 5 L|(SC)^M ρ (C^†S^†)^M) |5 L 5 L⟩
++ 1.0 ⟨3 S 3 S|(SC)^M ρ (C^†S^†)^M) |3 S 3 S⟩
++ 1.0 ⟨6 L 6 L|(SC)^M ρ (C^†S^†)^M) |6 L 6 L⟩
 =
 + ρ_[0 0]^[0 0] ⋅ 0.25
 + ρ_[0 0]^[1 1] ⋅ 0.25

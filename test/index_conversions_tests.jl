@@ -1,6 +1,5 @@
 
 @testset "lcmk <-> j" begin
-    # Write your tests here.
     N = 5
     j_arr = 1:(4*N^2)
     lcmk_arr = zeros(4, 4*N^2)
@@ -28,7 +27,6 @@
 end
 
 @testset "lm <-> j" begin
-    # Write your tests here.
     N = 5
     j_arr = 1:(N^2)
     lm_arr = zeros(2, N^2)
@@ -52,7 +50,6 @@ end
 end
 
 @testset "lc <-> j" begin
-    # Write your tests here.
     N = 5
     j_arr = 1:(2 * N)
     lc_arr = zeros(2, 2 * N)
