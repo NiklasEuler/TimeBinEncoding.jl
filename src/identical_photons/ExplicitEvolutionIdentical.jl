@@ -18,7 +18,6 @@ end
 
 function _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles)
     d_hilbert_space = N * (2 * N + 1)
-        # simplified expression for N_LOOPS = 2 canceling out geometric series
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
@@ -76,9 +75,7 @@ function explicit_fs_coherence_map_identical(
     #M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
     d_hilbert_space = (N * (2 * N + 1))^2::Int64
-        # hilbert space dimension of the initial state
-        # simplified expression for N_LOOPS = 2 canceling out geometric series
-
+    # hilbert space dimension of the initial state
     j1_arr = Int64[]
     j2_arr = Int64[]
     weights = ComplexF64[]
