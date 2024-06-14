@@ -240,37 +240,117 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
     return nothing
 end
 
+"""
+    angles4bins_01(N, l, m, p, q)
+
+Compute the beam-splitter angles for interference of 4 bins using the first configuration,
+in which the first and second time bins and the third and fourth time bins are interfered
+with each other before the two pairs are interfered with each other.
+
+# Arguments
+- `N`: The number of time bins.
+- `l`: The index of the first time bin.
+- `m`: The index of the second time bin.
+- `p`: The index of the third time bin.
+- `q`: The index of the fourth time bin.
+
+# Returns
+An array of angles for interference of 4 bins using the first configuration.
+
+See also [`angles4bins_02`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@ref).
+
+"""
 function angles4bins_01(N, l, m, p, q)
-	angles = [zeros(i) for i in N:N + q - l]
-	angles[1][[l + 1, p + 1]] .= 0.5
-	angles[m - l + 1][m + 1] = 0.25
-	angles[q - p + 1][q + 1] = 0.25
-	angles[end][q + 1] = 0.25
-	angles *= π
-	return angles
+    angles = [zeros(i) for i in N:N + q - l]
+    angles[1][[l + 1, p + 1]] .= 0.5
+    angles[m - l + 1][m + 1] = 0.25
+    angles[q - p + 1][q + 1] = 0.25
+    angles[end][q + 1] = 0.25
+    angles *= π
+    return angles
 end
 
+"""
+    angles4bins_02(N, l, m, p, q)
+
+Compute the beam-splitter angles for interference of 4 bins using the second configuration,
+in which the first and third time bins and the second and fourth time bins are interfered
+with each other before the two pairs are interfered with each other.
+
+# Arguments
+- `N`: The number of time bins.
+- `l`: The index of the first time bin.
+- `m`: The index of the second time bin.
+- `p`: The index of the third time bin.
+- `q`: The index of the fourth time bin.
+
+# Returns
+An array of angles for interference of 4 bins using the second configuration.
+
+See also [`angles4bins_01`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@ref).
+
+
+"""
 function angles4bins_02(N, l, m, p, q)
-	angles = [zeros(i) for i in N:N + q - l]
-	angles[1][[l + 1, m + 1]] .= 0.5
-	angles[p - l + 1][p + 1] = 0.25
-	angles[q - m + 1][q + 1] = 0.25
-	angles[end][q + 1] = 0.25
-	angles *= π
-	return angles
+    angles = [zeros(i) for i in N:N + q - l]
+    angles[1][[l + 1, m + 1]] .= 0.5
+    angles[p - l + 1][p + 1] = 0.25
+    angles[q - m + 1][q + 1] = 0.25
+    angles[end][q + 1] = 0.25
+    angles *= π
+    return angles
 end
 
+"""
+    angles4bins_03(N, l, m, p, q)
+
+Compute the beam-splitter angles for interference of 4 bins using the  third configuration,
+in which the first and fourth time bins and the second and third time bins are interfered
+with each other before the two pairs are interfered with each other.
+
+# Arguments
+- `N`: The number of time bins.
+- `l`: The index of the first time bin.
+- `m`: The index of the second time bin.
+- `p`: The index of the third time bin.
+- `q`: The index of the fourth time bin.
+
+# Returns
+An array of angles for interference of 4 bins using the third configuration.
+
+See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins`](@ref).
+
+
+"""
 function angles4bins_03(N, l, m, p, q)
-	angles = [zeros(i) for i in N:N + q - l + 1]
-	angles[1][l + 1] = 0.5
-	angles[m - l + 2][m + 1] = 0.5
-	angles[p - l + 2][p + 1] = 0.25
-	angles[q - l + 1][q + 1] = 0.25
-	angles[end][q + 1] = 0.25
-	angles *= π
-	return angles
+    angles = [zeros(i) for i in N:N + q - l + 1]
+    angles[1][l + 1] = 0.5
+    angles[m - l + 2][m + 1] = 0.5
+    angles[p - l + 2][p + 1] = 0.25
+    angles[q - l + 1][q + 1] = 0.25
+    angles[end][q + 1] = 0.25
+    angles *= π
+    return angles
 end
 
+"""
+    angles4bins(N, l, m, p, q)
+
+Compute the angles for time bin encoding with 4 bins using all three configurations.
+
+# Arguments
+- `N`: The number of time bins.
+- `l`: The index of the first time bin.
+- `m`: The index of the second time bin.
+- `p`: The index of the third time bin.
+- `q`: The index of the fourth time bin.
+
+# Returns
+A tuple of arrays of angles for interference of 4 bins using all three configurations.
+
+See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins_03`](@ref).
+
+"""
 function angles4bins(N, l, m, p, q)
     angles_01 = angles4bins_01(N, l, m, p, q)
     angles_02 = angles4bins_02(N, l, m, p, q)

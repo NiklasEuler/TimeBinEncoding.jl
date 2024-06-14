@@ -4,7 +4,19 @@ export visualize_symbolic_ket_evolution_sp, visualize_symbolic_fs_projection_sp,
 """
     visualize_symbolic_ket_evolution_sp(M, l_init)
 
-TBW
+Print the generic evolution of the single-photon initial state `|l_init, S⟩` after `M`
+roundtrips. The function prints the contributing states and their weights computed
+symbolically for general beam-splitter angles.
+
+# Arguments
+- `M`: The number of roundtrips.
+- `l_init`: The initial state time-bin index.
+
+# Returns
+- `nothing`
+
+See also [`symbolic_ket_evolution_sp`](@ref), ['visualize_symbolic_fs_projection_sp`](@ref).
+
 """
 function visualize_symbolic_ket_evolution_sp(M, l_init)
     j_idx_arr, trigonometric_history_arr, angle_history_arr =
@@ -17,18 +29,36 @@ function visualize_symbolic_ket_evolution_sp(M, l_init)
     for (i, j) in enumerate(j_idx_arr)
         l, c  = j2lc(j)
         print("+ |$l,$(cs[c + 1])⟩⋅[")
-        trigonometric_string_formatter(trigonometric_history_arr[i], angle_history_arr[i])
+        _trigonometric_string_formatter(trigonometric_history_arr[i], angle_history_arr[i])
         println("]")
    end
 
     return nothing
 end
 
+
+
+
 """
     visualize_symbolic_fs_projection_sp(M, l_fs, c_fs)
 
-TBW
+Print the contributing single-photon initial state terms to a generic final state after `M`
+roundtrips and subsequent projection onto `|l_fs, c_fs⟩⟨l_fs, c_fs|`. The function prints
+the contributing states and their weights computed symbolically for general beam-splitter
+angles.
+
+# Arguments
+- `M`: The number of roundtrips.
+- `l_fs`: The value of `l_fs` in the final-state projector `|l_fs, c_fs⟩⟨l_fs, c_fs|`.
+- `c_fs`: The value of `c_fs` in the final-state projector `|l_fs, c_fs⟩⟨l_fs, c_fs|`.
+
+# Returns
+- `nothing`
+
+See also [`symbolic_fs_projection_sp`](@ref), ['visualize_symbolic_ket_evolution_sp`](@ref).
+
 """
+
 function visualize_symbolic_fs_projection_sp(M, l_fs, c_fs)
     j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs =
         symbolic_fs_projection_sp(M, l_fs, c_fs)
@@ -38,7 +68,7 @@ function visualize_symbolic_fs_projection_sp(M, l_fs, c_fs)
     for (i, j) in enumerate(j_idx_arr_fs)
         l_init, c_init = j2lc(j)
         print("+ c_($l_init,$(cs[c_init + 1]))⋅[")
-        trigonometric_string_formatter(trigonometric_history_arr_fs[i],
+        _trigonometric_string_formatter(trigonometric_history_arr_fs[i],
             angle_history_arr_fs[i])
         println("]")
     end
@@ -46,12 +76,7 @@ function visualize_symbolic_fs_projection_sp(M, l_fs, c_fs)
     return nothing
 end
 
-"""
-    trigonometric_string_formatter(trigonometric_history, angle_history)
-
-TBW
-"""
-function trigonometric_string_formatter(trigonometric_history, angle_history)
+function _trigonometric_string_formatter(trigonometric_history, angle_history)
     n_tri_strings = size(trigonometric_history)[1]
     tri_replacement_str = ["cos(θ", "sin(θ"]
     phase_replacement_str = [" + ", " + i ⋅ ", " - ", " - i ⋅ "]
@@ -169,7 +194,7 @@ function visual_meas_coh_map(
     return nothing
 end
 
-function _print_header_offsets(off_l, off_m)
+function _print_header_offsets(off_l, off_m) # print header line with offset information
     if off_l != 0 || off_m != 0
         println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
     end
@@ -186,7 +211,7 @@ function _visual_coh(
     phases=ones(Float64, N),
     off_l=0,
     off_m=0
-)
+) # encoding of coherence information and printout
     contr_j_idxs = correlated_short_bins_idxs(N)
     extractable_correlated_coherences = []
     if phases == ones(Float64, N)

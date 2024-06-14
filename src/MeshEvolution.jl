@@ -288,6 +288,7 @@ end
 """
     mesh_evolution_sp(initial_state::Vector, angles)
     mesh_evolution_sp(initial_state::SparseVector, angles)
+    mesh_evolution_sp(initial_state::AbstractMatrix, angles)
 
 Numerically compute the unitary evolution of the single-photon initial state `initial_state`
 through the fiber mesh network parametrized through `angles`.
