@@ -1,5 +1,5 @@
 export visualize_symbolic_ket_evolution_sp, visualize_symbolic_fs_projection_sp,
-    visualize_measurement_coherence_map, visualize_combined_measurement_coherence_map
+    visual_meas_coh_map, visualize_combined_measurement_coherence_map
 
 """
     visualize_symbolic_ket_evolution_sp(M, l_init)
@@ -70,20 +70,59 @@ function trigonometric_string_formatter(trigonometric_history, angle_history)
     return nothing
 end
 
-function visualize_measurement_coherence_map end
 
-function visualize_measurement_coherence_map(
+"""
+    visual_meas_coh_map(
+        j_out::Int64,
+        angles,
+        phases=ones(Float64, length(angles[1]))::Vector,
+        off_l=0,
+        off_m=0;
+        extract_diagonal=true
+    )
+    visual_meas_coh_map(
+        j_out::Vector{Int64},
+        angles,
+        projector_weights=ones(Float64, length(j_out)),
+        phases=ones(Float64, length(angles[1]))::Vector,
+        off_l=0,
+        off_m=0;
+        extract_diagonal=true
+    )
+
+Visualize the contributing initial-state coherences contributing to the measured projectors
+defined through `j_out`. The function prints the contributing coherences and their weights.
+Optionally, initial state `phases` can be provided. The function also allows for time shifts
+for the signal and idler photons through the `off_l` and `off_m` arguments.
+
+# Arguments
+- `j_out`: The output time bin(s) of the measured projector(s).
+- `angles`: The beam-splitter angles along the interference measurement.
+- `phases`: The phases of the roundtrips. Default is an array of ones.
+- `off_l::Int64`: The time shift for the signal photon. Default is 0.
+- `off_m::Int64`: The time shift for the signal photon. Default is 0.
+- `extract_diagonal::Bool`: Whether to extract the diagonal elements. Default is true.
+
+# Returns
+- `nothing`
+
+"""
+function visual_meas_coh_map end
+
+function visual_meas_coh_map(
     j_out::Int64,
     angles,
-    extract_diagonal=true,
     phases=ones(Float64, length(angles[1]))::Vector,
     off_l=0,
-    off_m=0,
+    off_m=0;
+    extract_diagonal=true
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
-    j1_arr, j2_arr, weights =  explicit_fs_coherence_map(j_out, angles, phases)
+    projector_weight = 1 # needed for single projector for interoperability
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map(j_out, angles, projector_weight, phases)
 
     if off_l != 0 || off_m != 0
         println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
@@ -93,18 +132,18 @@ function visualize_measurement_coherence_map(
 	println("⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
         l_out, " ", c_out, " ", m_out, " ", k_out, "⟩ ="
     )
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
+    _visual_coh(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
     return nothing
 end
 
-function visualize_measurement_coherence_map(
+function visual_meas_coh_map(
     j_out_arr::Vector{Int64},
     angles,
-    extract_diagonal=true,
     projector_weights=ones(Float64, length(j_out_arr)),
     phases=ones(Float64, length(angles[1]))::Vector,
     off_l=0,
-    off_m=0
+    off_m=0;
+    extract_diagonal=true,
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
@@ -129,14 +168,14 @@ function visualize_measurement_coherence_map(
     end
 
     println("=")
-    _visualize_coherence(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
+    _visual_coh(N, j1_arr, j2_arr, weights, extract_diagonal, phases, off_l, off_m)
 
     return nothing
 end
 
 
 
-function _visualize_coherence(
+function _visual_coh(
     N,
     j1_arr,
     j2_arr,

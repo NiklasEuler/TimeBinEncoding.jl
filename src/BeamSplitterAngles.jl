@@ -1,6 +1,6 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
-export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins_04
+export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
 """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)

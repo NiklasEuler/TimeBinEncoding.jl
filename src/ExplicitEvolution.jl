@@ -325,23 +325,21 @@ See also [`explicit_fs_pop`](@ref), [`explicit_fs_projection`](@ref).
 """
 function explicit_fs_coherence_map end
 
-function explicit_fs_coherence_map(j_out::Int64, angles, phases::Vector)
+function explicit_fs_coherence_map(
+    j_out::Int64,
+    angles,
+    projector_weight=1,
+    phases::Vector=ones(Float64, length(angles[1]))
+)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
     n_contr = length(j_idx_arr_contr)
     j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
     j2_arr = repeat(j_idx_arr_contr, n_contr)
-    weights = kron(coeff_arr, conj.(coeff_arr))
+    weights = kron(coeff_arr, conj.(coeff_arr)) .* projector_weight
     return j1_arr, j2_arr, weights
 end
 
-function explicit_fs_coherence_map(j_out::Int64, angles)
-    N = length(angles[1]) # initial number of time bins
-    phases = ones(Float64, N)
-    j1_arr, j2_arr, weights =
-        explicit_fs_coherence_map(j_out, angles, phases)
-    return j1_arr, j2_arr, weights
-end
 
 function explicit_fs_coherence_map(
     j_out_arr::Vector{Int64},

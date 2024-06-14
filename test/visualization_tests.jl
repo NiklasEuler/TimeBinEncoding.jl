@@ -28,6 +28,8 @@ end
 " == result
 end
 
+
+
 @testset "visualize_combined_measurement_coherence_map" begin
 
     N = 4
@@ -45,7 +47,7 @@ end
     j_out_modified = [lcmk2j(N + M_exp, 4, 0, 4, 0), lcmk2j(N + M_exp, 5, 1, 5, 1),
                         lcmk2j(N + M_exp, 3, 0, 3, 0), lcmk2j(N + M_exp, 6, 1, 6, 1)
                     ]
-    result = @capture_out visualize_measurement_coherence_map(j_out_modified, angles_exp)
+    result = @capture_out visual_meas_coh_map(j_out_modified, angles_exp)
 
     @test "+ 1.0 ⟨4 S 4 S|(SC)^M ρ (C^†S^†)^M) |4 S 4 S⟩
 + 1.0 ⟨5 L 5 L|(SC)^M ρ (C^†S^†)^M) |5 L 5 L⟩
@@ -135,10 +137,10 @@ Useful extractable coherences:
 + ρ_[3 3]^[3 3] ⋅ 0.25
 " == result
 
-result = @capture_out visualize_measurement_coherence_map(lcmk2j(N + M_exp, 8, 0, 8, 0), angles_exp)
+result = @capture_out visual_meas_coh_map(lcmk2j(N + M_exp, 8, 0, 8, 0), angles_exp)
 @test "⟨8 0 8 0|(SC)^M ρ (C^†S^†)^M) |8 0 8 0⟩ =\nUseful extractable coherences:\n" == result
 
-result = @capture_out visualize_measurement_coherence_map(lcmk2j(N + M_exp, 3, 0, 4, 0), angles_exp)
+result = @capture_out visual_meas_coh_map(lcmk2j(N + M_exp, 3, 0, 4, 0), angles_exp)
 
 @test "⟨3 0 4 0|(SC)^M ρ (C^†S^†)^M) |3 0 4 0⟩ =
 + ρ_[0 0]^[0 0] ⋅ 0.0625
@@ -414,6 +416,35 @@ Useful extractable coherences:
 + ρ_[3 3]^[1 1] ⋅ -0.0625
 + ρ_[3 3]^[2 2] ⋅ -0.0625
 + ρ_[3 3]^[3 3] ⋅ 0.0625
+" == result
+
+end
+
+@testset "visual_meas_coh_map with shift" begin
+    N = 4
+    no_phases = ones(N)
+    extract_diagonal = false
+    angles_4b_2 = angles4bins_02(N, 0, 1, 2, 3)
+	M_4b_2 = length(angles_4b_2)
+	j_out_4b_arr_coinc = [lcmk2j(N + M_4b_2, 3, 0, 3, 0),lcmk2j(N + M_4b_2, 4, 1, 4, 1)]
+	j_out_4b_arr_no_coinc = [lcmk2j(N + M_4b_2, 3, 0, 4, 1),lcmk2j(N + M_4b_2, 4, 1, 3, 0)]
+	j_out_4b_arr_all = vcat(j_out_4b_arr_coinc, j_out_4b_arr_no_coinc)
+    result = @capture_out visual_meas_coh_map(
+        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], no_phases, 0, 2; extract_diagonal
+    )
+    @test "with offsets: off_l = 0, off_m = 2
+- 1 ⟨3 S 3 S|(SC)^M ρ (C^†S^†)^M) |3 S 3 S⟩
+- 1 ⟨4 L 4 L|(SC)^M ρ (C^†S^†)^M) |4 L 4 L⟩
++ 1 ⟨3 S 4 L|(SC)^M ρ (C^†S^†)^M) |3 S 4 L⟩
++ 1 ⟨4 L 3 S|(SC)^M ρ (C^†S^†)^M) |4 L 3 S⟩
+=
++ ρ_[0 0]^[1 1] ⋅ 0.25
++ ρ_[0 1]^[1 0] ⋅ 0.25
++ ρ_[1 0]^[0 1] ⋅ 0.25
++ ρ_[1 1]^[0 0] ⋅ 0.25
+Useful extractable coherences:
++ ρ_[0 0]^[1 1] ⋅ 0.25
++ ρ_[1 1]^[0 0] ⋅ 0.25
 " == result
 
 end
