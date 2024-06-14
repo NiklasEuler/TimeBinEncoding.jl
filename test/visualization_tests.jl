@@ -430,7 +430,8 @@ end
 	j_out_4b_arr_no_coinc = [lcmk2j(N + M_4b_2, 3, 0, 4, 1),lcmk2j(N + M_4b_2, 4, 1, 3, 0)]
 	j_out_4b_arr_all = vcat(j_out_4b_arr_coinc, j_out_4b_arr_no_coinc)
     result = @capture_out visual_meas_coh_map(
-        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], no_phases, 0, 2; extract_diagonal
+        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], no_phases, 0, 2;
+        extract_diagonal=extract_diagonal
     )
     @test "with offsets: off_l = 0, off_m = 2
 - 1 ⟨3 S 3 S|(SC)^M ρ (C^†S^†)^M) |3 S 3 S⟩
@@ -447,10 +448,11 @@ Useful extractable coherences:
 + ρ_[1 1]^[0 0] ⋅ 0.25
 " == result
 
-    phases = cispi.([0.25,0,0.25,0])
+    phases = cis.([0.25, 0, 0.25, 0] * π)
 
     result = @capture_out visual_meas_coh_map(
-        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], phases, 2, 0; extract_diagonal
+        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], phases, 2, 0;
+        extract_diagonal = extract_diagonal
     )
     @test "with offsets: off_l = 2, off_m = 0
 - 1 ⟨3 S 3 S|(SC)^M ρ (C^†S^†)^M) |3 S 3 S⟩
