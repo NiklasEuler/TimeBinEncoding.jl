@@ -447,4 +447,24 @@ Useful extractable coherences:
 + ρ_[1 1]^[0 0] ⋅ 0.25
 " == result
 
+    phases = cispi.([0.25,0,0.25,0])
+
+    result = @capture_out visual_meas_coh_map(
+        j_out_4b_arr_all, angles_4b_2, [-1, -1, 1, 1], phases, 2, 0; extract_diagonal
+    )
+    @test "with offsets: off_l = 2, off_m = 0
+- 1 ⟨3 S 3 S|(SC)^M ρ (C^†S^†)^M) |3 S 3 S⟩
+- 1 ⟨4 L 4 L|(SC)^M ρ (C^†S^†)^M) |4 L 4 L⟩
++ 1 ⟨3 S 4 L|(SC)^M ρ (C^†S^†)^M) |3 S 4 L⟩
++ 1 ⟨4 L 3 S|(SC)^M ρ (C^†S^†)^M) |4 L 3 S⟩
+=
++ ρ_[0 0]^[1 1] ⋅ 0.0 + 0.25im
++ ρ_[0 1]^[1 0] ⋅ 0.25 + 0.0im
++ ρ_[1 0]^[0 1] ⋅ 0.25 + 0.0im
++ ρ_[1 1]^[0 0] ⋅ 0.0 - 0.25im
+Useful extractable coherences:
++ ρ_[0 0]^[1 1] ⋅ 0.0 + 0.25im
++ ρ_[1 1]^[0 0] ⋅ 0.0 - 0.25im
+" == result
+
 end
