@@ -124,9 +124,7 @@ function visual_meas_coh_map(
     j1_arr, j2_arr, weights =
         explicit_fs_coherence_map(j_out, angles, projector_weight, phases)
 
-    if off_l != 0 || off_m != 0
-        println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
-    end
+    _print_header_offsets(off_l, off_m)
 
     l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
 	println("⟨", l_out, " ", c_out, " ", m_out, " ", k_out, "|(SC)^M ρ (C^†S^†)^M) |",
@@ -151,9 +149,7 @@ function visual_meas_coh_map(
     j1_arr, j2_arr, weights =
         explicit_fs_coherence_map(j_out_arr, angles, projector_weights, phases)
 
-    if(off_l != 0 || off_m != 0)
-        println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
-    end
+    _print_header_offsets(off_l, off_m)
 
     for (j_idx, j_out) in enumerate(j_out_arr)
         l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
@@ -173,7 +169,13 @@ function visual_meas_coh_map(
     return nothing
 end
 
+function _print_header_offsets(off_l, off_m)
+    if off_l != 0 || off_m != 0
+        println("with offsets: off_l = ", off_l, ", off_m = ", off_m)
+    end
 
+    return nothing
+end
 
 function _visual_coh(
     N,
