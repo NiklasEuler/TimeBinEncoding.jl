@@ -158,3 +158,76 @@ end
     @test (all(angles4bins_all[3] ≈ angles_4b_3))
 
 end
+
+@testset "angles_ref_bin_all_pairs" begin
+    N = 2
+    angles_ref = angles_ref_bin_all_pairs(N, 0)
+    @test angles_ref == [[0.5, 0], [0, 0.25, 0]] * π
+    @test angles_ref == angles_ref_bin_all_pairs(N, 1)
+    @test_throws ArgumentError angles_ref_bin_all_pairs(N, 2)
+
+    angles_40 = [
+        [Θ_13, 0, 0, 0],
+        [0.25, 0, 0, 0, 0],
+        [0.5, 0, 0, 0, 0, 0],
+        [0, 0.25, 0.25, 0.25, 0, 0, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 0)
+    @test all(angles_ref .≈ angles_40)
+
+    angles_40_pop = [
+        [Θ_13, θ_pop_ref, θ_pop_ref, θ_pop_ref],
+        [0.25, 0, 0, 0, 0],
+        [0.5, 0, 0, 0, 0, 0],
+        [0, 0.25, 0.25, 0.25, 0, 0, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 0; population_bins=true)
+    @test all(angles_ref .≈ angles_40_pop)
+
+
+    angles_41 = [
+        [0, Θ_13, 0, 0],
+        [0.5, 0.25, 0, 0, 0],
+        [0, 0.25, 0.25, 0.25, 0, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 1)
+    @test all(angles_ref .≈ angles_41)
+
+
+    angles_42 = [
+        [0.5, 0.5, Θ_23, 0.5],
+        [0, 0, 0, 0.25, 0.5],
+        [0, 0, 0.25, 0.25, 0.25, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 2)
+    @test all(angles_ref .≈ angles_42)
+
+    angles_42_pop = [
+        [θ_pop_ref, θ_pop_ref, Θ_23, 0.5],
+        [0, 0, 0, 0.25, θ_pop_ref],
+        [0, 0, 0.25, 0.25, 0.25, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 2, population_bins=true)
+    @test all(angles_ref .≈ angles_42_pop)
+
+    angles_43 = [
+        [0.5, 0.5, 0.5, Θ_23],
+        [0, 0, 0, 0, 0.25],
+        [0, 0, 0, 0, 0, 0.5],
+        [0, 0, 0, 0.25, 0.25, 0.25, 0],
+        ] * π
+    angles_ref = angles_ref_bin_all_pairs(4, 3)
+    @test all(angles_ref .≈ angles_43)
+
+    angles_84 = [
+        [0, 0, 0, 0, asin(sqrt(4 / 7)) / π, 0.5, 0.5, 0.5],
+        [0, 0, 0, 0, Θ_13, asin(sqrt(1 / 4)) / π, 0, 0, 0],
+        [0.5, 0.5, 0.5, 0.5, 0.25, 0, Θ_13, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0.25, 0.5, 0.5, 0.5],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0, 0, 0],
+        ] * π
+        angles_ref = angles_ref_bin_all_pairs(8, 4)
+        @test all(angles_ref .≈ angles_84)
+end

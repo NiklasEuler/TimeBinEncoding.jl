@@ -1,6 +1,7 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
+export angles_ref_bin_all_pairs
 """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
@@ -357,4 +358,70 @@ function angles4bins(N, l, m, p, q)
     angles_03 = angles4bins_03(N, l, m, p, q)
 
     return angles_01, angles_02, angles_03
+end
+
+function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
+	N = convert(Int64, N)::Int64 # initial number of time bins
+    idx_ref = convert(Int64, idx_ref)::Int64 # reference time-bin index
+	@argcheck idx_ref >= 0
+	@argcheck idx_ref < N
+
+	Δfirst = idx_ref
+	Δlast = N - 1 - idx_ref
+
+	n_branch_vert = max(Δfirst - 1, 0)
+        # number of secondary vertical branches going of the main diagonal branch
+	n_branch_diag = max(Δlast - 1, 0)
+        # number of secondary diagonal branches going of the main vertical branch
+
+	M = max(Δfirst + n_branch_diag, Δlast + n_branch_vert) + 1 # depth of the mesh lattice
+
+	angles = [zeros(Float64, n) for n in N:N + M - 1]
+	offset_last = Δlast > 0 ? 1 : 0
+        # correction term needed when there are bins later than the reference bin
+	offset_first = Δfirst > 0 ? 1 : 0
+        # correction term needed when there are bins earlier than the reference bin
+
+	angles[1][idx_ref + 1] = asin(sqrt((n_branch_vert + offset_last)/(Δfirst + Δlast))) / π
+	    # need enough time to split of enough packages for interference
+        # with all bins later then the reference
+	angles[n_branch_diag + 1][1:idx_ref] .= population_bins ? θ_pop_ref : 0.5
+        # insert all bins earlier then the reference bin into the long loop
+        # if population_bins is true, the beam is split to generate a population reference
+        # output for further measurement options
+	if n_branch_vert > 0
+		angles[1][idx_ref + 2:end] .= 0.5
+            # delay later time bins to make space for interference with earlier time bins
+		angles[1 + n_branch_vert][idx_ref + 2 + n_branch_vert:end] .=
+            population_bins ? θ_pop_ref : 0.5
+            # reinsert into short bin. if population_bins is true, the beam is split to
+            # generate a population reference output for further measurement options
+		for n in 1:n_branch_vert
+            # lso include potential mirror at the end of main diagonal branch
+ 			angles[1 + n][idx_ref + 1 + n] =
+                asin(sqrt(1/(n_branch_vert + 1 + offset_last - n))) / π
+			    # branch of ever larger amounts for overall homogeneous distro.
+                # last entry is just 0.5
+		end
+	elseif population_bins
+        angles[1][idx_ref + 2:end] .= θ_pop_ref
+            # if population_bins is true, the beam is split to generate a population
+            # reference output for further measurement options
+    end
+
+	for n in 1:n_branch_diag
+        # also include potential mirror at the end of main vertical branch
+		angles[1 + n][idx_ref + 1] =
+            asin(sqrt(1/(n_branch_diag + 1 + offset_first - n))) / π
+		    # branch off ever larger amplitudes for overall homogeneous distro.
+            # last entry is just 0.5
+	end
+
+	idx_start_final_bs = Δfirst > 0 ? idx_ref + 1 : 2
+        # idx where the earliest and the reference bin interfere
+	angles[end][idx_start_final_bs:idx_start_final_bs + Δfirst + Δlast - 1] .= 0.25
+        # actual time-bin interference
+	angles .*= π
+
+	return angles
 end
