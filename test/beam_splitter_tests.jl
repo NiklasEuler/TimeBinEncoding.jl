@@ -240,6 +240,9 @@ end
     @test length(pairings[1]) == N / 2
     @test length(unique(reduce(hcat, pairings))) == N * (N - 1) / 2
 
+    perfect_matches_sort = [sort(reduce(vcat, perf_match)) for perf_match in pairings]
+    @test all([match == 0:N-1 for match in perfect_matches_sort])
+
     N = 7
     pairings_odd = graph_coloring(N)
 
@@ -250,4 +253,8 @@ end
     reduced_pairings = reduce(hcat,(reduce(hcat, pairings_odd)))
     @test N - 1 ∈ reduced_pairings
     @test N ∉ reduced_pairings
+
+    perfect_matches_length =
+        [length(unique(reduce(vcat, perf_match))) for perf_match in pairings_odd]
+    @test all(perfect_matches_length .== N - 1)
 end
