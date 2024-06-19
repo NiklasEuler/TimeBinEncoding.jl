@@ -2,6 +2,9 @@ export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
 export angles_ref_bin_all_pairs
+export graph_coloring
+
+
 """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
@@ -424,4 +427,64 @@ function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
 	angles .*= π
 
 	return angles
+end
+
+"""
+    graph_coloring(N)
+
+Given an integer `N`, this function performs graph-edge coloring to generate pairings of
+bins/nodes. If `N` is even, it calls the `_graph_coloring_even` function to generate the
+pairings. If `N` is odd, it first calls the `graph_coloring` function recursively with
+`N + 1` to generate pairings for an even number of bins/nodes. Then, it removes the first
+pair from each perfect matching to leave out one bin/node, resulting in an odd number of
+bins/nodes.
+
+# Arguments
+- `N::Int`: The number of bins/nodes.
+
+# Returns
+- `pairings::Vector{Vector{Vector{Int}}}`: A vector of perfect matchings of the fully
+    connected graph of `N` nodes. Each perfect matching is a vector containing the chosen
+    edges of the matching each represented by the a vector with the two adjacent node
+    indices of the respective edge.
+
+"""
+function graph_coloring(N)
+    if iseven(N)
+        pairings = _graph_coloring_even(N)
+    else
+        pairings_even = graph_coloring(N + 1)
+        pairings = [perfect_matching[2:end] for perfect_matching in pairings_even]
+        # delete the first pair, which is always the reference bin. This way, one bin is
+        # left out, and the number of bins/nodes is odd again.
+    end
+
+    return pairings
+end
+
+
+function _graph_coloring_even(N)
+	N = convert(Int64, N)::Int64
+	@argcheck iseven(N)
+	@argcheck N > 1
+
+	N_half = N ÷ 2
+	n_pairs = N_half - 1 # number of pairings beside the defining pair adjacent to node N-1
+	pairings_all = [[[0, 0] for _ in 1:N_half] for _ in 1:N - 1]
+
+	for i in 1:N - 1
+		pairings_all[i][1][1] = i - 1 # first pair determined by pair between
+		pairings_all[i][1][2] = N - 1 # reference and i'th bin
+		for j in 1:n_pairs
+			# symmetrically pairing up nodes with ever increasing distance to the defining
+            # node. The boundaries of the chain are taken to be open boundary conditions
+			val_left = mod(i - 1 - j, N - 1)
+                # index of the node to the left of the defining node
+			val_right = mod(i - 1 + j, N - 1)
+                # index of the node to the right of the defining node
+			pairings_all[i][1 + j] = sort([val_left, val_right])
+		end
+	end
+
+	return pairings_all
 end

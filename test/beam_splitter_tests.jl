@@ -231,3 +231,23 @@ end
         angles_ref = angles_ref_bin_all_pairs(8, 4)
         @test all(angles_ref .≈ angles_84)
 end
+
+@testset "graph_coloring" begin
+    N = 4
+    pairings = graph_coloring(N)
+
+    @test length(pairings) == N - 1
+    @test length(pairings[1]) == N / 2
+    @test length(unique(reduce(hcat, pairings))) == N * (N - 1) / 2
+
+    N = 7
+    pairings_odd = graph_coloring(N)
+
+    @test length(pairings_odd) == N
+    @test length(pairings_odd[1]) == (N - 1) / 2
+    @test length(unique(reduce(hcat, pairings_odd))) == N * (N - 1) / 2
+
+    reduced_pairings = reduce(hcat,(reduce(hcat, pairings_odd)))
+    @test N - 1 ∈ reduced_pairings
+    @test N ∉ reduced_pairings
+end
