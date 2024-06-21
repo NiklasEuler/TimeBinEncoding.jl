@@ -1,7 +1,7 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
-export angles_ref_bin_all_pairs
+export angles_ref_bin_all_pairs, angles_pairs_from_mask
 export graph_coloring
 
 
@@ -426,6 +426,48 @@ function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
         # actual time-bin interference
 	angles .*= π
 
+	return angles
+end
+
+function angles_pairs_from_mask(N, pair_arr; population_bins=false)
+	N = convert(Int64, N)::Int64
+	sort!.(pair_arr)
+	incoming_diag_idxs = [pair[2] + 1 for pair in pair_arr]
+	Δpairs = [pair[2] - pair[1] for pair in pair_arr]
+	Δmax = max(Δpairs...)
+	M = Δmax + 1
+	angles = [zeros(Float64, n) for n in N:N + M - 1]
+	roundtrip_insertion_idxs = Δmax .- Δpairs .+ 1
+	for (pair_idx, pair) in enumerate(pair_arr)
+		idx_early = pair[1] + 1
+		idx_late = pair[2] + 1
+		angles[roundtrip_insertion_idxs[pair_idx]][idx_early] =
+            population_bins ? θ_pop_ref : 0.5
+		angles[end][idx_late] = 0.25
+	end
+	if population_bins
+		pair_arr_inv = sort(pair_arr, by=last, rev=true)
+		for pair in pair_arr_inv
+			idx_late = pair[2] + 1
+			flag_population_bin = false
+			for pop_branch_delay in 0:Δmax - 1
+				pop_bin_idx = idx_late + Δmax - pop_branch_delay
+				if !(pop_bin_idx in incoming_diag_idxs)
+					angles[1 + pop_branch_delay][idx_late] = θ_pop_ref
+					push!(incoming_diag_idxs, pop_bin_idx)
+					flag_population_bin = true
+					break
+				end
+			end
+			if !flag_population_bin
+                throw(ArgumentError(
+                    "A population bin could not be established due to a lack of a timeslot."
+                    )
+                )
+            end
+        end
+	end
+    angles .*= π
 	return angles
 end
 
