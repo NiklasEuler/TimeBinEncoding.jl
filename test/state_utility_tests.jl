@@ -106,6 +106,25 @@ end
 
     @test relative_phases ≈ zeros(Float64, N)
     @test ρ_nocorrect ≈ ρ_nophase
+
+    φ_arr = (0:N - 1) .* (π / 2)
+    phase_gradient = cis.(φ_arr)
+    ρ_phase_gradient = density_matrix(
+        insert_initial_state(correlated_timebin_state(phase_gradient))
+    )
+    ρ_real = density_matrix(
+        insert_initial_state(correlated_timebin_state(ones(N)))
+    )
+
+    pops_phase_gradient = populations(ρ_phase_gradient)
+
+    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_phase_gradient)
+    relative_phases =
+        initial_state_phase_estimation(pops_phase_gradient, pops_fs_real, pops_fs_imag)
+    ρ_correct = phase_on_density_matrix(ρ_phase_gradient, -1 * relative_phases)
+
+    @test ρ_correct ≈ ρ_real
+
 end
 
 
