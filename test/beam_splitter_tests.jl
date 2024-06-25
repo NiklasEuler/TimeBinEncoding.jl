@@ -55,7 +55,7 @@
     @test_throws ArgumentError angles_single_setup(N)
 end
 
- @testset "angles_phase_estimation" begin
+#=  @testset "angles_phase_estimation" begin
     N = 4
     angles_12_1 = [0.5, 0, 0, 0] * π
     angles_12_2 = [0, 0.25, 0, 0, 0] * π
@@ -72,12 +72,30 @@ end
     angles_all = [angles_12, angles_23, angles_34]
 
     @test all(angles_all .≈ angles_phase_estimation(N))
- end
+ end =#
 
 @testset "angles_compound" begin
     N = 4
     angles_compound_all = angles_compound(N)
-    angles_k1 = angles_phase_estimation(N)
+#    angles_k1 = angles_phase_estimation(N)
+
+    angles_12_1 = [0.5, 0, 0, 0] * π
+    angles_12_2 = [0, 0.25, 0, 0, 0] * π
+
+    angles_12 = [angles_12_1, angles_12_2]
+
+    angles_23_1 = [0, 0.5, 0, 0] * π
+    angles_23_2 = [0, 0, 0.25, 0, 0] * π
+
+    angles_23 = [angles_23_1, angles_23_2]
+
+    angles_34_1 = [0, 0, 0.5, 0] * π
+    angles_34_2 = [0, 0, 0, 0.25, 0] * π
+
+    angles_34 = [angles_34_1, angles_34_2]
+
+    angles_k1 = [angles_12, angles_23, angles_34]
+
     @test all(angles_compound_all[1] .≈ angles_k1)
 
     angles_13_1 = [0.5, 0, 0, 0] * π
@@ -110,7 +128,14 @@ end
 @testset "angles_phase_estimation" begin
     N = 4
     ϵ = 0.0
-    @test all(angles_phase_estimation(N, ϵ) .≈ angles_phase_estimation(N))
+    angles = angles_phase_estimation(N)
+
+    @test all(angles .≈ [
+            [0.25, 0.25, 0.25, 0.25],
+            [0, 0.25, 0.25, 0.25, 0],
+        ] .* π
+    )
+    @test all(angles_phase_estimation(N, ϵ) .≈ angles)
 end
 
 

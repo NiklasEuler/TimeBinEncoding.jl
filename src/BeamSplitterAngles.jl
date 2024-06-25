@@ -71,20 +71,19 @@ end
     angles_phase_estimation(N::Real, ϵ_angles)
     angles_phase_estimation(ρ_init::AbstractMatrix)
 
-Return the set of all beam-splitter configurations `angles` needed for phase estimation.
+Return a unified beam-splitter configuration `angles` needed for initial-state phase
+estimation.
 
-Optionally, `ϵ_angles` can be given as an argument, returning uniform random angles
-distributed symmetrically around the targeted angles. Futhermore, for convenience, the
-function can instead of `N` also be called with a `ρ_init` argument to simply the use in
-default argument usage.
+Optionally, `ϵ_angles` can be given as an argument, returning random angles
+distributed uniformly and symmetrically around the targeted angles. Futhermore, for con-
+venience, the function can also be called with a `ρ_init` argument instead of `N` to simply
+the use in default argument usage.
 
 # Returns
 
-- `angles`::Vector{Vector{Vector{Float64}}}: Nested Vector of beam-splitter angles.
-At the lowest two levels, it contains complete sets of beam splitter configurations as
-Vector{Vector{Float64}}. All configurations that interfere initial-state time bins of
-distance `k = 1` are collected into Vector{Vector{Vector{Float64}}}.
-
+- `angles`::Vector{Vector{Float64}}: Unified beam-splitter configuration for initial-state
+    phase estimation. This configuration allows the readout of all relative initial initial-
+    state phases between |ii⟩ and |jj⟩ for all i, j = 1, ..., N.
 See also [`angles_single_setup`](@ref), [`angles_compound`](@ref), [`j_out_compound`](@ref),
 [`coherence_extraction_compound`](@ref), [`noisy_angles_symmetric`](@ref).
 """
@@ -92,15 +91,20 @@ function angles_phase_estimation end
 
 function angles_phase_estimation(N::Real)
     N = convert(Int64, N)::Int64
-    angles = angles_kth_neighbor_interference(N, 1) # nearest neighbor phase estimation
+    M = 2
+    angles = [fill(0.25 * π, n) for n in N:N + M - 1]
+    angles[2][[1, end]] .= 0
+    # angles = angles_kth_neighbor_interference(N, 1) # nearest neighbor phase estimation
     return angles
 end
 
 function angles_phase_estimation(N::Real, ϵ_angles)
     N = convert(Int64, N)::Int64
-    angles = angles_kth_neighbor_interference(N, 1, ϵ_angles)
+    angles = angles_phase_estimation(N)
+    angles_noisy = noisy_angles_symmetric(angles, ϵ_angles)
+    #angles_noisy = angles_kth_neighbor_interference(N, 1, ϵ_angles)
     # noisy nearest neighbor phase estimation
-    return angles
+    return angles_noisy
 end
 
 function angles_phase_estimation(ρ_init::AbstractMatrix)
