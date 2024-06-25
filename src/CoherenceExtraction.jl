@@ -115,13 +115,10 @@ Compute the relative phases between the time bins of an initial states `ρ_init`
 arbitrary but fixed phases and return the phase-corrected density matrix and measured
 relative phases.
 
-Optionally, the measured initial state populations can be given as a parameter, taking
-finite sampling statistics into consideration. The default value are the true populations of
-the initial state `ρ_init`. Furthermore, the phase estimation process can be modelled to
-have noisy beam-splitter angles. The entire noisy angle sets can be given for the real- and
-imaginary-part measurements each. The default here are the clean angles.
+The function takes the measured initial-state and final-state populations as an argument,
+taking finite sampling statistics and noisy beam-splitter angles into consideration.
 
-See also [`noisy_angles_symmetric`](@ref), [`angles_kth_neighbor_interference`](@ref),
+See also [`noisy_angles_symmetric`](@ref), [`angles_phase_estimation`](@ref),
 [`phase_on_density_matrix`](@ref).
 """
 function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
@@ -131,19 +128,31 @@ function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
     nn_phases = zeros(Float64, N)
     k = 1 # nearest neigbor phase measurements suffice
     extract_diagonal = false # dont need the populations
-    angles_k = angles_kth_neighbor_interference(N, k)
+    #angles_k = angles_kth_neighbor_interference(N, k)
+    angles = angles_phase_estimation(N) # intended angles (no noise)
     j_out_arr = j_out_phase_estimation(N)
     j_contr_idxs = correlated_short_bins_idxs(N) # all time bin j indices
 
     for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
         c_real = coherence_extraction(
-            N, j, pops_init, pops_fs_real[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
+            N, j, pops_init, pops_fs_real[idx], angles, j_contr_idxs[[idx, idx + k]];
             extract_diagonal=extract_diagonal
         )
         c_imag = coherence_extraction(
-            N, j, pops_init, pops_fs_imag[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
+            N, j, pops_init, pops_fs_imag[idx], angles, j_contr_idxs[[idx, idx + k]];
             extract_diagonal=extract_diagonal
         )
+        #c_real = coherence_extraction(
+        #    N, j, pops_init, pops_fs_real[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
+        #    extract_diagonal=extract_diagonal
+        #)
+        #c_imag = coherence_extraction(
+        #    N, j, pops_init, pops_fs_imag[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
+        #    extract_diagonal=extract_diagonal
+        #)
+        #println("idx: ", idx, " lcmk: ", [j2lcmk(N + 2, j[1]), j2lcmk(N + 2, j[2])])
+        #println("c_real: ", c_real)
+        #println("c_imag: ", c_imag)
         c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
         nn_phases[idx + 1] = ϕ_arr[argmax(c_contr)]
     end
@@ -167,6 +176,7 @@ See also [`j_out_compound`](@ref), [`j_out_single_setup`](@ref), [angles]
 function j_out_phase_estimation(N)
     k = 1 # nearest neigbour phase measurements suffice
     j_out_arr = [[lcmk2j(N + k + 1, i, 0, i, 0), lcmk2j(N + k + 1, i + 1, 1, i + 1, 1)]
+    # + k + 1 because two round trips are needed for nearest-neighbor interference
         for i in 1:k:N - k]
     return j_out_arr
 end
@@ -198,13 +208,22 @@ function pops_fs_phase_estimation(
     pop_fs_real = zeros(Float64, length(j_out_arr))
     pop_fs_imag = zero(pop_fs_real)
 
-    for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
-        φ_arr = zeros(Float64, N)
-        φ_arr[idx + 1] = π / 2 # apply π / 2 phase shift to swap real and imaginary parts
-        ρ_rotated = phase_on_density_matrix(ρ_init, φ_arr)
+    φ_arr = (0:N - 1) .* (π / 2)
+    ρ_rotated = phase_on_density_matrix(ρ_init, φ_arr)
 
-        pop_fs_real[idx] = explicit_fs_pop(ρ_init, j, angles_real[idx])
-        pop_fs_imag[idx] = explicit_fs_pop(ρ_rotated, j, angles_imag[idx])
+    for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
+
+        #φ_arr = zeros(Float64, N)
+        #φ_arr[idx + 1] = π / 2 # apply π / 2 phase shift to swap real and imaginary parts
+
+        #ρ_rotated = phase_on_density_matrix(ρ_init, φ_arr)
+
+
+        pop_fs_real[idx] = explicit_fs_pop(ρ_init, j, angles_real)
+        pop_fs_imag[idx] = explicit_fs_pop(ρ_rotated, j, angles_imag)
+
+        #pop_fs_real[idx] = explicit_fs_pop(ρ_init, j, angles_real[idx])
+        #pop_fs_imag[idx] = explicit_fs_pop(ρ_rotated, j, angles_imag[idx])
 
     end
 
