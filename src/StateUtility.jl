@@ -232,8 +232,21 @@ function sample_populations(pop::Real, n_samples)
     return pop_sampled
 end
 
-function sample_populations(pops::Vector{<:Real}, n_samples)
+function sample_populations(pops::Vector{<:Real}, n_samples; unity=true)
     n_samples = convert(Int64, n_samples)::Int64 # number of measurements
+
+    if(unity)
+        @argcheck sum(pops) ≈ 1 # unity check
+    else
+        @argcheck 0 < sum(pops) < 1 # normalizable check
+    end
+    @argcheck n_samples > 0
+    @argcheck all(pops .≥ 0)
+
+    if !unity
+        push!(pops, 1 - sum(pops)) # append the remaining probability to the last entry
+    end
+
     pops_measured = zero(pops)
     samples_ordered =
         sample(collect(1:length(pops)), ProbabilityWeights(pops), n_samples, ordered=true)
@@ -244,6 +257,11 @@ function sample_populations(pops::Vector{<:Real}, n_samples)
 
     for count_pair in count_map_samples
         pops_measured[count_pair.first] = count_pair.second/n_samples # normalization
+    end
+
+    if !unity
+        popat!(pops, length(pops)) # remove the appended entry
+        popat!(pops_measured, length(pops_measured))
     end
 
     return pops_measured

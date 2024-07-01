@@ -424,6 +424,29 @@ function explicit_fs_pop(
     return exp_val
 end
 
+function explicit_fs_pop_sampled(
+    ρ_init,
+    j_out_arr::Vector{Int64},
+    angles,
+    n_samples,
+    projector_weights=ones(Float64, length(j_out_arr))
+)
+    n_samples = convert(Int64, n_samples)::Int64
+    pops = [explicit_fs_pop(ρ_init, j_out, angles) for j_out in j_out_arr]
+    push!(pops, 1 - sum(pops)) # add dummy entry for other results to preserve normalization
+    pops_sampled = sample_populations(pops, n_samples)
+    pop_fs_weighted = sum(pops_sampled[1:end - 1] .* projector_weights)
+        # remove dummy entry and sum up the weighted results
+    #popat!(pops, length(pops)) # remove dummy entry
+
+    #= println("pops :",pops)
+    println("pops_sampled :",pops_sampled) =#
+
+    return pop_fs_weighted
+end
+
+
+
 """
     expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 

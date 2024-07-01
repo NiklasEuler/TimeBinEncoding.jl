@@ -79,6 +79,37 @@ end
     angles_compound_all = angles_compound(N)
 #    angles_k1 = angles_phase_estimation(N)
 
+    angles_14_1 = [0.5, 0, 0, 0] * π
+    angles_14_2 = [0, 0, 0, 0, 0] * π
+    angles_14_3 = [0, 0.5, 0, 0, 0, 0] * π
+    angles_14_4 = [0, 0, 0.25, 0.25, 0, 0, 0] * π
+    angles_k3 = [angles_14_1, angles_14_2, angles_14_3, angles_14_4]
+
+    @test all(angles_compound_all[1] .≈ angles_k3)
+
+    angles_13_1 = [0.5, 0.5, 0, 0] * π
+    angles_13_2 = [0, 0, 0, 0, 0] * π
+    angles_13_3 = [0, 0, 0.25, 0.25, 0, 0] * π
+
+    angles_13 = [angles_13_1, angles_13_2, angles_13_3]
+
+    angles_k2 = angles_13
+
+    @test all(angles_compound_all[2] .≈ angles_k2)
+
+    angles_12_1 = [0.5, 0, 0.5, 0] * π
+    angles_12_2 = [0, 0.25, 0, 0.25, 0] * π
+
+    angles_k1 = [angles_12_1, angles_12_2]
+
+    @test all(angles_compound_all[3] .≈ angles_k1)
+end
+
+#= @testset "angles_compound" begin
+    N = 4
+    angles_compound_all = angles_compound(N)
+#    angles_k1 = angles_phase_estimation(N)
+
     angles_12_1 = [0.5, 0, 0, 0] * π
     angles_12_2 = [0, 0.25, 0, 0, 0] * π
 
@@ -123,7 +154,7 @@ end
     angles_k3 = [angles_14]
 
     @test all(angles_compound_all[3] .≈ angles_k3)
-end
+end =#
 
 @testset "angles_phase_estimation" begin
     N = 4

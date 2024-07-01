@@ -114,7 +114,7 @@ function angles_phase_estimation(ρ_init::AbstractMatrix)
     return angles
 end
 
-"""
+#= """
     angles_compound(N)
     angles_compound(N, ϵ_angles)
 
@@ -150,7 +150,7 @@ function angles_compound(N, ϵ_angles)
 
     angles = [angles_kth_neighbor_interference(N, k, ϵ_angles) for k in 1:N - 1]
     return angles::Vector{Vector{Vector{Vector{Float64}}}}
-end
+end =#
 
 
 """
@@ -431,6 +431,21 @@ function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
 	angles .*= π
 
 	return angles
+end
+
+function angles_compound end
+
+function angles_compound(N)
+    N = convert(Int64, N)::Int64
+    pairings = graph_coloring(N)
+    angles = [angles_pairs_from_coloring(N, pair) for pair in pairings]
+    return angles
+end
+
+function angles_compound(N, ϵ_angles)
+    angles_clean = angles_compound(N)
+    angles_noisy = [noisy_angles_symmetric(angles, ϵ_angles) for angles in angles_clean]
+    return angles_noisy
 end
 
 function angles_pairs_from_coloring(N, pair_arr; population_bins=false)
