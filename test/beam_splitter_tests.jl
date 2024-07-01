@@ -284,11 +284,11 @@ end
     @test all(perfect_matches_length .== N - 1)
 end
 
-@testset "angles_pairs_from_mask" begin
+@testset "angles_pairs_from_coloring" begin
     N = 4
     pairings = graph_coloring(N)
 
-    angles_1 = angles_pairs_from_mask(N, pairings[1])
+    angles_1 = angles_pairs_from_coloring(N, pairings[1])
     @test all(
         angles_1 .≈ [
             [0.5, 0, 0, 0],
@@ -298,7 +298,7 @@ end
         ] * π
     )
 
-    angles_2 = angles_pairs_from_mask(N, pairings[2])
+    angles_2 = angles_pairs_from_coloring(N, pairings[2])
     @test all(
         angles_2 .≈ [
             [0.5, 0.5, 0, 0],
@@ -307,7 +307,7 @@ end
         ] * π
     )
 
-    angles_3 = angles_pairs_from_mask(N, pairings[3])
+    angles_3 = angles_pairs_from_coloring(N, pairings[3])
     @test all(
         angles_3 .≈ [
             [0.5, 0, 0.5, 0],
@@ -318,7 +318,7 @@ end
     N = 6
     pairings = graph_coloring(N)
 
-    angles_1 = angles_pairs_from_mask(N, pairings[1]; population_bins=true)
+    angles_1 = angles_pairs_from_coloring(N, pairings[1]; population_bins=true)
     @test all(
         angles_1 .≈ [
             [θ_pop_ref, 0, 0, θ_pop_ref, θ_pop_ref, θ_pop_ref],
@@ -330,7 +330,7 @@ end
         ] * π
     )
 
-    angles_2 = angles_pairs_from_mask(N, pairings[2]; population_bins=true)
+    angles_2 = angles_pairs_from_coloring(N, pairings[2]; population_bins=true)
     @test all(
         angles_2 .≈ [
             [0, θ_pop_ref, θ_pop_ref, 0, θ_pop_ref, θ_pop_ref],
@@ -342,7 +342,7 @@ end
     )
 
 
-    angles_5 = angles_pairs_from_mask(N, pairings[5]; population_bins=true)
+    angles_5 = angles_pairs_from_coloring(N, pairings[5]; population_bins=true)
     @test all(
         angles_5 .≈ [
             [θ_pop_ref, 0, 0, θ_pop_ref, 0, θ_pop_ref],

@@ -1,7 +1,7 @@
 export angles_kth_neighbor_interference, noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
-export angles_ref_bin_all_pairs, angles_pairs_from_mask
+export angles_ref_bin_all_pairs, angles_pairs_from_coloring
 export graph_coloring
 
 
@@ -433,7 +433,7 @@ function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
 	return angles
 end
 
-function angles_pairs_from_mask(N, pair_arr; population_bins=false)
+function angles_pairs_from_coloring(N, pair_arr; population_bins=false)
 	N = convert(Int64, N)::Int64
 	sort!.(pair_arr)
 	incoming_diag_idxs = [pair[2] + 1 for pair in pair_arr]
