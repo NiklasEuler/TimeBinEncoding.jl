@@ -88,7 +88,7 @@ end
     ρ_corrected = phase_on_density_matrix(ρ_pure, -1 * relative_phases)
 
     angles_compound_all = angles_compound(N)
-    pops_fs_all_pure = pops_fs_compound(ρ_corrected, angles_compound_all)
+    pops_fs_all_pure = fs_pop_compound(ρ_corrected, angles_compound_all)
 
     @test isapprox(
         coherence_extraction_compound(pops_pure, pops_fs_all_pure), 1.0, atol = 1e-8
@@ -141,10 +141,25 @@ end
     @test sum(pops_mixed) ≈ 1
     @test diag(ρ_mixed) ≈ pops_mixed
     @test typeof(pops_mixed) <: Vector{Float64}
-    pops_mixed_sampled = populations(ρ_mixed, n_samples)
 
+    pops_mixed_sampled = populations(ρ_mixed, n_samples)
     @test isapprox(pops_mixed_sampled, pops_mixed, atol = 1e-3)
     @test sum(pops_mixed_sampled) ≈ 1
 
     @test isapprox(sample_populations(0.67, n_samples), 0.67, atol = 1e-3)
+
+    pops_non_normalized = [0.1, 0.2, 0.3, 0.1]
+    pops_non_normalized_sampled = sample_populations(
+        pops_non_normalized, n_samples; unity = false
+    )
+    @test length(pops_non_normalized_sampled) == length(pops_non_normalized) == 4
+    @test isapprox(pops_non_normalized_sampled, pops_non_normalized, atol = 1e-3)
+
+    pops_to_much = [0.1, 0.8, 0.2]
+    @test_throws ArgumentError sample_populations(pops_to_much, n_samples)
+
+    pops_negative = [-0.1, 0.8, 0.2]
+    @test_throws ArgumentError sample_populations(pops_negative, n_samples)
+
+
 end

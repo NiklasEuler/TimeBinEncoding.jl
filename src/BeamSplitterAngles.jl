@@ -1,11 +1,11 @@
-export angles_kth_neighbor_interference, noisy_angles_symmetric
+export noisy_angles_symmetric
 export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
 export angles_ref_bin_all_pairs, angles_pairs_from_coloring
 export graph_coloring
+# export angles_kth_neighbor_interference
 
-
-"""
+#= """
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
 
@@ -63,7 +63,7 @@ function _angles_kth_neighbor(N, k, i, ϵ_angles)
     angles_k_i = _angles_kth_neighbor(N, k, i)
     angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
     return angles_k_i_noisy
-end
+end =#
 
 
 """
@@ -114,7 +114,7 @@ function angles_phase_estimation(ρ_init::AbstractMatrix)
     return angles
 end
 
-"""
+#= """
     angles_compound(N)
     angles_compound(N, ϵ_angles)
 
@@ -150,7 +150,7 @@ function angles_compound(N, ϵ_angles)
 
     angles = [angles_kth_neighbor_interference(N, k, ϵ_angles) for k in 1:N - 1]
     return angles::Vector{Vector{Vector{Vector{Float64}}}}
-end
+end =#
 
 
 """
@@ -433,6 +433,59 @@ function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
 	return angles
 end
 
+
+"""
+    angles_compound(N)
+    angles_compound(N, ϵ_angles)
+
+Return the set of all beam-splitter configurations `angles` needed for compound coherence
+extraction.
+
+Optionally, `ϵ_angles` can be given as an argument, returning uniform random angles
+distributed symmetrically around the targeted angles.
+
+# Returns
+
+- `angles`::Vector{Vector{Vector{Float64}}}: Nested Vector of beam-splitter angles.
+At the lowest two levels, it contains complete sets of beam splitter configurations as
+Vector{Vector{Float64}}. Each configuration interferes all bins in pairs of two (if N is
+odd, one bin remains unaltered). Over all configurations, all possible pairings are covered.
+
+See also [`j_out_compound`](@ref), [`coherence_extraction_compound`](@ref),
+[`noisy_angles_symmetric`](@ref), [`angles_single_setup`](@ref).
+"""
+function angles_compound end
+
+function angles_compound(N)
+    N = convert(Int64, N)::Int64
+    pairings = graph_coloring(N)
+    angles = [angles_pairs_from_coloring(N, pair) for pair in pairings]
+    return angles
+end
+
+function angles_compound(N, ϵ_angles)
+    angles_clean = angles_compound(N)
+    angles_noisy = [noisy_angles_symmetric(angles, ϵ_angles) for angles in angles_clean]
+    return angles_noisy
+end
+
+
+"""
+    angles_pairs_from_coloring(N, pair_arr; population_bins=false)
+
+Compute the angles for beam splitters based on a pairing of bins given by `pair_arr`.
+Optionally, reference population bins can be included via the `population_bins` argument.
+
+# Arguments
+- `N`: The number of input bins.
+- `pair_arr`: A vector of two-element vectors of time-bin indices representing the pairing.
+- `population_bins`: (optional) A boolean indicating whether to include population bins.
+    Default is `false`.
+
+# Returns
+An array of angles for the beam splitters.
+
+"""
 function angles_pairs_from_coloring(N, pair_arr; population_bins=false)
 	N = convert(Int64, N)::Int64
 	sort!.(pair_arr)

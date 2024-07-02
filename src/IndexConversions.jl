@@ -1,4 +1,5 @@
-export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
+export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc
+export correlated_short_bins_idxs, correlated_short_bins_tuples, indices2tuples
 
 """
     lcmk2j(N, l, c, m, k)
@@ -180,10 +181,55 @@ end
 
 Compute the joint indices `j` of the `|lcmk⟩` basis corresponding to `|i0i0⟩` for
 i ∈ {0,…, N - 1}.
+
+See also [`correlated_short_bins_tuples`](@ref), [`indices2tuples`](@ref).
 """
 function correlated_short_bins_idxs(N)
     N = convert(Int64, N)::Int64
-
     contr_j_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
     return contr_j_idxs
+end
+
+
+
+"""
+    correlated_short_bins_tuples(N; extract_diagonal=false)
+
+Converts the indices of correlated short bins to tuples.
+
+# Arguments
+- `N`: The number of time bins.
+- `extract_diagonal`: (Optional) A boolean indicating whether to include the diagonal
+elements. Default is `false`.
+
+# Returns
+- `Vector{Tuple{Int64, Int64}}`: A list of tuples representing pairs of indices.
+
+See also [`correlated_short_bins_idxs`](@ref), [`indices2tuples`](@ref).
+"""
+function correlated_short_bins_tuples(N; extract_diagonal=false)
+    contr_j_idxs = correlated_short_bins_idxs(N)
+    return indices2tuples(contr_j_idxs; extract_diagonal=extract_diagonal)
+end
+
+"""
+    indices2tuples(indices; extract_diagonal=false)
+
+Converts a list of indices into a list of tuples. Each tuple represents a pair of indices
+(i, j) where i and j are elements from the input list `indices`. By default, the function
+includes all possible pairs of indices but excludes the diagonal elements (i, i). They can
+also be included by setting `extract_diagonal` to `true`.
+
+# Arguments
+- `indices`: A list of indices.
+- `extract_diagonal`: (Optional) A boolean value indicating whether to include the diagonal
+    elements in the output. Default is `false`.
+
+# Returns
+- `Vector{Tuple{Int64, Int64}}`: A list of tuples representing pairs of indices.
+
+See also [`correlated_short_bins_tuples`](@ref), [`correlated_short_bins_idxs`](@ref).
+"""
+function indices2tuples(indices; extract_diagonal=false)
+    return [(i,j) for i in indices for j in indices if i ≠ j || extract_diagonal]
 end

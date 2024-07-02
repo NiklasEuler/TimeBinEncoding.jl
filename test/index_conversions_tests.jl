@@ -68,3 +68,23 @@ end
     @test_throws ArgumentError lc2j(1, -1)
     @test_throws ArgumentError lc2j(4, 2)
 end
+
+
+@testset "correlated_short_bins_tuples" begin
+    N = 4
+    tuples = correlated_short_bins_tuples(N)
+    @test length(tuples) == N * (N - 1)
+    j1 = lcmk2j(N, 0, 0, 0, 0)
+    j2 = lcmk2j(N, 1, 0, 1, 0)
+    @test (j1, j2) in tuples
+    @test (j2, j1) in tuples
+    @test (j1, j1) ∉ tuples
+
+    N = 5
+
+    tuples = correlated_short_bins_tuples(N; extract_diagonal = true)
+    @test length(tuples) == N^2
+
+    j2 = lcmk2j(N, N - 1, 0, N - 1, 0)
+    @test (j2, j2) in tuples
+end
