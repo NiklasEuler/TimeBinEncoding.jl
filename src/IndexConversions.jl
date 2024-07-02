@@ -187,3 +187,8 @@ function correlated_short_bins_idxs(N)
     contr_j_idxs = [lcmk2j(N, i, 0, i, 0) for i in 0:N - 1]
     return contr_j_idxs
 end
+
+function correlated_short_bins_tuples(N)
+    contr_j_idxs = correlated_short_bins_idxs(N)
+    return [(i,j) for i in contr_j_idxs for j in contr_j_idxs]
+end
