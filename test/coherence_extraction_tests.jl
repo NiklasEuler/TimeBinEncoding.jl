@@ -25,13 +25,13 @@
     proj_weights = [1, -1]
     pop_fs = explicit_fs_pop(ρ_pure, j_out_arr, angles)
     pop_fs_weighted = explicit_fs_pop(ρ_pure, j_out_arr, angles, proj_weights)
-
+    contr_j_tuples = correlated_short_bins_tuples(N, extract_diagonal = true)
 
     @test isapprox((@test_logs min_level=Logging.Warn coherence_extraction(N, j_out_arr,
-    pops_pure, pop_fs, angles)), mes_fidelity, atol = 1e-8)
+    pops_pure, pop_fs, angles, contr_j_tuples)), mes_fidelity, atol = 1e-8)
 
 	@test_throws ArgumentError coherence_extraction(
-        N, j_out_arr,  pops_pure, pop_fs, angles, proj_weights, extract_diagonal=false
+        N, j_out_arr, pops_pure, pop_fs, angles, proj_weights
     )
 
     j_out_single_proj = [lcmk2j(N + M, 3, 0, 3, 0)]
@@ -43,7 +43,7 @@
         pops_pure,
         pop_fs_single_proj,
         angles,
-        correlated_short_bins_idxs(N),
+        contr_j_tuples,
         proj_weight
     )), mes_fidelity, atol = 1e-8)
 
@@ -76,9 +76,10 @@
 
 	@test isapprox((@test_logs (:warn, "Some of the scheduled coherences have a vanishing "*
         "weight in the given final-state projectors. Please check again and consider "*
-        "adapting the scheduled coherences in `contr_j_idxs`.") min_level =
-        Logging.Warn coherence_extraction(N, j_01, pops_pure, pop_fs, angles_1;
-        extract_diagonal=extract_diagonal)), 1 / 8, atol = 1e-8)
+        "adapting the scheduled coherences in `contr_j_tuples`.") min_level =
+        Logging.Warn coherence_extraction(N, j_01, pops_pure, pop_fs, angles_1)
+        ), 1 / 8, atol = 1e-8
+    )
 end
 
 @testset "compound coherence extraction" begin

@@ -1,4 +1,5 @@
-export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc, correlated_short_bins_idxs
+export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc
+export correlated_short_bins_idxs, correlated_short_bins_tuples, indices2tuples
 
 """
     lcmk2j(N, l, c, m, k)
@@ -188,7 +189,11 @@ function correlated_short_bins_idxs(N)
     return contr_j_idxs
 end
 
-function correlated_short_bins_tuples(N)
+function correlated_short_bins_tuples(N; extract_diagonal=false)
     contr_j_idxs = correlated_short_bins_idxs(N)
-    return [(i,j) for i in contr_j_idxs for j in contr_j_idxs]
+    return [(i,j) for i in contr_j_idxs for j in contr_j_idxs if i ≠ j || extract_diagonal]
+end
+
+function indices2tuples(indices; extract_diagonal=false)
+    return [(i,j) for i in indices for j in indices if i ≠ j || extract_diagonal]
 end

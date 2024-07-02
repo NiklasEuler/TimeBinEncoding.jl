@@ -6,7 +6,7 @@ export j_out_single_setup
 
 """
     coherence_extraction(
-        N, j_out, pops_init, pop_fs, angles, contr_j_idxs = correlated_short_bins_idxs(N);
+        N, j_out, pops_init, pop_fs, angles, contr_j_tuples=correlated_short_bins_tuples(N);
         extract_diagonal::Bool=true
     )
 
@@ -22,8 +22,9 @@ Extract the coherences between correlated time-bin populations.
     projectors given by `j_out`
 - `angles`: a Vector or Vectors of scheduled beam-splitter angles. The number of round trips
     matches `length(angles)`.
-- `contr_j_idxs`: Vector of `j` indices of states that should be extracted from the state.
-    Default value is `correlated_short_bins_idxs(N)`, which is all correlated time bins.
+- `contr_j_tuples`: Vector of `(j1, j2)` tuples of state indices that should be extracted
+    from the state. Default value is `correlated_short_bins_tuples(N)`, which is all
+    correlated time bins.
 
 # Keyword Arguments
 
@@ -38,9 +39,8 @@ function coherence_extraction(
     pops_init,
     pop_fs,
     angles,
-    contr_j_idxs = correlated_short_bins_idxs(N),
-    projector_weights=ones(Float64, length(j_out));
-    extract_diagonal::Bool=true
+    contr_j_tuples = correlated_short_bins_tuples(N, extract_diagonal=false),
+    projector_weights=ones(Float64, length(j_out))
 )
     N = convert(Int64, N)::Int64
     j_out = try
@@ -71,7 +71,7 @@ function coherence_extraction(
     for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2)
+		if (j1, j2) in contr_j_tuples
             # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence, (j1, j2))
             # relevant coherence, so indices saved to list of extracted coherences.
@@ -87,14 +87,13 @@ function coherence_extraction(
 
     @argcheck extracted_weights ≠ []
 
-    n_contr_sched = length(contr_j_idxs)
+    n_contr_sched = length(contr_j_tuples)
     n_extracted = length(extracted_weights)
 
-    if (n_extracted != n_contr_sched^2 && extract_diagonal) ||
-         (n_extracted != n_contr_sched * (n_contr_sched - 1) && !extract_diagonal)
+    if n_extracted != n_contr_sched
         @warn "Some of the scheduled coherences have a vanishing weight in the given "*
         "final-state projectors. Please check again and consider adapting the scheduled "*
-        "coherences in `contr_j_idxs`."
+        "coherences in `contr_j_tuples`."
     end
 
     if !all(extracted_weights .≈ extracted_weights[1])
@@ -135,14 +134,13 @@ function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
     j_contr_idxs = correlated_short_bins_idxs(N) # all time bin j indices
 
     for (idx, j) in enumerate(j_out_arr) # j is the index of the final state projectors
+        j_contr1 = j_contr_idxs[idx]
+        j_contr2 = j_contr_idxs[idx + k]
+        j_contr = [(j_contr1, j_contr2), (j_contr2, j_contr1)]
         c_real = coherence_extraction(
-            N, j, pops_init, pops_fs_real[idx], angles, j_contr_idxs[[idx, idx + k]];
-            extract_diagonal=extract_diagonal
-        )
+            N, j, pops_init, pops_fs_real[idx], angles, j_contr)
         c_imag = coherence_extraction(
-            N, j, pops_init, pops_fs_imag[idx], angles, j_contr_idxs[[idx, idx + k]];
-            extract_diagonal=extract_diagonal
-        )
+            N, j, pops_init, pops_fs_imag[idx], angles, j_contr)
         #c_real = coherence_extraction(
         #    N, j, pops_init, pops_fs_real[idx], angles_k[idx], j_contr_idxs[[idx, idx + k]];
         #    extract_diagonal=extract_diagonal
@@ -297,28 +295,40 @@ See also [`coherence_extraction`](@ref), [`noisy_angles_symmetric`](@ref).
 """
 function coherence_extraction_compound(pops_init, pops_fs_all)
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))::Int64
-    extract_diagonal = false
 
-
-    contr_j_idxs_all = correlated_short_bins_idxs(N)
-    contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs_all]))
+    contr_j_idxs = correlated_short_bins_idxs(N)
+    contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs]))
     extracted_coherences = contr_pops / N # populations contribution to fidelity
+
+    pairings = graph_coloring(N)
+
+    contr_j_tuples_all = Vector{Vector{Tuple{Int64, Int64}}}(undef, length(pairings))
+    # construct vector of all relevant coherences to be extracted from current iteration
+    for (idx, pairs) in enumerate(pairings)
+        contr_j_tuples_all[idx] = []
+        for pair in pairs
+            j1 = contr_j_idxs[pair[1] + 1]
+            j2 = contr_j_idxs[pair[2] + 1]
+            push!(contr_j_tuples_all[idx], (j1, j2), (j2, j1))
+        end
+    end
+
 
     j_out_all = j_out_compound(N)
     angles_all = angles_compound(N)
     projector_weights = proj_weights_compound(N)
 
+
     for k in eachindex(j_out_all)
         j_out = j_out_all[k] # the kth final state projector indices
         angles = angles_all[k] # the kth angle settings
         pop_fs = pops_fs_all[k] # the kth final state populations
-        # contr_j_idxs = contr_j_idxs_all[[idx, idx + k]]
+        contr_j_tuples = contr_j_tuples_all[k]
         # # the two time bins to be extracted from data.
 
         coh = coherence_extraction(
-            N, j_out, pops_init, pop_fs, angles, contr_j_idxs_all, projector_weights;
-            extract_diagonal = extract_diagonal
-        ) # noisy extraction using the correlated and anti-correlated coincidence counts
+            N, j_out, pops_init, pop_fs, angles, contr_j_tuples, projector_weights)
+            # noisy extraction using the correlated and anti-correlated coincidence counts
         extracted_coherences += coh
     end
 
