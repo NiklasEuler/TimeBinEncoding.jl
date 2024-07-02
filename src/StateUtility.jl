@@ -213,13 +213,14 @@ end
 
 """
     sample_populations(pop::Real, n_samples)
-    sample_populations(pops::Vector{<:Real}, n_samples)
+    sample_populations(pops::Vector{<:Real}, n_samples; unity=true)
 
 Return an approximate normalized reconstruction of the original distribution `pops` based on
 the measurement statistics generated with `n_samples` random samples.
 
 Accepts also a single (unnormalized) argument `pop` as a standalone probability to sample
-from.
+from. If `unity=true`, the sum of the probabilities is required to be unity, otherwise also
+not normalized distributions are accepted.
 
 See also [`populations`](@ref).
 """
@@ -260,8 +261,8 @@ function sample_populations(pops::Vector{<:Real}, n_samples; unity=true)
     end
 
     if !unity
-        popat!(pops, length(pops)) # remove the appended entry
-        popat!(pops_measured, length(pops_measured))
+        pop!(pops) # remove the appended entry
+        pop!(pops_measured)
     end
 
     return pops_measured

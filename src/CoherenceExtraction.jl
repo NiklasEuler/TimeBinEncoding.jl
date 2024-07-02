@@ -1,7 +1,7 @@
 export coherence_extraction
 export j_out_phase_estimation, initial_state_phase_estimation, pops_fs_phase_estimation
 export j_out_compound, coherence_extraction_compound
-export pops_fs_compound, pops_fs_compound_sampled
+export fs_pop_compound, fs_pop_compound_sampled
 export j_out_single_setup
 
 """
@@ -193,7 +193,7 @@ noisy setup, given through the two sets of optional mesaurement angles `angles_r
 
 Their default values are the noiseless angles for nearest-neighbor time-bin interference.
 
-See also [`pops_fs_compound`](@ref), [`initial_state_phase_estimation`](@ref),
+See also [`fs_pop_compound`](@ref), [`initial_state_phase_estimation`](@ref),
 [`angles_phase_estimation`](@ref).
 """
 function pops_fs_phase_estimation(
@@ -276,6 +276,19 @@ end
  =#
 
 
+"""
+    proj_weights_compound(N)
+
+Compute the projector weights for the compound-system readout scheme. Correlated outcomes
+have weight 1, wherease anti-correlated outcomes have weight -1.
+
+# Arguments
+- `N`: The number of particles in the system.
+
+# Returns
+- `Vector{Int}`: Array of projector weights.
+
+"""
 function proj_weights_compound(N)
     n_interference_pairs = ceil(Int, N / 2)
     projector_weights = [1, 1, -1, -1] # correlated outcomes minues anti-correlated outcomes
@@ -366,7 +379,17 @@ function j_out_compound(N)
     return j_out
 end =#
 
+ """
+    j_out_compound(N)
 
+Return all the final-state projector indices for the compound coherence-extraction scheme.
+
+# Returns
+- `Vector{Vector{Int}}`: All final-state projector indices for each beam-splitter setup.
+
+See also [`angles_compound`](@ref), [`coherence_extraction_compound`](@ref),
+[`j_out_single_setup`](@ref).
+"""
 function j_out_compound(N)
     j_out_arr = Vector{Int}[]
     pairings = graph_coloring(N)
@@ -374,15 +397,15 @@ function j_out_compound(N)
     for (idx, pair_arr) in enumerate(pairings)
         j_out = Int[]
         Δpairs = [pair[2] - pair[1] for pair in pair_arr]
-        Δmax = max(Δpairs...)
-        M = Δmax + 1
+        Δmax = max(Δpairs...) # maximum distance between time-bin pairs
+        M = Δmax + 1 # number of round trips
         proj_bins = proj_bin_idxs[idx]
         for j in proj_bins
             push!(j_out,
-                lcmk2j(N + M, j, 0, j, 0),
-                lcmk2j(N + M, j + 1, 1, j + 1, 1),
-                lcmk2j(N + M, j, 0, j + 1, 1),
-                lcmk2j(N + M, j + 1, 1, j, 0)
+                lcmk2j(N + M, j, 0, j, 0), # correlated time bins
+                lcmk2j(N + M, j + 1, 1, j + 1, 1), # correlated time bins
+                lcmk2j(N + M, j, 0, j + 1, 1), # anti-correlated time bins
+                lcmk2j(N + M, j + 1, 1, j, 0) # anti-correlated time bins
             )
         end
         # pairs of |i,S,i,S⟩ and |i + 1,L,i + 1,L⟩ and mixtures |i,S,i+1,L⟩ and |i+1,L,i,S⟩
@@ -393,7 +416,7 @@ end
 
 
 #= """
-    pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+    fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 
 Compute all needed final-state populations for an initial state `ρ_init` for a complete set
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
@@ -402,7 +425,7 @@ contains all beam-splitter angles to be used for the scheme.
 See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
 [`angles_compound`](@ref).
 """
-function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
     # Add projector weights to explicit_fs_pop
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
     angles_all = convert(
@@ -426,18 +449,18 @@ function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 end =#
 
 """
-    pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+    fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 
 Compute all needed final-state populations for an initial state `ρ_init` for a complete set
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
-[`angles_compound`](@ref).
+See also [`fs_pop_compound_sampled`](@ref), [`pops_fs_phase_estimation`](@ref),
+[`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
 """
-function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 
-    ρ_init, angles_all, j_out_all, proj_weights, pops_out = _pops_fs_compound_worker(
+    ρ_init, angles_all, j_out_all, proj_weights, pops_out = _fs_pop_compound_worker(
         ρ_init, angles_all
     )
     for k in eachindex(j_out_all)
@@ -448,10 +471,21 @@ function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
     return pops_out
 end
 
-function pops_fs_compound_sampled(
+"""
+    fs_pop_compound_sampled(ρ_init, n_samples, angles_all=angles_compound(ρ2N(ρ_init)))
+
+Compute the sampled final-state populations for an initial state `ρ_init` for a complete set
+of measurements in the compound coherence extraction scheme, using `n_sample` sta. The
+`angles_all` argument contains all beam-splitter angles to be used for the scheme.
+
+
+See also [`fs_pop_compound`](@ref), [`pops_fs_phase_estimation`](@ref),
+[`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
+"""
+function fs_pop_compound_sampled(
     ρ_init, n_samples, angles_all=angles_compound(ρ2N(ρ_init))
 )
-    ρ_init, angles_all, j_out_all, proj_weights, pops_out = _pops_fs_compound_worker(
+    ρ_init, angles_all, j_out_all, proj_weights, pops_out = _fs_pop_compound_worker(
         ρ_init, angles_all
     )
     for k in eachindex(j_out_all)
@@ -465,7 +499,7 @@ function pops_fs_compound_sampled(
 end
 
 
-function _pops_fs_compound_worker(ρ_init, angles_all)
+function _fs_pop_compound_worker(ρ_init, angles_all)
     # Add projector weights to explicit_fs_pop
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
     angles_all = convert(

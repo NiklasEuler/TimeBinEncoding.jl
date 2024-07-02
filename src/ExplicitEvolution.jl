@@ -434,7 +434,8 @@ function explicit_fs_pop_sampled(
     n_samples = convert(Int64, n_samples)::Int64
     pops = [explicit_fs_pop(ρ_init, j_out, angles) for j_out in j_out_arr]
     if !(sum(pops) .≈ 1)
-        push!(pops, 1 - sum(pops)) # add dummy entry for other results to preserve normalization
+        push!(pops, 1 - sum(pops))
+        # add dummy entry for other results to preserve normalization
     end
     pops_sampled = sample_populations(pops, n_samples)
     pop_fs_weighted = sum(pops_sampled[1:length(projector_weights)] .* projector_weights)
