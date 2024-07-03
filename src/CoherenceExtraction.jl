@@ -1,5 +1,5 @@
 export coherence_extraction
-export j_out_phase_estimation, initial_state_phase_estimation, pops_fs_phase_estimation
+export j_out_phase_estimation, initial_state_phase_estimation, fs_pop_phase_estimation
 export j_out_compound, coherence_extraction_compound
 export fs_pop_compound, fs_pop_compound_sampled
 export j_out_single_setup
@@ -170,7 +170,7 @@ The returned vector contains vectors with two `j` entries each, corresponding to
 kets `|i,S,i,S⟩` and `|i+1,L,i+1,L⟩`, for i in 1:N-1.
 
 See also [`j_out_compound`](@ref), [`j_out_single_setup`](@ref), [angles]
-[`initial_state_phase_estimation`](@ref), [`pops_fs_phase_estimation`](@ref).
+[`initial_state_phase_estimation`](@ref), [`fs_pop_phase_estimation`](@ref).
 """
 function j_out_phase_estimation(N)
     k = 1 # nearest neigbour phase measurements suffice
@@ -181,7 +181,7 @@ function j_out_phase_estimation(N)
 end
 
 """
-    function pops_fs_phase_estimation(
+    function fs_pop_phase_estimation(
         ρ_init,
         angles_real=angles_phase_estimation(ρ_init),
         angles_imag=angles_phase_estimation(ρ_init),
@@ -196,7 +196,7 @@ Their default values are the noiseless angles for nearest-neighbor time-bin inte
 See also [`fs_pop_compound`](@ref), [`initial_state_phase_estimation`](@ref),
 [`angles_phase_estimation`](@ref).
 """
-function pops_fs_phase_estimation(
+function fs_pop_phase_estimation(
         ρ_init,
         angles_real=angles_phase_estimation(ρ_init),
         angles_imag=angles_phase_estimation(ρ_init),
@@ -422,7 +422,7 @@ Compute all needed final-state populations for an initial state `ρ_init` for a 
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
+See also [`fs_pop_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
 [`angles_compound`](@ref).
 """
 function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
@@ -455,7 +455,7 @@ Compute all needed final-state populations for an initial state `ρ_init` for a 
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`fs_pop_compound_sampled`](@ref), [`pops_fs_phase_estimation`](@ref),
+See also [`fs_pop_compound_sampled`](@ref), [`fs_pop_phase_estimation`](@ref),
 [`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
 """
 function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
@@ -479,7 +479,7 @@ of measurements in the compound coherence extraction scheme, using `n_sample` st
 `angles_all` argument contains all beam-splitter angles to be used for the scheme.
 
 
-See also [`fs_pop_compound`](@ref), [`pops_fs_phase_estimation`](@ref),
+See also [`fs_pop_compound`](@ref), [`fs_pop_phase_estimation`](@ref),
 [`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
 """
 function fs_pop_compound_sampled(

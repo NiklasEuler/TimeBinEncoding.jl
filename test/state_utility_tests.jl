@@ -83,7 +83,7 @@ end
 	ρ_pure = density_matrix(Ψ_init)
     pops_pure = populations(ρ_pure)
 
-    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_pure)
+    pops_fs_real, pops_fs_imag = fs_pop_phase_estimation(ρ_pure)
     relative_phases = initial_state_phase_estimation(pops_pure, pops_fs_real, pops_fs_imag)
     ρ_corrected = phase_on_density_matrix(ρ_pure, -1 * relative_phases)
 
@@ -99,7 +99,7 @@ end
     )
     pops_nophase = populations(ρ_nophase)
 
-    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_nophase)
+    pops_fs_real, pops_fs_imag = fs_pop_phase_estimation(ρ_nophase)
     relative_phases =
         initial_state_phase_estimation(pops_nophase, pops_fs_real, pops_fs_imag)
     ρ_nocorrect = phase_on_density_matrix(ρ_nophase, -1 * relative_phases)
@@ -118,7 +118,7 @@ end
 
     pops_phase_gradient = populations(ρ_phase_gradient)
 
-    pops_fs_real, pops_fs_imag = pops_fs_phase_estimation(ρ_phase_gradient)
+    pops_fs_real, pops_fs_imag = fs_pop_phase_estimation(ρ_phase_gradient)
     relative_phases =
         initial_state_phase_estimation(pops_phase_gradient, pops_fs_real, pops_fs_imag)
     ρ_correct = phase_on_density_matrix(ρ_phase_gradient, -1 * relative_phases)

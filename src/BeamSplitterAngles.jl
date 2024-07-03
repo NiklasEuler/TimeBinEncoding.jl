@@ -108,7 +108,7 @@ function angles_phase_estimation(N::Real, ϵ_angles)
 end
 
 function angles_phase_estimation(ρ_init::AbstractMatrix)
-    # call signature to simplify pops_fs_phase_estimation default argument call signature
+    # call signature to simplify fs_pop_phase_estimation default argument call signature
     N = ρ2N(ρ_init)
     angles =  angles_phase_estimation(N::Real)
     return angles
