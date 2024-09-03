@@ -2,8 +2,8 @@ export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evoluti
 export explicit_fs_projection_sp, explicit_fs_projection,
     explicit_fs_coherence_map, explicit_add_fs_projection
 export explicit_fs_pop
-export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
-export explicit_fs_pop_identical
+#export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
+#export explicit_fs_pop_identical
 
 """
     explicit_ket_evolution_sp(l, angles)
@@ -446,7 +446,7 @@ end
 
 
 
-function explicit_fs_projection_identical(j_out, angles)
+#= function explicit_fs_projection_identical(j_out, angles)
     j_out = convert(Int64, j_out)::Int64 # two-photon bin index in the |l, c , m , k > basis
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     M = length(angles) # number of roundtrips
@@ -573,3 +573,4 @@ function explicit_fs_pop_identical(
 
     return exp_val
 end
+ =#

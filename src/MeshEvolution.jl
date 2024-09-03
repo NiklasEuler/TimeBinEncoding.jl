@@ -4,10 +4,10 @@ export shift_timebins_sp, shift_timebins_operator_sp, coin_operator_sp
 export mesh_evolution
 export mesh_evolution_sp
 export phase_on_density_matrix
-export coin_operator_sp_identical, coin_operator_identical
-export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
-export mesh_evolution_sp_identical
-export mesh_evolution_identical
+#export coin_operator_sp_identical, coin_operator_identical
+#export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
+#export mesh_evolution_sp_identical
+#export mesh_evolution_identical
 
 
 """
@@ -371,7 +371,7 @@ function _iterative_mesh_evolution_sp(state::AbstractMatrix, angles)
     return state
 end
 
-function coin_operator_sp_identical(angles::Vector)
+#= function coin_operator_sp_identical(angles::Vector)
     N = length(angles)
     d_hilbert_space = N * (2 * N + 1)
     real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
@@ -457,7 +457,7 @@ function _shift_j_sp_identical!(N, j, state_vec, new_vec)
     return nothing
 end
 
-function shift_timebins end
+function shift_timebins_identical end
 
 function shift_timebins_identical(state_vec::Vector)
     d_hilbert_space = Int(sqrt(length(state_vec)))
@@ -642,3 +642,4 @@ function _iterative_mesh_evolution_identical(input_state::AbstractMatrix, angles
 
     return state
 end
+ =#

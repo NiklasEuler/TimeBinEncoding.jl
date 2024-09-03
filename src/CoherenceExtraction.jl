@@ -2,8 +2,8 @@ export coherence_extraction
 export j_out_phase_estimation, initial_state_phase_estimation, pops_fs_phase_estimation
 export j_out_compound, coherence_extraction_compound, pops_fs_compound
 export j_out_single_setup
-export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
-export j_out4bins, j_out_hom
+#export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
+#export j_out4bins, j_out_hom
 
 """
     coherence_extraction(
@@ -342,7 +342,7 @@ function j_out_single_setup(N)
 end
 
 
-function coherence_extraction_identical(
+#= function coherence_extraction_identical(
     N,
     j_out,
     pops_init,
@@ -505,4 +505,4 @@ function combined_measurement_coherence_extraction_identical(
 	pop_fs /= norm # normalization of the extracted coherences
 
 	return convert(Float64, pop_fs)#, extracted_coherence
-end
+end =#

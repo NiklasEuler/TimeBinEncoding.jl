@@ -1,7 +1,7 @@
 export correlated_timebin_state, insert_initial_state, insert_initial_state_sp
 export density_matrix, density_matrix_dephased, white_noise
 export fidelity, purity, populations, sample_populations
-export density_matrix_dephased_identical, white_noise_identical
+#export density_matrix_dephased_identical, white_noise_identical
 
 
 """
@@ -107,7 +107,7 @@ function density_matrix_dephased(Ψ, ϵ)
     return ρ
 end
 
-function density_matrix_dephased_identical(Ψ, ϵ)
+#= function density_matrix_dephased_identical(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     ϵ = convert(Float64, ϵ)::Float64
     d_hilbert_space = Int(sqrt(length(Ψ)))
@@ -120,7 +120,7 @@ function density_matrix_dephased_identical(Ψ, ϵ)
     ρ_pure = density_matrix(Ψ)
     ρ = (1 - ϵ) * ρ_pure + ϵ * white_noise_identical(N)
     return ρ
-end
+end =#
 
 """
     phase_on_density_matrix(ρ, φ_arr)
@@ -170,7 +170,7 @@ function white_noise(N)
     return ρ_noise
 end
 
-function white_noise_identical(N)
+#= function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
     #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
     ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
@@ -197,7 +197,7 @@ function white_noise_identical(N)
    ρ_noise = Diagonal(ρ_diag)
 
    return ρ_noise
-end
+end =#
 
 #= function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
