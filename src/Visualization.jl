@@ -1,6 +1,6 @@
 export visualize_symbolic_ket_evolution_sp, visualize_symbolic_fs_projection_sp,
     visualize_measurement_coherence_map, visualize_combined_measurement_coherence_map
-#export visualize_measurement_coherence_map_identical
+#export visual_meas_coh_map_identical
 
 """
     visualize_symbolic_ket_evolution_sp(M, l_init)
@@ -199,9 +199,9 @@ function _visualize_coherence(
     return nothing
 end
 
-#= function visualize_measurement_coherence_map_identical end
+#= function visual_meas_coh_map_identical end
 
-function visualize_measurement_coherence_map_identical(
+function visual_meas_coh_map_identical(
     j_out::Int64, angles, extract_diagonal=true
 )
     M = length(angles)  # number of roundtrips
@@ -223,7 +223,7 @@ function visualize_measurement_coherence_map_identical(
     return nothing
 end
 
-function visualize_measurement_coherence_map_identical(
+function visual_meas_coh_map_identical(
     j_out_arr::Vector{Int64},
     angles,
     extract_diagonal=true,

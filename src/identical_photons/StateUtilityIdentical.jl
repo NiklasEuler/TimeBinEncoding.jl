@@ -17,6 +17,7 @@ end
 
 function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
+    # simplified expression for N_LOOPS = 2 canceling out geometric series
     #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
     ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
     for l in 0:N - 1, m in l:N - 1
