@@ -83,12 +83,26 @@ function j2lcmk_identical(N, j)
 	return l, c, m, k
 end
 
+
+
+"""
+    j_super2lcmk_identical(N, j_super)
+
+Converts a 4-photon bin index in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2> basis to the
+corresponding |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal and idler
+photon pairs, respectively.
+
+"""
 function j_super2lcmk_identical(N, j_super)
     N = convert(Int64, N)::Int64
     j_super = convert(Int64, j_super)::Int64
+    # 4-photon bin index in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2 basis
 
-    d_hilbert_space = N * (2 * N + 1)
+    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+    # local hilbert space dimension for two photons
+    # indistinguishable and N_LOOPS * N states per photon -> geometric series
     j1, j2 = j2lm(d_hilbert_space, j_super)
+    # translate j_super to two 2-photon j indices (indistinguishable/identical )
     l1, c1 , m1 , k1  = j2lcmk_identical(N, j1 + 1) # +1 for 1-based indexing
     l2, c2 , m2 , k2  = j2lcmk_identical(N, j2 + 1) # +1 for 1-based indexing
 
@@ -101,7 +115,9 @@ function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
     j1 = lcmk2j_identical(N, l1, c1, m1, k1)
     j2 = lcmk2j_identical(N, l2, c2, m2, k2)
 
-    d_hilbert_space = N * (2 * N + 1)
+    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+        # local hilbert space dimension for two photons
+    # indistinguishable and N_LOOPS * N states per photon -> geometric series
     j_super = lm2j(d_hilbert_space, j1 - 1, j2 - 1) # -1 for 0-based indexing
 
     return j_super

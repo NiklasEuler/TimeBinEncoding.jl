@@ -6,6 +6,7 @@ export mesh_evolution_identical
 function coin_operator_sp_identical(angles::Vector)
     N = length(angles)
     d_hilbert_space = N * (2 * N + 1)
+        # simplified expression for N_LOOPS = 2 canceling out geometric series
     real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
     coin_op = spzeros(ComplexF64, d_hilbert_space, d_hilbert_space)
 
@@ -145,6 +146,7 @@ end
 function shift_timebins_operator_sp_identical(N)
     N = convert(Int64, N)::Int64
     d_hilbert_space = N * (2 * N + 1)
+    # simplified expression for N_LOOPS = 2 canceling out geometric series
     d_hilbert_space_shifted = (N + 1) * (2 * (N + 1) + 1)
 
     shift_op_single_party =
