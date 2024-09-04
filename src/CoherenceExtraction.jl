@@ -1,6 +1,6 @@
 export coherence_extraction
 export j_out_phase_estimation, initial_state_phase_estimation, pops_fs_phase_estimation
-export j_out_compound, coherence_extraction_compound, pops_fs_compound
+export j_out_compound, coherence_extraction_compound, fs_pop_compound
 export j_out_single_setup
 #export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
 #export j_out4bins, j_out_hom
@@ -186,7 +186,7 @@ noisy setup, given through the two sets of optional mesaurement angles `angles_r
 
 Their default values are the noiseless angles for nearest-neighbor time-bin interference.
 
-See also [`pops_fs_compound`](@ref), [`initial_state_phase_estimation`](@ref),
+See also [`fs_pop_compound`](@ref), [`initial_state_phase_estimation`](@ref),
 [`angles_phase_estimation`](@ref).
 """
 function pops_fs_phase_estimation(
@@ -290,7 +290,7 @@ function j_out_compound(N)
 end
 
 """
-    pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+    fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 
 Compute all needed final-state populations for an initial state `ρ_init` for a complete set
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
@@ -299,7 +299,7 @@ contains all beam-splitter angles to be used for the scheme.
 See also [`pops_fs_phase_estimation`](@ref), [`explicit_fs_pop`](@ref),
 [`angles_compound`](@ref).
 """
-function pops_fs_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
     # Add projector weights to explicit_fs_pop
     ρ_init = convert(Matrix{ComplexF64}, copy(ρ_init))::Matrix{ComplexF64}
     angles_all = convert(

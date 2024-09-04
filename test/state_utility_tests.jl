@@ -88,7 +88,7 @@ end
     ρ_corrected = phase_on_density_matrix(ρ_pure, -1 * relative_phases)
 
     angles_compound_all = angles_compound(N)
-    pops_fs_all_pure = pops_fs_compound(ρ_corrected, angles_compound_all)
+    pops_fs_all_pure = fs_pop_compound(ρ_corrected, angles_compound_all)
 
     @test isapprox(
         coherence_extraction_compound(pops_pure, pops_fs_all_pure), 1.0, atol = 1e-8

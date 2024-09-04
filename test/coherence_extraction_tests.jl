@@ -76,7 +76,7 @@ end
 	mes_fidelity = fidelity(Ψ_mes, ρ_pure)
 
     angles_compound_all = angles_compound(N)
-    pops_fs_all_pure = pops_fs_compound(ρ_pure, angles_compound_all)
+    pops_fs_all_pure = fs_pop_compound(ρ_pure, angles_compound_all)
     @test isapprox(
         (@test_logs min_level=Logging.Warn coherence_extraction_compound(
             pops_pure, pops_fs_all_pure
@@ -87,10 +87,10 @@ end
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
     pops_mixed = populations(ρ_mixed)
 
-    pops_fs_all_mixed = pops_fs_compound(ρ_mixed, angles_compound_all)
+    pops_fs_all_mixed = fs_pop_compound(ρ_mixed, angles_compound_all)
 
     angles_compound_all_noisy = angles_compound(N, ϵ_angles)
-    pops_fs_all_pure_noisy = pops_fs_compound(ρ_pure, angles_compound_all_noisy)
+    pops_fs_all_pure_noisy = fs_pop_compound(ρ_pure, angles_compound_all_noisy)
 
     @test coherence_extraction_compound(pops_mixed, pops_fs_all_mixed) ≤
         coherence_extraction_compound(pops_pure, pops_fs_all_pure)
