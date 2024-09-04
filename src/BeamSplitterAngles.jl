@@ -3,9 +3,9 @@ export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
 export angles_ref_bin_all_pairs, angles_pairs_from_coloring
 export graph_coloring
-# export angles_kth_neighbor_interference
+export angles_kth_neighbor_interference
 
-#= """
+"""
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
 
@@ -63,7 +63,7 @@ function _angles_kth_neighbor(N, k, i, ϵ_angles)
     angles_k_i = _angles_kth_neighbor(N, k, i)
     angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
     return angles_k_i_noisy
-end =#
+end
 
 
 """
