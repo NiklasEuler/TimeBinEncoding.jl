@@ -1,7 +1,7 @@
 export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
 export explicit_fs_pop_identical
 
-function explicit_fs_projection_identical(j_out, angles)
+function explicit_fs_projection_identical(j_out, angles, phases=ones(Float64, N))
     j_out = convert(Int64, j_out)::Int64 # two-photon bin index in the |l, c , m , k > basis
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     M = length(angles) # number of roundtrips
@@ -13,15 +13,19 @@ function explicit_fs_projection_identical(j_out, angles)
         #return _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
     #end
 
-    return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles)
+    return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles, phases)
 end
 
-function _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles)
-    d_hilbert_space = N * (2 * N + 1)
-        # simplified expression for N_LOOPS = 2 canceling out geometric series
+function _explicit_fs_projection_mesh_identical_backend(
+    N, M, j_out, angles, phases=ones(Float64, N)
+)
+    @argcheck abs2.(phases) ≈ ones(Float64, N)
+    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+    # full local hilbert space dimension for two photons
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
+    # four-photon state indices
 
     l1_init_min = max(0, l1 - M) # light cone for contributions fron the initial state
     #m1_init_min = max(0, m1 - M)
@@ -41,7 +45,8 @@ function _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles)
                 lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
 
             single_ket = spzeros(ComplexF64, d_hilbert_space^2)
-            single_ket[j_init] = 1.0
+            phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
+            single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
             single_ket_evolved = mesh_evolution_identical(single_ket, angles)
             coeff = single_ket_evolved[j_out]
             if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
@@ -57,9 +62,14 @@ end
 
 function explicit_fs_coherence_map_identical end
 
-function explicit_fs_coherence_map_identical(j_out::Int64, angles, projector_weight=1)
+function explicit_fs_coherence_map_identical(
+    j_out::Int64,
+    angles,
+    projector_weight=1,
+    phases::Vector=ones(Float64, length(angles[1]))
+)
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles)
+    j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles, phases)
     n_contr = length(j_idx_arr_contr)
     j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
     j2_arr = repeat(j_idx_arr_contr, n_contr)
@@ -68,7 +78,10 @@ function explicit_fs_coherence_map_identical(j_out::Int64, angles, projector_wei
 end
 
 function explicit_fs_coherence_map_identical(
-        j_out_arr::Vector{Int64}, angles, projector_weights=ones(Float64, length(j_out_arr))
+        j_out_arr::Vector{Int64},
+        angles,
+        projector_weights=ones(Float64, length(j_out_arr)),
+        phases::Vector=ones(Float64, length(angles[1]))
     )
     @argcheck length(j_out_arr) == length(projector_weights)
 
@@ -85,7 +98,7 @@ function explicit_fs_coherence_map_identical(
     weight_vec = SparseVector(d_hilbert_space^2, Int64[], ComplexF64[])
 
     for (projector_idx, j_out) in enumerate(j_out_arr)
-        j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles)
+        j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles, phases)
         for (idx1, j1) in enumerate(j_idx_arr_contr)
             for (idx2, j2) in enumerate(j_idx_arr_contr)
                 weight = kron(coeff_arr[idx1], conj(coeff_arr[idx2]))
@@ -112,8 +125,12 @@ end
 
 function explicit_fs_pop_identical end
 
-function explicit_fs_pop_identical(ρ_init, j_out::Int64, angles)
-    j1_arr, j2_arr, weights = explicit_fs_coherence_map_identical(j_out, angles)
+function explicit_fs_pop_identical(
+    ρ_init, j_out::Int64, angles, phases::Vector=ones(Float64, length(angles[1]))
+)
+    projector_weight = 1 # default projector weight
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map_identical(j_out, angles, projector_weight, phases)
     return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
@@ -121,13 +138,15 @@ function explicit_fs_pop_identical(
     ρ_init,
     j_out_arr::Vector{Int64},
     angles,
-    projector_weights=ones(Float64, length(j_out_arr))
+    projector_weights=ones(Float64, length(j_out_arr)),
+    phases::Vector=ones(Float64, length(angles[1]))
 )
     exp_val = 0.0
     for (j_idx, j_out) in enumerate(j_out_arr)
-        exp_val +=
-            explicit_fs_pop_identical(ρ_init, j_out, angles) * projector_weights[j_idx]
-   end
+        exp_val_j = explicit_fs_pop_identical(ρ_init, j_out, angles, phases)
+        exp_val_j *= projector_weights[j_idx]
+        exp_val += exp_val_j
+    end
 
     return exp_val
 end
