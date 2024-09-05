@@ -222,6 +222,8 @@ function fs_pop_phase_estimation(
 
         pop_fs_real[idx] = explicit_fs_pop(ρ_init, j, angles_real)
         pop_fs_imag[idx] = explicit_fs_pop(ρ_rotated, j, angles_imag)
+        # phases applied through rotated density matrix `ρ_rotated`, not through explicit
+        # optional argument `phases` in `explicit_fs_pop`. Should this be changed?
 
         #pop_fs_real[idx] = explicit_fs_pop(ρ_init, j, angles_real[idx])
         #pop_fs_imag[idx] = explicit_fs_pop(ρ_rotated, j, angles_imag[idx])
@@ -469,6 +471,10 @@ function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
         j_out = j_out_all[k]
         angles = angles_all[k]
         pops_out[k] = explicit_fs_pop(ρ_init, j_out, angles, proj_weights)
+        # no phase argument here. Not needed, as no phases are being applied iin this step.
+        # Density matrix is rotated already in the phase estimation step.
+        # In compound scheme, only real parts of some of the coherences are extracted.
+        # For imaginary parts of arbitrary coherences, one has to consider phase argument.
     end
     return pops_out
 end
@@ -512,7 +518,7 @@ function _fs_pop_compound_worker(ρ_init, angles_all)
     j_out_all = j_out_compound(N)
     proj_weights = proj_weights_compound(N) # projector weights
     pops_out = Vector{Float64}(undef, length(j_out_all))
-
+    # prepare pops_out array for type stability
     return ρ_init, angles_all, j_out_all, proj_weights, pops_out
 
 end

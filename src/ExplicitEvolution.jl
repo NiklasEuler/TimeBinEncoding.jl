@@ -342,12 +342,11 @@ function explicit_fs_coherence_map(
     return j1_arr, j2_arr, weights
 end
 
-
 function explicit_fs_coherence_map(
     j_out_arr::Vector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases=ones(Float64, length(angles[1]))
+    phases::Vector=ones(Float64, length(angles[1]))
 )
     @argcheck length(phases) == length(angles[1])
     @argcheck length(j_out_arr) == length(projector_weights)
@@ -397,7 +396,7 @@ end
     )
 
 Compute the expectation value `⟨lcmk|U ρ_init U^†|lcmk⟩`, where `j_out` corresponds to
-`|lcmk⟩` and `U` is the unitary time evolution operator defined through the beam-splitter
+`|lcmk⟩` and `U` is the unitary time-evolution operator defined through the beam-splitter
 configuration in `angles`.
 
 Alternatively, instead of a singular `j_out`, a vector of `j_out_arr` can be provided, in
@@ -407,8 +406,16 @@ See also [`explicit_fs_coherence_map`](@ref), [`expval_calculation`](@ref).
 """
 function explicit_fs_pop end
 
-function explicit_fs_pop(ρ_init, j_out::Int64, angles)
-    j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
+function explicit_fs_pop(
+    ρ_init, j_out::Int64, angles, phases::Vector=ones(Float64, length(angles[1]))
+)
+    ### WHY NO PHASE???
+    ### Found the solution: Before, phases where inserted via auxiliary density matrix with
+    ### phases applied. Now, phases can also be inserted directly into the final-state popu-
+    ### lation function. This makes the entire process a bit more consistent.
+    projector_weight = 1 # default projector weight
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map(j_out, angles, projector_weight, phases)
     return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
@@ -416,11 +423,12 @@ function explicit_fs_pop(
     ρ_init,
     j_out_arr::Vector{Int64},
     angles,
-    projector_weights=ones(Float64, length(j_out_arr))
+    projector_weights=ones(Float64, length(j_out_arr)),
+    phases::Vector=ones(Float64, length(angles[1]))
 )
     exp_val = 0.0
     for (j_idx, j_out) in enumerate(j_out_arr)
-        exp_val += explicit_fs_pop(ρ_init, j_out, angles) * projector_weights[j_idx]
+        exp_val += explicit_fs_pop(ρ_init, j_out, angles, phases) * projector_weights[j_idx]
     end
 
     return exp_val
