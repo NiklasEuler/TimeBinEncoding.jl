@@ -531,12 +531,12 @@ end
 """
     graph_coloring(N)
 
-Given an integer `N`, this function performs graph-edge coloring to generate pairings of
-bins/nodes. If `N` is even, it calls the `_graph_coloring_even` function to generate the
-pairings. If `N` is odd, it first calls the `graph_coloring` function recursively with
-`N + 1` to generate pairings for an even number of bins/nodes. Then, it removes the first
-pair from each perfect matching to leave out one bin/node, resulting in an odd number of
-bins/nodes.
+Given an integer `N`, this function performs graph-edge coloring on a graph of `N` nodes to
+generate pairings of bins/nodes. If `N` is even, it calls the `_graph_coloring_even` func-
+tion to generate the pairings. If `N` is odd, it first calls the `graph_coloring` function
+recursively with `N + 1` to generate pairings for an even number of bins/nodes. Then, it re-
+moves the first pair from each perfect matching to leave out one bin/node, resulting in an
+odd number of bins/nodes.
 
 # Arguments
 - `N::Int`: The number of bins/nodes.
