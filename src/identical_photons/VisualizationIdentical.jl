@@ -3,12 +3,14 @@ export visual_meas_coh_map_identical
 function visual_meas_coh_map_identical end
 
 function visual_meas_coh_map_identical(
-    j_out::Int64, angles, extract_diagonal=true
+    j_out::Int64, angles; extract_diagonal=true
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
-    j1_arr, j2_arr, weights =  explicit_fs_coherence_map_identical(j_out, angles)
+    projector_weight = 1 # default projector weight
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map_identical(j_out, angles, projector_weight, phases)
 
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
     c1_str = c1 == 0 ? "S" : "L"
@@ -17,24 +19,25 @@ function visual_meas_coh_map_identical(
     k2_str = k2 == 0 ? "S" : "L"
 
 	println("⟨", l1, " ", c1_str, " ", m1, " ", k1_str, " ", l2, " ", c2_str, " ", m2, " ",
-        k2_str, "|(SC)^M ρ (C^†S^†)^M) |", l1, " ", c1_str, " ", m1, " ", k1_str, " ", l2, " ",
-        c2_str, " ", m2, " ", k2_str, "⟩ ="
+        k2_str, "|(SC)^M ρ (C^†S^†)^M) |", l1, " ", c1_str, " ", m1, " ", k1_str, " ", l2,
+        " ", c2_str, " ", m2, " ", k2_str, "⟩ ="
     )
-    _visualize_coherence_identical(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visual_coh_identical(N, j1_arr, j2_arr, weights, extract_diagonal, phases)
     return nothing
 end
 
 function visual_meas_coh_map_identical(
     j_out_arr::Vector{Int64},
     angles,
+    projector_weights=ones(Float64, length(j_out_arr)),
+    phases=ones(Float64, length(angles[1]))::Vector;
     extract_diagonal=true,
-    projector_weights=ones(Float64, length(j_out_arr))
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
     j1_arr, j2_arr, weights =
-        explicit_fs_coherence_map_identical(j_out_arr, angles, projector_weights)
+        explicit_fs_coherence_map_identical(j_out_arr, angles, projector_weights, phases)
 
     for (j_idx, j_out) in enumerate(j_out_arr)
         l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
@@ -51,14 +54,20 @@ function visual_meas_coh_map_identical(
         )
     end
     println("=")
-    _visualize_coherence_identical(N, j1_arr, j2_arr, weights, extract_diagonal)
+    _visual_coh_identical(N, j1_arr, j2_arr, weights, extract_diagonal, phases)
     return nothing
 end
 
-function _visualize_coherence_identical(N, j1_arr, j2_arr, weights, extract_diagonal=true)
+function _visual_coh_identical(
+    N, j1_arr, j2_arr, weights, extract_diagonal=true, phases=ones(Float64, N)
+)
     contr_j_idxs = correlated_short_bins_idxs_identical(N)
     extractable_correlated_coherences = []
-    display_weights = round.(Real.(weights), digits=5)
+    if phases == ones(Float64, N)
+        display_weights = round.(Real.(weights), digits=5)
+    else
+        display_weights = round.(weights, digits=5)
+    end
 
 	for i in eachindex(j1_arr)
         j1 = j1_arr[i]
