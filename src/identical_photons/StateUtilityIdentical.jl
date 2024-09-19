@@ -15,6 +15,15 @@ function density_matrix_dephased_identical(Ψ, ϵ)
     return ρ
 end
 
+
+"""
+    white_noise_identical(N)
+
+Generate a white noise density matrix for a four photon system with two pairs of identical
+photons. This model allows for white noise populations where one of the photons is detected
+in a wrong bin, which can differ by one time bin compared to the correct bin.
+
+"""
 function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
     # simplified expression for N_LOOPS = 2 canceling out geometric series
@@ -44,6 +53,19 @@ function white_noise_identical(N)
 
    return ρ_noise
 end
+
+#= function white_noise_dark_count_identical(N, loss_factor)
+    d_hilbert_space = N_LOOPS * N * (N_LOOPS * N + 1) / 2 # correct?
+    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
+    for l in 0:N - 1
+        for m in l:N - 1, for k in l:N - 1
+            j = lcmk2j_super_identical(N, l, 0, m, 0, k, 0, l, 0)
+            ρ_diag[j] = 1
+        end
+
+end
+ =#
+
 
 #= function white_noise_identical(N)
     d_hilbert_space = N * (2 * N + 1)
