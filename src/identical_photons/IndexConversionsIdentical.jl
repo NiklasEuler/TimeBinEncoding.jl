@@ -15,9 +15,9 @@ function correlated_short_bins_idxs_identical(N)
     return contr_j_idxs
 end
 
-function correlated_short_bins_tuples_identical(N)
+function correlated_short_bins_tuples_identical(N; extract_diagonal=false)
     contr_j_idxs = correlated_short_bins_idxs_identical(N)
-    return [(i,j) for i in contr_j_idxs for j in contr_j_idxs]
+    return [(i,j) for i in contr_j_idxs for j in contr_j_idxs if i ≠ j || extract_diagonal]
 end
 
 function lcmk2j_identical(N, l, c, m, k)
@@ -88,9 +88,9 @@ end
 """
     j_super2lcmk_identical(N, j_super)
 
-Converts a 4-photon bin index in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2> basis to the
-corresponding |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal and idler
-photon pairs, respectively.
+Converts a 4-photon basis state index ´j_super´ in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2>
+basis to the corresponding |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal
+and idler photon pairs, respectively.
 
 """
 function j_super2lcmk_identical(N, j_super)
@@ -110,6 +110,14 @@ function j_super2lcmk_identical(N, j_super)
 
 end
 
+"""
+    lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
+
+    Converts the |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal and idler
+    photon pairs, respectively, to the corresponding 4-photon basis state index ´j_super´ in
+    the |l1, c1 , m1 , k1, l2, c2 , m2 , k2> basis.
+
+"""
 function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
 
     j1 = lcmk2j_identical(N, l1, c1, m1, k1)

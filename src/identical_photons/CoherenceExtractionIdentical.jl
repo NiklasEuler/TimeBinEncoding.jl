@@ -1,16 +1,33 @@
 export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
 export j_out4bins, j_out_hom
 
+"""
+    coherence_extraction_identical(
+        N,
+        j_out,
+        pops_init,
+        pop_fs,
+        angles,
+        contr_j_tuples=correlated_short_bins_tuples_identical(N; extract_diagonal=false),
+        projector_weights=ones(Float64, length(j_out))
+    )
+
+    Extract the coherences from the final state population `pop_fs` corresponding to the in-
+    dex (or vector of indices) `j_out` after a given beam-splitter configuration `angles`.
+    Only coherences indicated in `contr_j_tuples` are extracted, all others are bounded and
+    then subtracted.
+
+"""
 function coherence_extraction_identical(
     N,
     j_out,
     pops_init,
     pop_fs,
     angles,
-    contr_j_tuples=correlated_short_bins_tuples_identical(N),
-    projector_weights=ones(Float64, length(j_out));
-    extract_diagonal::Bool=true
+    contr_j_tuples=correlated_short_bins_tuples_identical(N; extract_diagonal=false),
+    projector_weights=ones(Float64, length(j_out))
 )
+    # original default was extract_diagonal=true. If problems arise, explicitly set to true.
     N = convert(Int64, N)::Int64
     j_out = try
 		convert(Vector{Int64}, j_out)::Vector{Int64}
@@ -39,7 +56,7 @@ function coherence_extraction_identical(
     for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if (j1,j2) in contr_j_tuples && (extract_diagonal || j1 ≠ j2)
+		if (j1,j2) in contr_j_tuples &&
             # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence, (j1, j2))
             # relevant coherence, so indices saved to list of extracted coherences.
@@ -109,15 +126,31 @@ function j_out_hom(N_post, bin_1, bin_2)
     return j_out
 end
 
+
+
+"""
+    combined_measurement_coherence_extraction_identical(
+        N,
+        combined_weights,
+        pops_init,
+        pop_fs_combined,
+        contr_j_tuples=correlated_short_bins_tuples_identical(N);
+    )
+
+    Extract the coherences from a combined measurement of several different beam-splitter
+    configurations or phase settings. This allowes for the cancelation of additional cohe-
+    rences across different measurements and improves fidelity of the extracted coherences.
+
+"""
 function combined_measurement_coherence_extraction_identical(
     N,
     combined_weights,
     pops_init,
     pop_fs_combined,
-    contr_j_tuples=correlated_short_bins_tuples_identical(N);
-    extract_diagonal::Bool=true
+    contr_j_tuples=correlated_short_bins_tuples_identical(N; extract_diagonal=false)
 )
     d_full_hilbert_space = lcmk2j_super_identical(N, N-1, 1, N-1, 1, N-1, 1, N-1, 1)
+    # full four-photon Hilbert space dimenion
 	#extracted_coherence = []
     pop_fs = copy(pop_fs_combined)
     extracted_weights = Float64[]
@@ -125,10 +158,7 @@ function combined_measurement_coherence_extraction_identical(
 		j1, j2 = j2lm(d_full_hilbert_space, j)
 		j1 += 1
 		j2 += 1
-		if (j1,j2) in contr_j_tuples && (extract_diagonal || j1 ≠ j2)
-            # check whether both j1 and j2 are correlated time bins
-			#push!(extracted_coherence, (j1, j2))
-            # relevant coherence, so indices saved to list of extracted coherences.
+		if (j1,j2) in contr_j_tuples # check outsurced to contr_j_tuples creation
             push!(extracted_weights, combined_weights[j])
 		elseif j1 == j2
 			pop_fs -= pops_init[j1] * combined_weights[j]
