@@ -269,6 +269,8 @@ See also [`angles4bins_02`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_01(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, p + 1]] .= 0.5
     angles[m - l + 1][m + 1] = 0.25
@@ -300,6 +302,8 @@ See also [`angles4bins_01`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_02(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, m + 1]] .= 0.5
     angles[p - l + 1][p + 1] = 0.25
@@ -331,6 +335,8 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_03(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l + 1]
     angles[1][l + 1] = 0.5
     angles[m - l + 2][m + 1] = 0.5
@@ -360,11 +366,27 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins_03`](
 
 """
 function angles4bins(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles_01 = angles4bins_01(N, l, m, p, q)
     angles_02 = angles4bins_02(N, l, m, p, q)
     angles_03 = angles4bins_03(N, l, m, p, q)
 
     return angles_01, angles_02, angles_03
+end
+
+function angles4bins_input_sanity_check(N, l, m, p, q)
+    N = convert(Int64, N)::Int64
+    l = convert(Int64, l)::Int64
+    m = convert(Int64, m)::Int64
+    p = convert(Int64, p)::Int64
+    q = convert(Int64, q)::Int64
+
+    @argcheck N > 0
+    @argcheck q < N
+    @argcheck l < m < p < q
+
+    return N, l, m, p, q
 end
 
 function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
