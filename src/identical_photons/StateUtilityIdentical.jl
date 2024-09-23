@@ -25,10 +25,9 @@ in a wrong bin, which can differ by one time bin compared to the correct bin.
 
 """
 function white_noise_identical(N)
-    d_hilbert_space = N * (2 * N + 1)
-    # simplified expression for N_LOOPS = 2 canceling out geometric series
-    #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
-    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
+    d_local_hs_bl = N * (2 * N + 1)
+    # local Hilbert space dimension of two identical photons in the bin-loop basis
+    ρ_diag = zeros(ComplexF64, d_local_hs_bl^2)
     for l in 0:N - 1, m in l:N - 1
         j = lcmk2j_super_identical(N, l, 0, m, 0, l, 0, m, 0)
         ρ_diag[j] = 1
@@ -53,6 +52,14 @@ function white_noise_identical(N)
 
    return ρ_noise
 end
+
+function krauss_operator_single_species(N, i, j)
+    d_local_hs_bl = N * (2 * N + 1)
+    # local Hilbert space dimension of two identical photons in the bin-loop basis
+    krauss_op = zeros(ComplexF64, d_hilbert_space, d_hilbert_space)
+
+end
+
 
 #= function white_noise_dark_count_identical(N, loss_factor)
     d_hilbert_space = N_LOOPS * N * (N_LOOPS * N + 1) / 2 # correct?
