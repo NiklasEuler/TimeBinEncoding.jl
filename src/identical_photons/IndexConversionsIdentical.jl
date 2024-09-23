@@ -37,6 +37,7 @@ function lcmk2j_identical(N, l, c, m, k)
 
     j = dynamic_base_width[l * N_LOOPS + c + 1] + (m - l) * N_LOOPS + k - c + 1
     # -c to skip one j index in case of identical time bins
+    # ToDo: Need to extend documentation on this function.
     return j
 
 end
