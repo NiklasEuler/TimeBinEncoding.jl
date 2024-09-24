@@ -1,4 +1,6 @@
 export density_matrix_dephased_identical, white_noise_identical
+export krauss_operator_single_species, krauss_operators_dual_species
+export photon_loss_channel
 
 function density_matrix_dephased_identical(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
@@ -53,13 +55,59 @@ function white_noise_identical(N)
    return ρ_noise
 end
 
-function krauss_operator_single_species(N, i, j)
+function krauss_operator_single_species(N, l, m)
+    N = convert(Int64, N)::Int64
+    l = convert(Int64, l)::Int64
+    m = convert(Int64, m)::Int64
+
+    @argcheck N > 0
+    @argcheck 0 ≤ l < N
+    @argcheck 0 ≤ m < N
+
     d_local_hs_bl = N * (2 * N + 1)
     # local Hilbert space dimension of two identical photons in the bin-loop basis
-    krauss_op = zeros(ComplexF64, d_hilbert_space, d_hilbert_space)
+    krauss_op = spzeros(Float64, d_local_hs_bl, d_local_hs_bl)
+    for n in 0:N - 1
+        bin1_init, bin2_init = sort([n, m])
+        j1 = lcmk2j_identical(N, bin1_init, 0, bin2_init, 0)
+        bin1_after, bin2_after = sort([n, l])
+        j2 = lcmk2j_identical(N, bin1_after, 0, bin2_after, 0)
+        if l ≠ n ≠ m
+            coeff = 1
+        elseif n == l == m
+            coeff = 2
+        else
+            coeff = √2
+        end
+        krauss_op[j2, j1] = coeff
+    end
+    krauss_op *= 1 / (2 * √(N + 1))
 
+    return krauss_op
 end
 
+function krauss_operators_dual_species(N, l, m)
+    d_local_hs_bl = N * (2 * N + 1)
+    # local Hilbert space dimension of two identical photons in the bin-loop basis
+    I_local = Diagonal(ones(d_local_hs_bl))
+    krauss_op = krauss_operator_single_species(N, l, m)
+    klm_signal = kron(krauss_op, I_local)
+    klm_idler = kron(I_local, krauss_op)
+
+    return klm_signal, klm_idler
+end
+
+function photon_loss_channel(N, ρ)
+    d_local_hs_bl = N * (2 * N + 1)
+    d_full_hs_bl  = d_local_hs_bl ^ 2
+    noisy_state = spzeros(ComplexF64, d_full_hs_bl, d_full_hs_bl)
+    for l in 0:N - 1, m in 0:N - 1
+        klm_signal, klm_idler = krauss_operators_dual_species(N, l, m)
+        noisy_state += klm_signal * ρ * klm_signal' + klm_idler * ρ * klm_idler'
+    end
+    return noisy_state
+
+end
 
 #= function white_noise_dark_count_identical(N, loss_factor)
     d_hilbert_space = N_LOOPS * N * (N_LOOPS * N + 1) / 2 # correct?
