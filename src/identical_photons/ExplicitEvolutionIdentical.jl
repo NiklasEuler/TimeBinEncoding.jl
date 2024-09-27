@@ -66,7 +66,7 @@ function explicit_fs_coherence_map_identical(
     j_out::Int64,
     angles,
     projector_weight=1,
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles, phases)
@@ -78,10 +78,10 @@ function explicit_fs_coherence_map_identical(
 end
 
 function explicit_fs_coherence_map_identical(
-        j_out_arr::Vector{Int64},
+        j_out_arr::AbstractVector{Int64},
         angles,
         projector_weights=ones(Float64, length(j_out_arr)),
-        phases::Vector=ones(Float64, length(angles[1]))
+        phases::AbstractVector=ones(Float64, length(angles[1]))
     )
     @argcheck length(j_out_arr) == length(projector_weights)
 
@@ -126,7 +126,7 @@ end
 function explicit_fs_pop_identical end
 
 function explicit_fs_pop_identical(
-    ρ_init, j_out::Int64, angles, phases::Vector=ones(Float64, length(angles[1]))
+    ρ_init, j_out::Int64, angles, phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     projector_weight = 1 # default projector weight
     j1_arr, j2_arr, weights =
@@ -136,10 +136,10 @@ end
 
 function explicit_fs_pop_identical(
     ρ_init,
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     exp_val = 0.0
     for (j_idx, j_out) in enumerate(j_out_arr)
