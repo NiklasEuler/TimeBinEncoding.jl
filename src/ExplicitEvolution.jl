@@ -331,7 +331,7 @@ function explicit_fs_coherence_map(
     j_out::Int64,
     angles,
     projector_weight=1,
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
@@ -343,10 +343,10 @@ function explicit_fs_coherence_map(
 end
 
 function explicit_fs_coherence_map(
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     @argcheck length(phases) == length(angles[1])
     @argcheck length(j_out_arr) == length(projector_weights)
@@ -407,7 +407,7 @@ See also [`explicit_fs_coherence_map`](@ref), [`expval_calculation`](@ref).
 function explicit_fs_pop end
 
 function explicit_fs_pop(
-    ρ_init, j_out::Int64, angles, phases::Vector=ones(Float64, length(angles[1]))
+    ρ_init, j_out::Int64, angles, phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     ### WHY NO PHASE???
     ### Found the solution: Before, phases where inserted via auxiliary density matrix with
@@ -421,10 +421,10 @@ end
 
 function explicit_fs_pop(
     ρ_init,
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     exp_val = 0.0
     for (j_idx, j_out) in enumerate(j_out_arr)
@@ -436,7 +436,7 @@ end
 
 function explicit_fs_pop_sampled(
     ρ_init,
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     n_samples,
     projector_weights=ones(Float64, length(j_out_arr))
