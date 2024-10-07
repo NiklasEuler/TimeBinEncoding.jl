@@ -75,7 +75,7 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
     # four-photon state indices
     configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
     N_comb = size(configs_lightcone_arr, 2)
-    tasks_per_thread = 2 # customize this as needed. More tasks have more overhead, but better
+    tasks_per_thread = 1 # customize this as needed. More tasks have more overhead, but better
     # load balancing
 
     chunk_size = max(1, N_comb ÷ (tasks_per_thread * Base.Threads.nthreads()))
