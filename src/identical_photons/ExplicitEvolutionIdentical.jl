@@ -13,7 +13,9 @@ function explicit_fs_projection_identical(j_out, angles, phases=ones(Float64, N)
         #return _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
     #end
 
-    return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles, phases)
+    #return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles, phases)
+    return _explicit_fs_projection_mesh_identical_backend_parallel(N, M, j_out, angles, phases)
+
 end
 
 function _explicit_fs_projection_mesh_identical_backend(
@@ -26,7 +28,7 @@ function _explicit_fs_projection_mesh_identical_backend(
     j_idx_arr_contr = Int64[]
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
     # four-photon state indices
-
+#=
     l1_init_min = max(0, l1 - M) # light cone for contributions fron the initial state
     #m1_init_min = max(0, m1 - M)
     l2_init_min = max(0, l2 - M)
@@ -40,25 +42,97 @@ function _explicit_fs_projection_mesh_identical_backend(
     # would have to consider (j1, j2) and (j2, j1) in the end
 
     for l1_init in l1_init_min:l1_init_max, m1_init in l1_init:m1_init_max
-        for l2_init in l2_init_min:l2_init_max, m2_init in l2_init:m2_init_max
-            j_init =
-                lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
+        for l2_init in l2_init_min:l2_init_max, m2_init in l2_init:m2_init_max =#
 
-            single_ket = spzeros(ComplexF64, d_hilbert_space^2)
-            phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
-            single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
-            single_ket_evolved = mesh_evolution_identical(single_ket, angles)
-            coeff = single_ket_evolved[j_out]
-            if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
-                push!(coeff_arr, coeff)
-                push!(j_idx_arr_contr, j_init)
-            end
+    configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
+    for (l1_init, m1_init, l2_init, m2_init) in eachcol(configs_lightcone_arr)
+        #println("l1_init: ", l1_init, " m1_init: ", m1_init, " l2_init: ", l2_init, " m2_init: ", m2_init)
+        j_init = lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
+        single_ket = spzeros(ComplexF64, d_hilbert_space^2)
+        phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
+        single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
+        single_ket_evolved = mesh_evolution_identical(single_ket, angles)
+        coeff = single_ket_evolved[j_out]
+        if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
+            push!(coeff_arr, coeff)
+            push!(j_idx_arr_contr, j_init)
         end
     end
 
     return j_idx_arr_contr, coeff_arr
 end
 
+function _explicit_fs_projection_mesh_identical_backend_parallel(
+    N, M, j_out, angles, phases=ones(Float64, N)
+)
+    @argcheck abs2.(phases) ≈ ones(Float64, N)
+    #println("Running in parallel!")
+    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+    # full local hilbert space dimension for two photons
+    #coeff_arr = Vector{ComplexF64}(undef, 0)
+    #j_idx_arr_contr = Int64[]
+    l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
+    # four-photon state indices
+    configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
+    N_comb = size(configs_lightcone_arr, 2)
+    tasks_per_thread = 2 # customize this as needed. More tasks have more overhead, but better
+    # load balancing
+
+    chunk_size = max(1, N_comb ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    data_chunks = Base.Iterators.partition(Array(1:N_comb), chunk_size)
+    # partition your data into chunks that individual tasks will deal with
+    # for j in 1:N_comb
+    tasks = map(data_chunks) do chunk
+        Base.Threads.@spawn begin
+            coeff_arr_local = Vector{ComplexF64}(undef, 0)
+            j_idx_arr_contr_local = Int64[]
+            for j in chunk
+                l1_init, m1_init, l2_init, m2_init = configs_lightcone_arr[:, j]
+                j_init = lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
+                single_ket = spzeros(ComplexF64, d_hilbert_space^2)
+                phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
+                single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
+                single_ket_evolved = mesh_evolution_identical(single_ket, angles)
+                coeff = single_ket_evolved[j_out]
+                if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
+                    push!(coeff_arr_local, coeff)
+                    push!(j_idx_arr_contr_local, j_init)
+                end
+            end
+            return j_idx_arr_contr_local, coeff_arr_local
+        end
+    end
+    results = fetch.(tasks)
+	j_idx_arr_contr = cat([tup[1] for tup in results]..., dims = 1)
+    coeff_arr = cat([tup[2] for tup in results]..., dims = 1)
+    return j_idx_arr_contr, coeff_arr
+end
+
+function _configs_lightcone_identical(N, M, l1, m1, l2, m2)
+	l1_init_min = max(0, l1 - M) # light cone for contributions fron the initial state
+    l2_init_min = max(0, l2 - M)
+
+    l1_init_max = min(N - 1, l1) # light cone for contributions fron the initial state
+    m1_init_max = min(N - 1, m1)
+    l2_init_max = min(N - 1, l2)
+    m2_init_max = min(N - 1, m2)
+
+	N_comb1 = (m1_init_max + 1) * (l1_init_max - l1_init_min + 1) - l1_init_max *
+        (l1_init_max + 1) / 2 + (l1_init_min - 1) * l1_init_min / 2
+	N_comb2 = (m2_init_max + 1) * (l2_init_max - l2_init_min + 1) - l2_init_max *
+        (l2_init_max + 1) / 2 + (l2_init_min - 1) * l2_init_min / 2
+	N_comb = Int(N_comb1 * N_comb2)
+	configs_lightcone_arr = zeros(Int64, 4, N_comb)
+	i = 0
+	for l1_init in l1_init_min:l1_init_max, m1_init in l1_init:m1_init_max
+        for l2_init in l2_init_min:l2_init_max, m2_init in l2_init:m2_init_max
+			i += 1
+			configs_lightcone_arr[:, i] = [l1_init, m1_init, l2_init, m2_init]
+		end
+	end
+
+	return configs_lightcone_arr
+end
 
 function explicit_fs_coherence_map_identical end
 
