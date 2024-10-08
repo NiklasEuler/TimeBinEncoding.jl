@@ -74,8 +74,8 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
     # four-photon state indices
     configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
     N_comb = size(configs_lightcone_arr, 2)
-    tasks_per_thread = 1 # customize this as needed. More tasks have more overhead, but better
-    # load balancing
+    tasks_per_thread = 1
+    # customize this as needed. More tasks have more overhead, but better load balancing
 
     chunk_size = max(1, N_comb ÷ (tasks_per_thread * Base.Threads.nthreads()))
     data_chunks = Base.Iterators.partition(Array(1:N_comb), chunk_size)
@@ -87,7 +87,9 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
             j_idx_arr_contr_local = Int64[]
             for j in chunk
                 l1_init, m1_init, l2_init, m2_init = configs_lightcone_arr[:, j]
-                j_init = lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
+                j_init = lcmk2j_super_identical(
+                    N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0
+                )
                 single_ket = spzeros(ComplexF64, d_hilbert_space^2)
                 phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
                 single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
