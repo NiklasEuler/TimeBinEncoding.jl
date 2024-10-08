@@ -46,7 +46,6 @@ function _explicit_fs_projection_mesh_identical_backend(
 
     configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
     for (l1_init, m1_init, l2_init, m2_init) in eachcol(configs_lightcone_arr)
-        #println("l1_init: ", l1_init, " m1_init: ", m1_init, " l2_init: ", l2_init, " m2_init: ", m2_init)
         j_init = lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
         single_ket = spzeros(ComplexF64, d_hilbert_space^2)
         phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
