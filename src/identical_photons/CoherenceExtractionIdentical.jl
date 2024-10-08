@@ -1,5 +1,6 @@
 export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
 export j_out4bins, j_out_hom
+export combined_weights_pops_4bins_all, combined_weights_pops_hom, combs_4bin
 
 """
     coherence_extraction_identical(
@@ -195,4 +196,129 @@ function combined_measurement_coherence_extraction_identical(
 	pop_fs /= norm # normalization of the extracted coherences
 
 	return convert(Float64, pop_fs)#, extracted_coherence
+end
+
+"""
+    combs_4bin(N)
+
+    Generates all possible combinations of 4 bins out of N bins, such that the bins are
+    ordered in increasing order. The output is a 4xN_comb matrix, where each column
+    corresponds to a combination of 4 bins.
+"""
+function combs_4bin(N)
+	@argcheck N ≥ 4
+	N_comb = binomial(N, N - 4)
+	bin_idxs = zeros(Int64, 4, N_comb)
+	i = 1
+	for a in 0:N - 4, b in a + 1:N - 3, c in b + 1:N - 2, d in c + 1:N - 1
+		bin_idxs[:, i] = [a, b, c, d]
+		i += 1
+	end
+	return bin_idxs
+end
+"""
+    combined_weights_pops_4bins_all(N, extraction_composition_weights)
+
+    Computes the combined weights and populations for the four-bin interference, with the
+    desired weights for the different projectors given in `extraction_composition_weights`.
+    Return both the combined weights and the total final-state population.
+"""
+function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_weights)
+
+	projector_weights_4b = [
+        extraction_composition_weights[1],
+        extraction_composition_weights[1],
+        extraction_composition_weights[2],
+        extraction_composition_weights[2],
+        extraction_composition_weights[3]
+
+    ] # projector weights for the four-bin interference
+	d_local_hs_bl = N * (2 * N + 1)
+	d_full_hs_bl = d_local_hs_bl ^ 2
+
+    combined_weights_4b = spzeros(ComplexF64, d_full_hs_bl^2)
+    pop_fs_4b = 0
+
+	bin_combinations = combs_4bin(N)
+	N_comb = binomial(N, N - 4) # only ever let 4 bins interfere
+	phase_args = zeros(N, 4)
+    for j in 1:N_comb
+        a, b, c, d = bin_combinations[:, j]
+        angles_all = angles4bins(N, a, b, c, d)
+        phase_args .= 0
+        phase_args[a + 1, 1] = 1
+        phase_args[b + 1, 2] = 1
+        phase_args[c + 1, 3] = 1
+        phase_args[d + 1, 4] = 1
+        phases_all = cispi.(phase_args)
+        for angles in angles_all
+            N_post = N + length(angles)
+            j_out = j_out4bins(N_post, d, d + 1)
+            for phases in eachcol(phases_all)
+                j1_arr, j2_arr, weights = explicit_fs_coherence_map_identical(
+                    j_out, angles, projector_weights_4b, phases
+                )
+                pop_fs_4b += explicit_fs_pop_identical(
+                    ρ_mixed, j_out, angles, projector_weights_4b, phases
+                )
+                for i in eachindex(j1_arr)
+                    j1 = j1_arr[i]
+                    j2 = j2_arr[i]
+                    j_comb = lm2j(d_full_hs_bl, j1 - 1, j2 - 1)
+                    combined_weights_4b[j_comb] += weights[i]
+                end
+            end
+		end
+	end
+
+	return combined_weights_4b, pop_fs_4b
+end
+
+
+function combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
+
+	pop_fs_hom = 0
+	d_local_hs_bl = N * (2 * N + 1)
+	d_full_hs_bl = d_local_hs_bl ^ 2
+
+	projector_weights_hom = [
+        extraction_composition_weights[4],
+        extraction_composition_weights[5],
+        extraction_composition_weights[5]
+    ]
+	combined_weights_hom = spzeros(ComplexF64, d_full_hs_bl^2)
+
+	for l in 0:N - 2
+		for m in l + 1:N - 1
+			phase_args = zeros(N, 1)
+			#phase_args[m + 1, 0] = 0.5 # once with phases, once without
+			phases_hom_all = cispi.(phase_args)
+			angles_distance_k = angles_kth_neighbor_interference(N, m - l)
+			angles_lm = angles_distance_k[l + 1]
+			N_post_lm = N + length(angles_lm)
+			j_out_SSSS = lcmk2j_super_identical(N_post_lm, m, 0, m, 0, m, 0, m, 0)
+			j_out_LLLL =
+                lcmk2j_super_identical(N_post_lm, m + 1, 1, m + 1, 1, m + 1, 1, m + 1, 1)
+
+			j_out_lm_hom = lcmk2j_super_identical(N_post_lm, m, 0, m + 1, 1, m, 0, m + 1, 1)
+			j_out = [j_out_lm_hom, j_out_SSSS, j_out_LLLL]
+
+			for phases in eachcol(phases_hom_all)
+				j1_arr_hom, j2_arr_hom, weights_hom = explicit_fs_coherence_map_identical(
+                    j_out, angles_lm, projector_weights_hom, phases
+                )
+				pop_fs_hom += explicit_fs_pop_identical(
+                    ρ_mixed, j_out, angles_lm, projector_weights_hom, phases
+                )
+				for i in eachindex(j1_arr_hom)
+					j1 = j1_arr_hom[i]
+					j2 = j2_arr_hom[i]
+					j_comb = lm2j(d_full_hs_bl, j1 - 1, j2 - 1)
+					combined_weights_hom[j_comb] += weights_hom[i]
+				end
+			end
+		end
+	end
+
+	return combined_weights_hom, pop_fs_hom
 end
