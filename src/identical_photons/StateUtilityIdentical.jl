@@ -1,6 +1,6 @@
 export density_matrix_dephased_identical, white_noise_identical
 export krauss_operator_single_species, krauss_operators_dual_species
-export photon_loss_channel
+export photon_loss_channel, density_matrix_dephased_krauss_identical
 
 function density_matrix_dephased_identical(Ψ, ϵ)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
@@ -107,6 +107,12 @@ function photon_loss_channel(N, ρ)
     end
     return noisy_state
 
+end
+
+function density_matrix_dephased_krauss_identical(N, ρ, ϵ)
+    ρ_noisy = photon_loss_channel(N, ρ)
+    ρ_dephased = (1 - ϵ) * ρ + ϵ * ρ_noisy
+    return ρ_dephased
 end
 
 #= function white_noise_dark_count_identical(N, loss_factor)
