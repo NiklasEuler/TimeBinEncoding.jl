@@ -243,7 +243,7 @@ function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_wei
 	N_comb = binomial(N, N - 4) # only ever let 4 bins interfere
 	phase_args = zeros(N, 4)
     for j in 1:N_comb
-        a, b, c, d = bin_combinations[:, j]
+        a, b, c, d = @view bin_combinations[:, j]
         angles_all = angles4bins(N, a, b, c, d)
         phase_args .= 0
         phase_args[a + 1, 1] = 1

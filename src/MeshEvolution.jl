@@ -164,10 +164,10 @@ function beam_splitter_operator(θ)
     θ = convert(Float64,θ)::Float64
     cs = cos(θ)
     sn = im * sin(θ)
-    cols = [1, 1, 2, 2]
-    rows = [1, 2, 1, 2]
+    #cols = [1, 1, 2, 2]
+    #rows = [1, 2, 1, 2]
     vals = [cs, sn, sn, cs]
-   return sparse(cols, rows, vals)
+   return sparse(_cols, _rows, vals)
 end
 
 """

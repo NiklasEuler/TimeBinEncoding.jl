@@ -3,18 +3,21 @@ export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
 export mesh_evolution_sp_identical
 export mesh_evolution_identical
 
-function coin_operator_sp_identical(angles::Vector)
+function coin_operator_sp_identical(angles::AbstractVector)
     N = length(angles)
     d_hilbert_space = N * (2 * N + 1)
         # simplified expression for N_LOOPS = 2 canceling out geometric series
     real_angles = convert(Vector{Float64}, angles)::Vector{Float64}
     coin_op = spzeros(ComplexF64, d_hilbert_space, d_hilbert_space)
 
+    cos_vals = cos.(real_angles)
+    sin_vals = sin.(real_angles)
+
     for l in 0:N - 1
         for m in l:N - 1
-            cc = cos(real_angles[l + 1]) * cos(real_angles[m + 1])
-            ss = sin(real_angles[l + 1]) * sin(real_angles[m + 1])
-            cs = sqrt(2) * im * cos(real_angles[l + 1]) * sin(real_angles[m + 1])
+            cc = cos_vals[l + 1] * cos_vals[m + 1]
+            ss = sin_vals[l + 1] * sin_vals[m + 1]
+            cs = sqrt(2) * im * cos_vals[l + 1] * sin_vals[m + 1]
 
             j_ss = lcmk2j_identical(N, l, 0, m, 0)
             j_sl = lcmk2j_identical(N, l, 0, m, 1)
@@ -35,17 +38,25 @@ function coin_operator_sp_identical(angles::Vector)
                 j_arr = [j_ss, j_sl, j_ls, j_ll]
 
             end
-            coin_op[j_arr, j_arr] = beam_splitter_op
+            coin_op[j_arr, j_arr] .= beam_splitter_op
         end
     end
 
     return coin_op::SparseMatrixCSC{ComplexF64, Int64}
 end
 
+function coin_operator_identical end
+
 function coin_operator_identical(angles::Vector)
     coin_operator_single_party = coin_operator_sp_identical(angles)
     tensor_coin_operator = kron(coin_operator_single_party, coin_operator_single_party)
     return tensor_coin_operator::SparseMatrixCSC{ComplexF64, Int64}
+end
+
+function coin_operator_identical(angles::Vector, kron_mem)
+    coin_operator_single_party = coin_operator_sp_identical(angles)
+    kron!(kron_mem, coin_operator_single_party, coin_operator_single_party)
+    return kron_mem::SparseMatrixCSC{ComplexF64, Int64}
 end
 
 function shift_timebins_sp_identical end
@@ -229,35 +240,44 @@ end
 
 function mesh_evolution_identical end
 
-function mesh_evolution_identical(initial_state::Vector, angles)
+function mesh_evolution_identical(initial_state::Vector, angles, kron_mem=nothing)
     state = convert(Vector{ComplexF64}, initial_state)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles)
+    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+
     return state::Vector{ComplexF64}
 end
 
-function mesh_evolution_identical(initial_state::SparseVector, angles)
+function mesh_evolution_identical(initial_state::SparseVector, angles, kron_mem=nothing)
     state =
     convert(SparseVector{ComplexF64, Int64}, initial_state)::SparseVector{ComplexF64, Int64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles)
+    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+
     return state::SparseVector{ComplexF64, Int64}
 end
 
-function mesh_evolution_identical(initial_state, angles)
+function mesh_evolution_identical(initial_state, angles, kron_mem=nothing)
     state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles)
+    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+
     return state
 end
 
 
 function _iterative_mesh_evolution end
 
-function _iterative_mesh_evolution_identical(input_state::AbstractVector, angles)
+function _iterative_mesh_evolution_identical(
+    input_state::AbstractVector, angles, kron_mem=nothing
+)
     state = copy(input_state)
     for i in eachindex(angles)
-        coin_op = coin_operator_identical(angles[i])
+        if isnothing(kron_mem)
+            coin_op = coin_operator_identical(angles[i])
+        else
+            coin_op = coin_operator_identical(angles[i], kron_mem[i])
+        end
         state = coin_op * state # apply beam splitters
         state = shift_timebins_identical(state) # shift time bins accordingly
    end
@@ -265,10 +285,16 @@ function _iterative_mesh_evolution_identical(input_state::AbstractVector, angles
     return state
 end
 
-function _iterative_mesh_evolution_identical(input_state::AbstractMatrix, angles)
+function _iterative_mesh_evolution_identical(
+    input_state::AbstractMatrix, angles, kron_mem=nothing
+)
     state = copy(input_state)
     for i in eachindex(angles)
-        coin_op = coin_operator_identical(angles[i])
+        if isnothing(kron_mem)
+            coin_op = coin_operator_identical(angles[i])
+        else
+            coin_op = coin_operator_identical(angles[i], kron_mem[i])
+        end
         shift_op = shift_timebins_operator_identical(length(angles[i]))
         state = coin_op * state * coin_op' # apply beam splitters
         state = shift_op * state * shift_op' # apply time-bin shift operator
