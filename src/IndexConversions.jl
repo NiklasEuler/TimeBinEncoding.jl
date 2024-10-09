@@ -71,7 +71,7 @@ function _j2lcmk_input_sanity_check(N, j)
 
     @argcheck N > 0
     @argcheck j > 0
-    @argcheck j ≤ N_LOOPS2 * N^2
+    @argcheck j ≤ N_LOOPS2 * N ^ 2
 
     return N, j
 end

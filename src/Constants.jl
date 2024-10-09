@@ -1,4 +1,4 @@
-export N_LOOPS, N_LOOPS2, WEIGHT_CUTOFF, Θ_13, Θ_23, θ_pop_ref
+export N_LOOPS, N_LOOPS2, WEIGHT_CUTOFF, Θ_13, Θ_23, θ_pop_ref, _cols, _rows
 
 """
 Number of fiber loops. Saved as const to avoid magic numbers.
@@ -32,3 +32,9 @@ Angle such that sin(Θπ) = √3/4, used for the population reference beam-split
 Saved as const to avoid magic numbers.
 """
 global const θ_pop_ref = asin(sqrt(3 / 4)) / π
+
+"""
+beam-splitter colums and rows.
+"""
+global const _cols = [1, 1, 2, 2]
+global const _rows = [1, 2, 1, 2]
