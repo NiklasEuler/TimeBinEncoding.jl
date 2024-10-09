@@ -72,7 +72,7 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
 )
     @argcheck abs2.(phases) ≈ ones(Float64, N)
     #println("Running in parallel!")
-    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+    d_hilbert_space = Int(N * (2 * N + 1))
     # full local hilbert space dimension for two photons
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
     # four-photon state indices
@@ -101,7 +101,7 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
                 single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
                 #single_ket_evolved = mesh_evolution_identical(single_ket, angles, kron_mem)
                 for i in 1:M
-                    single_ket .= coin_op[i] * single_ket
+                    single_ket = coin_op[i] * single_ket
                     single_ket = shift_timebins_identical(single_ket)
                 end
                 coeff = single_ket[j_out]
