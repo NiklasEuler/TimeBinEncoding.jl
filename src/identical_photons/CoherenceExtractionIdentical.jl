@@ -237,7 +237,7 @@ function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_wei
 	d_full_hs_bl = d_local_hs_bl ^ 2
 
     combined_weights_4b = spzeros(ComplexF64, d_full_hs_bl^2)
-    pop_fs_4b = 0
+    pop_fs_4b = 0.0
 
 	bin_combinations = combs_4bin(N)
 	N_comb = binomial(N, N - 4) # only ever let 4 bins interfere
@@ -277,7 +277,7 @@ end
 
 function combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
 
-	pop_fs_hom = 0
+	pop_fs_hom = 0.0
 	d_local_hs_bl = N * (2 * N + 1)
 	d_full_hs_bl = d_local_hs_bl ^ 2
 

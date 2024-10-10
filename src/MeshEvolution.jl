@@ -26,8 +26,8 @@ function shift_timebins_sp end
 function shift_timebins_sp(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = Vector{ComplexF64}(undef, length(state_vec)+N_LOOPS)
-    new_vec[2] = 0
-    new_vec[end - 1] = 0
+    new_vec[2] = 0.0
+    new_vec[end - 1] = 0.0
     new_vec[1:2:end - 3] = @view state_vec[1:2:end]
     new_vec[4:2:end] = @view state_vec[2:2:end]
     return new_vec
