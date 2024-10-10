@@ -123,11 +123,33 @@ function shift_timebins_identical(state_vec::SparseVector)
         convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
     d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1))
     new_vec = spzeros(ComplexF64, d_hilbert_space_shifted^2)
-    for j_super in state_vec.nzind
+    nzinds_old = findnz(state_vec)[1]
+    if isempty(nzinds_old)
+        throw(ArgumentError("Input state is empty"))
+    end
+    for j_super in nzinds_old
         _shift_j_identical!(N, j_super, state_vec, new_vec)
     end
 
-    return new_vec
+    return new_vec::SparseVector
+end
+
+function shift_timebins_identical!(state_vec::SparseVector, temp_vec::SparseVector)
+    d_hilbert_space = Int(sqrt(length(state_vec)))
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    state_vec =
+        convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
+    d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1))
+    @argcheck length(temp_vec) == d_hilbert_space_shifted^2
+    nzinds_old = findnz(state_vec)[1]
+    if isempty(nzinds_old)
+        throw(ArgumentError("Input state is empty"))
+    end
+    for j_super in nzinds_old
+        _shift_j_identical!(N, j_super, state_vec, temp_vec)
+    end
+
+    return nothing
 end
 
 function _shift_j_identical!(N, j_super, state_vec, new_vec)

@@ -14,7 +14,9 @@ function explicit_fs_projection_identical(j_out, angles, phases=ones(Float64, N)
     #end
 
     #return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles, phases)
-    return _explicit_fs_projection_mesh_identical_backend_parallel(N, M, j_out, angles, phases)
+    return _explicit_fs_projection_mesh_identical_backend_parallel(
+        N, M, j_out, angles, phases
+    )
 
 end
 
@@ -91,31 +93,42 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
         Base.Threads.@spawn begin
             coeff_arr_local = Vector{ComplexF64}(undef, 0)
             j_idx_arr_contr_local = Int64[]
+            single_ket_arr = [
+                spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M
+            ]
+            #= single_ket_arr_temp = [
+                spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M - 1
+            ] =#
             for j in chunk
                 l1_init, m1_init, l2_init, m2_init = @view configs_lightcone_arr[:, j]
                 j_init = lcmk2j_super_identical(
                     N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0
                 )
-                single_ket = spzeros(ComplexF64, d_hilbert_space^2)
                 phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
-                single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
+                single_ket_arr[1][j_init] = prod(phases[phase_idxs]) # initial state phase
                 #single_ket_evolved = mesh_evolution_identical(single_ket, angles, kron_mem)
-                for i in 1:M
-                    single_ket = coin_op[i] * single_ket
-                    single_ket = shift_timebins_identical(single_ket)
+                for i in 1:M # apply coin operators
+                    single_ket_arr[i] .= coin_op[i] * single_ket_arr[i]
+                    single_ket_arr[i + 1] .= shift_timebins_identical(single_ket_arr[i])
+                    #= mul!(single_ket_arr_temp[i], coin_op[i], single_ket_arr[i])
+                    shift_timebins_identical!(single_ket_arr_temp[i], single_ket_arr[i + 1])
+                    =#
                 end
-                coeff = single_ket[j_out]
+                coeff = single_ket_arr[end][j_out]
                 if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
                     push!(coeff_arr_local, coeff)
                     push!(j_idx_arr_contr_local, j_init)
                 end
+                foreach(x -> x .= 0, single_ket_arr)
+                dropzeros!.(single_ket_arr)
             end
-            return j_idx_arr_contr_local, coeff_arr_local
+            return j_idx_arr_contr_local::Vector{Int64}, coeff_arr_local::Vector{ComplexF64}
         end
     end
-    results = fetch.(tasks)
-	j_idx_arr_contr = cat([tup[1] for tup in results]..., dims = 1)
-    coeff_arr = cat([tup[2] for tup in results]..., dims = 1)
+    results = fetch.(tasks)::Vector{Tuple{Vector{Int64}, Vector{ComplexF64}}}
+    #println("Results: ", typeof(results))
+	j_idx_arr_contr = cat([tup[1] for tup in results]..., dims = 1)::Vector{Int64}
+    coeff_arr = cat([tup[2] for tup in results]..., dims = 1)::Vector{ComplexF64}
     return j_idx_arr_contr, coeff_arr
 end
 
@@ -204,10 +217,10 @@ function explicit_fs_coherence_map_identical(
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection_identical(j_out, angles, phases)
     n_contr = length(j_idx_arr_contr)
-    j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))
-    j2_arr = repeat(j_idx_arr_contr, n_contr)
+    j1_arr = inverse_rle(j_idx_arr_contr, fill(n_contr, n_contr))::Vector{Int64}
+    j2_arr = repeat(j_idx_arr_contr, n_contr)::Vector{Int64}
     weights = kron(coeff_arr, conj.(coeff_arr)) * projector_weight
-    return j1_arr, j2_arr, weights
+    return j1_arr, j2_arr, weights::Vector{ComplexF64}
 end
 
 function explicit_fs_coherence_map_identical(
