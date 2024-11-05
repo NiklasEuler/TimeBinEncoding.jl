@@ -1,4 +1,6 @@
 export visual_meas_coh_map_identical
+export visual_meas_coh_map_combined_identical
+
 
 function visual_meas_coh_map_identical end
 
@@ -99,4 +101,42 @@ function _visual_coh_identical(
    end
 
     return nothing
+end
+
+function visual_meas_coh_map_combined_identical(
+    N, combined_weights, contr_j_idxs; extract_diagonal=false
+)
+	d_full_hs_bl = (N * (2 * N + 1)) ^ 2
+	println("All remaining coherences:")
+	for j_comb in eachindex(combined_weights)
+		if !(isapprox(combined_weights[j_comb], 0, atol=1e-10))
+			j1, j2 = j2lm(d_full_hs_bl, j_comb)
+			j1 += 1
+			j2 += 1
+	 		l1_bra, c1_bra, m1_bra, k1_bra, l2_bra, c2_bra, m2_bra, k2_bra =
+	            j_super2lcmk_identical(N, j1)
+			l1_ket, c1_ket, m1_ket, k1_ket, l2_ket, c2_ket, m2_ket, k2_ket =
+	            j_super2lcmk_identical(N, j2)
+	        println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
+                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ",
+                round(combined_weights[j_comb], sigdigits=5)
+            )
+	   end
+	end
+	println("\n All contributing coherences:")
+	for j_contr1 in contr_j_idxs, j_contr2 in contr_j_idxs
+		j_contr = lm2j(d_full_hs_bl,  j_contr1 - 1, j_contr2 - 1)
+		if !(isapprox(combined_weights[j_contr], 0, atol=1e-10)) && (j_contr1 != j_contr2 ||
+            extract_diagonal
+        )
+			l1_bra, c1_bra, m1_bra, k1_bra, l2_bra, c2_bra, m2_bra, k2_bra =
+	            j_super2lcmk_identical(N, j_contr1)
+			l1_ket, c1_ket, m1_ket, k1_ket, l2_ket, c2_ket, m2_ket, k2_ket =
+	            j_super2lcmk_identical(N, j_contr2)
+	        println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
+                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ",
+                round(combined_weights[j_contr], sigdigits = 5)
+            )
+	   end
+	end
 end
