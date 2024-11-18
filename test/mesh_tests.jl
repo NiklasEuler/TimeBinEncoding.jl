@@ -41,6 +41,50 @@ end
     @test ρ_out_vector ≈ ρ_out_matrix
 end
 
+@testset "mesh_evolution_backwards" begin
+
+    N = 2
+    M = 2
+    angles_1 = [0.5, 0] * π
+    angles_2 = [0, 0.25, 0] * π
+    angles = [angles_1, angles_2]
+
+    ϕ = 0
+    wf_coeffs = [cis(2 * n * ϕ * π) for n in 0:N - 1]
+    tb_state = correlated_timebin_state(wf_coeffs)
+    Ψ_init = insert_initial_state(tb_state)
+    ρ_init = density_matrix(Ψ_init)
+
+    Ψ_out_vector = mesh_evolution(Ψ_init, angles)
+    ρ_out_matrix = mesh_evolution(ρ_init, angles)
+
+    Ψ_init_re = mesh_evolution_backwards(Ψ_out_vector, angles)
+    ρ_init_re = mesh_evolution_backwards(ρ_out_matrix, angles)
+
+    @test Ψ_init ≈ Ψ_init_re
+    @test ρ_init ≈ ρ_init_re
+
+    N = 8
+
+    angles = angles_single_setup(N)
+
+    #ϕ = 0.3
+	#wf_coeffs = [cis(2 * n * ϕ * π) for n in 0:N - 1]
+    wf_coeffs = cis.(2 * rand(N) * π)
+    tb_state = correlated_timebin_state(wf_coeffs)
+	Ψ_init = insert_initial_state(tb_state)
+    ρ_init = density_matrix(Ψ_init)
+
+    Ψ_out_vector = explicit_state_evolution(Ψ_init, angles)
+    ρ_out_matrix = mesh_evolution(ρ_init, angles)
+
+    Ψ_init_re = mesh_evolution_backwards(Ψ_out_vector, angles)
+    ρ_init_re = mesh_evolution_backwards(ρ_out_matrix, angles)
+
+    @test Ψ_init ≈ Ψ_init_re
+    @test ρ_init ≈ ρ_init_re
+end
+
 @testset "mesh_evolution_sp" begin
 
     N = 2

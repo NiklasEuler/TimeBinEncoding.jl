@@ -288,7 +288,7 @@ function mesh_evolution_identical(initial_state, angles, kron_mem=nothing)
 end
 
 
-function _iterative_mesh_evolution end
+function _iterative_mesh_evolution_identical end
 
 function _iterative_mesh_evolution_identical(
     input_state::AbstractVector, angles, kron_mem=nothing
