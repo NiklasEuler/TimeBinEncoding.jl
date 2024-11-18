@@ -190,18 +190,22 @@ function angles_single_setup(N)
     angles_cascade = [zeros(Float64, n) for n in N:N + M - 1]
     angles_cascade[1][1:N_half] .= π / 2 # send early half into long loop
 
+    recursion_depth = 1
+    initial_branch = "center"
     _recursive_beam_splitter_array!(
-        N_half, 1 + N_half, 1 + N_half, angles_cascade, "center"
+        N_half, 1 + N_half, 1 + N_half, angles_cascade, initial_branch, recursion_depth,
     )
-
+#=
     for i in 2:N_half - 1 # 2 are already included in minimum structure
         angles_cascade[N + i * 2][N + i] = π / 4 # interfere early and late branches
-    end
+    end =#
 
     return angles_cascade
 end
 
-function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
+function _recursive_beam_splitter_array!(
+    N_bs, n_idx, m_idx, angles, branch, recursion_depth
+)
     @argcheck branch in ["early", "center", "late"]
 
     angles[m_idx][n_idx:n_idx + N_bs - 1] .= π / 4 # put original bs
@@ -211,20 +215,39 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
         elseif branch == "late"
             angles[m_idx + 1][[n_idx + 1]] .= π / 2 # right flank transparent couplers
         end
-    elseif N_bs == 2
-        # smallest regular structure in the center, also appears in the flanks.
-        # no further recursion
-        angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
-        angles[m_idx + 1][[n_idx + 1]] .= π / 4
-        angles[m_idx + 3][[n_idx + 2]] .= π / 4
-        if branch == "early"
-            angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
-        elseif branch == "late"
-            angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
-        end
     else
+
+        Nincr = N_bs - 1
+        if branch == "early"
+            angles[m_idx + Nincr * 3 + 1][n_idx + Nincr:n_idx + 2 * Nincr] .= π / 2
+            # left flank transparent couplers
+        elseif branch == "late"
+            angles[m_idx + Nincr * 3 + 1][n_idx + 2 * Nincr + 1:n_idx + 3 * Nincr + 1] .=
+                π / 2 # left flank transparent couplers
+        end
+
+        if N_bs == 2
+            # smallest regular structure in the center, also appears in the flanks.
+            # no further recursion
+            angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
+            #angles[m_idx + 1][[n_idx + 1]] .= π / 4
+            #angles[m_idx + 3][[n_idx + 2]] .= π / 4
+        #=     if branch == "early"
+                angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
+                angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
+            elseif branch == "late"
+                angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
+                angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
+            end =#
+
+            for i in 0:2 ^ recursion_depth - 1
+                angles[m_idx + 1 + i * 2][n_idx + 1 + i] = π / 4
+                # interfere early and late branches
+            end
+
+            return nothing
+        end
+
         N_bs_half = Int64(N_bs / 2)
         N_bs_quarter = Int64(N_bs / 4)
         angles[m_idx + N_bs_half][n_idx:n_idx + N_bs_quarter - 1] .= π / 2
@@ -232,16 +255,21 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
         angles[m_idx + N_bs_half][
             n_idx + N_bs + N_bs_quarter:n_idx + N_bs + N_bs_half - 1] .= π / 2
         # right flank transparent couplers
+
+        m_idx_flank = m_idx + N_bs_half + N_bs_quarter
+        n_idx_flank =  n_idx + N_bs_quarter
+
+        m_idx_center = m_idx + N_bs_half
+        n_idx_center =  n_idx + N_bs_half
+
         _recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "early"
+            N_bs_quarter, n_idx_flank, m_idx_flank, angles, "early", 1
         ) # left flank beam splitter array
         _recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs+N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "late"
+            N_bs_quarter, n_idx_flank + N_bs, m_idx_flank, angles, "late", 1
         ) # right flank beam splitter array
         _recursive_beam_splitter_array!(
-            N_bs_half, n_idx + N_bs_half, m_idx + N_bs_half, angles, "center"
+            N_bs_half, n_idx_center, m_idx_center, angles, "center", recursion_depth + 1
         ) # center branch beam splitter array
    end
 
