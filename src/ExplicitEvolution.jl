@@ -71,6 +71,9 @@ function explicit_fs_projection_sp(l, c, angles)
     j_idx_arr_contr, coeff_arr = _symbolic_2_explicit_worker(
         angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
     )
+    coeff_arr = [coeff' for coeff in coeff_arr]
+        #!!! Transpose as the phase aquired during evolution has to be counteracted such
+        # that the final state has no phase, as we are looking for coefficient in the fs.
     return j_idx_arr_contr, coeff_arr
 end
 
@@ -200,7 +203,7 @@ function _explicit_fs_projection_symbolic_backend(
     return j_idx_arr_contr, coeff_arr
 end
 
-function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
+function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(Float64, N))
     @argcheck abs2.(phases) ≈ ones(Float64, N)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
@@ -224,6 +227,9 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(F
         #single_ket = zeros(ComplexF64, N_LOOPS2 * N^2)
         single_ket = spzeros(ComplexF64, N_LOOPS2 * N^2)
         single_ket[j_init] = phases[l_init + 1] * phases[m_init + 1]
+        if j_init == 1
+            println(single_ket)
+        end
         single_ket_evolved = mesh_evolution(single_ket, angles)
         coeff = single_ket_evolved[j_out]
         if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
@@ -231,6 +237,28 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(F
             push!(j_idx_arr_contr, j_init)
         end
    end
+
+    return j_idx_arr_contr, coeff_arr
+end
+
+function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
+    @argcheck abs2.(phases) ≈ ones(Float64, N)
+    final_state_ket = spzeros(ComplexF64, N_LOOPS2 * (N+M)^2)
+    final_state_ket[j_out] = 1.0
+    initial_state = mesh_evolution_backwards(final_state_ket, angles)
+    j_idx_arr_contr = Int[]
+    coeff_arr = ComplexF64[]
+    for (j, coeff) in enumerate(initial_state)
+        l, c, m, k = j2lcmk(N, j)
+        if c != 0 || k != 0
+            continue
+        end # only consider |l, 0, m, 0> initial states
+        if abs2(coeff) > WEIGHT_CUTOFF
+            coeff *= (phases[l + 1] * phases[m + 1])'
+            push!(j_idx_arr_contr, j)
+            push!(coeff_arr, coeff)
+        end
+    end
 
     return j_idx_arr_contr, coeff_arr
 end

@@ -93,7 +93,7 @@ end
     @test explicit_fs_projection_sp(1, 1, angles) == ([], [])
     @test explicit_fs_projection_sp(2, 0, angles) == ([], [])
     @test all(explicit_fs_projection_sp(2, 1, angles) .≈
-        ([1, 3], im / √2 .* Complex.([1, 1])))
+        ([1, 3], -im / √2 .* Complex.([1, 1])))
     @test explicit_fs_projection_sp(3, 0, angles) == ([], [])
 end
 
@@ -122,7 +122,7 @@ end
 
     j = lcmk2j(N + M, 2, 1, 0, 0)
     @test all(explicit_fs_projection(j, angles) .≈
-        ([1, 9], im / 4 .* Complex.([1, 1])))
+        ([1, 9], -im / 4 .* Complex.([1, 1])))
 
     N = 4
     M = 2 * (N - 1)
@@ -133,7 +133,7 @@ end
     coeff_arr_all_symb = Vector{ComplexF64}[]
     coeff_arr_all_mesh = Vector{ComplexF64}[]
 
-    for j in 1:TimeBinEncoding.N_LOOPS2 * (N + M)^2
+    for j in 1:N_LOOPS2 * (N + M)^2
         j_idx_arr_contr_symb, coeff_arr_symb =
             TimeBinEncoding._explicit_fs_projection_symbolic_backend(N, M, j, angles)
         push!(j_idx_arr_contr_all_symb, j_idx_arr_contr_symb)
@@ -143,8 +143,20 @@ end
             TimeBinEncoding._explicit_fs_projection_mesh_backend(N, M, j, angles)
         push!(j_idx_arr_contr_all_mesh, j_idx_arr_contr_mesh)
         push!(coeff_arr_all_mesh, coeff_arr_mesh)
+    #=     if !(coeff_arr_mesh ≈ coeff_arr_symb)
+            println("j: ", j)
+            println("j_idx_arr_contr_symb: ", j_idx_arr_contr_symb)
+            println("j_idx_arr_contr_mesh: ", j_idx_arr_contr_mesh)
+            println("coeff_arr_symb: ", coeff_arr_symb)
+            println("coeff_arr_mesh: ", coeff_arr_mesh)
+        end =#
     end
 
     @test all(j_idx_arr_contr_all_symb .== j_idx_arr_contr_all_mesh)
+    #println("coeff_arr_all_symb: ", coeff_arr_all_symb)
+    #println("coeff_arr_all_mesh: ", coeff_arr_all_mesh)
+
+   # println("coeff_arr_all_mesh: ", coeff_arr_all_mesh - coeff_arr_all_symb)
+
     @test all(coeff_arr_all_symb .≈ coeff_arr_all_mesh)
 end
