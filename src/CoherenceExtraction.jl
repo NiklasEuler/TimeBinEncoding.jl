@@ -8,8 +8,13 @@ export j_out_single_setup
 
 """
     coherence_extraction(
-        N, j_out, pops_init, pop_fs, angles, contr_j_tuples=correlated_short_bins_tuples(N);
-        extract_diagonal::Bool=true
+        N,
+        j_out,
+        pops_init,
+        pop_fs,
+        angles,
+        contr_j_tuples=correlated_short_bins_tuples(N, extract_diagonal=false),
+        projector_weights=ones(Float64, length(j_out))
     )
 
 Extract the coherences between correlated time-bin populations.
@@ -25,13 +30,11 @@ Extract the coherences between correlated time-bin populations.
 - `angles`: a Vector or Vectors of scheduled beam-splitter angles. The number of round trips
     matches `length(angles)`.
 - `contr_j_tuples`: Vector of `(j1, j2)` tuples of state indices that should be extracted
-    from the state. Default value is `correlated_short_bins_tuples(N)`, which is all
-    correlated time bins.
-
-# Keyword Arguments
-
-- `extract_diagonal`::Bool: Bool flag to indicate whether state populations, i.e., diagonal
-    elements of ρ, should be extracted from the coherence. Default is `true`.
+    from the state. Default value is
+    `correlated_short_bins_tuples(N, extract_diagonal=false)`, which is all correlated time
+    bins, excluding the correlated populations.
+- `projector_weights`: The weights of the projectors in the final state. Default equal
+    weights for all projectors.
 
 See also [`coherence_extraction_compound`](@ref).
 """
@@ -126,10 +129,9 @@ See also [`noisy_angles_symmetric`](@ref), [`angles_phase_estimation`](@ref),
 function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
     N = Int64(sqrt(length(pops_init) / N_LOOPS2))
     # extract time-bin number from population number
-    ϕ_arr = (0:0.00001:2) * π
+    #ϕ_arr = (0:0.00001:2) * π
     nn_phases = zeros(Float64, N)
     k = 1 # nearest neigbor phase measurements suffice
-    extract_diagonal = false # dont need the populations
     #angles_k = angles_kth_neighbor_interference(N, k)
     angles = angles_phase_estimation(N) # intended angles (no noise)
     j_out_arr = j_out_phase_estimation(N)
@@ -154,8 +156,12 @@ function initial_state_phase_estimation(pops_init, pops_fs_real, pops_fs_imag)
         #println("idx: ", idx, " lcmk: ", [j2lcmk(N + 2, j[1]), j2lcmk(N + 2, j[2])])
         #println("c_real: ", c_real)
         #println("c_imag: ", c_imag)
-        c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
-        nn_phases[idx + 1] = ϕ_arr[argmax(c_contr)]
+        #c_contr = c_real .* cos.(-ϕ_arr) .+ c_imag .* sin.(-ϕ_arr)
+        #nn_phases[idx + 1] = ϕ_arr[argmax(c_contr)]
+        #println("Phase from my old method: ", nn_phases[idx + 1])
+        #println("Phase from my new method: ", mod.(-angle(c_real + im*c_imag), 2 * π))
+        nn_phases[idx + 1] = -atan(c_imag, c_real)
+            # the correction phase(negative sign)
     end
 
     relative_phases =  mod.(cumsum(nn_phases), 2 * π)
