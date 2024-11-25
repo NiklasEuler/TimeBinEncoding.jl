@@ -203,7 +203,7 @@ function _explicit_fs_projection_symbolic_backend(
     return j_idx_arr_contr, coeff_arr
 end
 
-function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(Float64, N))
+#= function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(Float64, N))
     @argcheck abs2.(phases) ≈ ones(Float64, N)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
@@ -239,7 +239,7 @@ function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(
    end
 
     return j_idx_arr_contr, coeff_arr
-end
+end =#
 
 function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
     @argcheck abs2.(phases) ≈ ones(Float64, N)
@@ -452,17 +452,31 @@ function explicit_fs_pop(
     j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases::AbstractVector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]));
+    n_samples = nothing
 )
-    exp_val = 0.0
-    for (j_idx, j_out) in enumerate(j_out_arr)
-        exp_val += explicit_fs_pop(ρ_init, j_out, angles, phases) * projector_weights[j_idx]
+    if isnothing(n_samples)
+        pop_fs_weighted = 0.0
+        for (j_idx, j_out) in enumerate(j_out_arr)
+            pop_fs_weighted +=
+                explicit_fs_pop(ρ_init, j_out, angles, phases) * projector_weights[j_idx]
+        end
+    else
+        n_samples = convert(Int64, n_samples)::Int64
+        pops = [explicit_fs_pop(ρ_init, j_out, angles) for j_out in j_out_arr]
+        if !(sum(pops) .≈ 1)
+            push!(pops, 1 - sum(pops))
+            # add dummy entry for other results to preserve normalization
+        end
+        pops_sampled = sample_populations(pops, n_samples)
+        pop_fs_weighted =
+            sum(pops_sampled[1:length(projector_weights)] .* projector_weights)
     end
 
-    return exp_val
+    return pop_fs_weighted
 end
 
-function explicit_fs_pop_sampled(
+#= function explicit_fs_pop_sampled(
     ρ_init,
     j_out_arr::AbstractVector{Int64},
     angles,
@@ -484,7 +498,7 @@ function explicit_fs_pop_sampled(
     println("pops_sampled :",pops_sampled) =#
 
     return pop_fs_weighted
-end
+end =#
 
 
 

@@ -1,7 +1,7 @@
 export coherence_extraction
 export j_out_phase_estimation, initial_state_phase_estimation, fs_pop_phase_estimation
 export j_out_compound, coherence_extraction_compound
-export fs_pop_compound, fs_pop_compound_sampled
+export fs_pop_compound#, fs_pop_compound_sampled
 export j_out_single_setup
 #export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
 #export j_out4bins, j_out_hom
@@ -321,7 +321,7 @@ function coherence_extraction_compound(pops_init, pops_fs_all)
 
     contr_j_idxs = correlated_short_bins_idxs(N)
     contr_pops = Float64(sum([pops_init[j] for j in contr_j_idxs]))
-    extracted_coherences = contr_pops / N # populations contribution to fidelity
+    pop_contr = contr_pops / N # populations contribution to fidelity
 
     pairings = graph_coloring(N)
 
@@ -341,21 +341,34 @@ function coherence_extraction_compound(pops_init, pops_fs_all)
     angles_all = angles_compound(N)
     projector_weights = proj_weights_compound(N)
 
+    tasks_per_thread = 1
+    # customize this as needed. More tasks have more overhead, but better load balancing
+    n_settings = length(j_out_all)
+    chunk_size = max(1, n_settings ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    data_chunks = Base.Iterators.partition(Array(1:n_settings), chunk_size)
+    #for k in eachindex(j_out_all)
+    tasks = map(data_chunks) do chunk
+        extracted_coherences = 0.0
+        Base.Threads.@spawn begin
+            for k in chunk
+                j_out = j_out_all[k] # the kth final state projector indices
+                angles = angles_all[k] # the kth angle settings
+                pop_fs = pops_fs_all[k] # the kth final state populations
+                contr_j_tuples = contr_j_tuples_all[k]
+                # # the two time bins to be extracted from data.
 
-    for k in eachindex(j_out_all)
-        j_out = j_out_all[k] # the kth final state projector indices
-        angles = angles_all[k] # the kth angle settings
-        pop_fs = pops_fs_all[k] # the kth final state populations
-        contr_j_tuples = contr_j_tuples_all[k]
-        # # the two time bins to be extracted from data.
-
-        coh = coherence_extraction(
-            N, j_out, pops_init, pop_fs, angles, contr_j_tuples, projector_weights)
-            # noisy extraction using the correlated and anti-correlated coincidence counts
-        extracted_coherences += coh
+                coh = coherence_extraction(
+                    N, j_out, pops_init, pop_fs, angles, contr_j_tuples, projector_weights)
+                    # noisy extraction using the correlated and
+                    # anti-correlated coincidence counts
+                extracted_coherences += coh
+            end
+            return extracted_coherences
+        end
     end
-
-    return extracted_coherences
+    extracted_coherences_all = sum(fetch.(tasks))
+    extracted_coherences_all += pop_contr # add populations contribution to fidelity
+    return extracted_coherences_all
 end
 
 
@@ -459,33 +472,52 @@ function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
 end =#
 
 """
-    fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+    fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)); n_samples=nothing)
 
 Compute all needed final-state populations for an initial state `ρ_init` for a complete set
 of measurements in the compound coherence extraction scheme. The `angles_all` argument
 contains all beam-splitter angles to be used for the scheme.
 
-See also [`fs_pop_compound_sampled`](@ref), [`fs_pop_phase_estimation`](@ref),
+Optionally, a number of samples `n_samples` can be specified to compute the final-state
+populations with finite sampling statistics.
+
+See also [`fs_pop_phase_estimation`](@ref),
 [`explicit_fs_pop`](@ref), [`angles_compound`](@ref).
 """
-function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)))
+function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)); n_samples=nothing)
 
-    ρ_init, angles_all, j_out_all, proj_weights, pops_out = _fs_pop_compound_worker(
+    ρ_init, angles_all, j_out_all, proj_weights = _fs_pop_compound_worker(
         ρ_init, angles_all
     )
-    for k in eachindex(j_out_all)
-        j_out = j_out_all[k]
-        angles = angles_all[k]
-        pops_out[k] = explicit_fs_pop(ρ_init, j_out, angles, proj_weights)
-        # no phase argument here. Not needed, as no phases are being applied iin this step.
-        # Density matrix is rotated already in the phase estimation step.
-        # In compound scheme, only real parts of some of the coherences are extracted.
-        # For imaginary parts of arbitrary coherences, one has to consider phase argument.
+    tasks_per_thread = 1
+    # customize this as needed. More tasks have more overhead, but better load balancing
+    n_settings = length(j_out_all)
+    chunk_size = max(1, n_settings ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    data_chunks = Base.Iterators.partition(Array(1:n_settings), chunk_size)
+    #for k in eachindex(j_out_all)
+    tasks = map(data_chunks) do chunk
+        Base.Threads.@spawn begin
+            pops_out = zeros(Float64, n_settings)
+            for k in chunk
+                j_out = j_out_all[k]
+                angles = angles_all[k]
+                pops_out[k] = explicit_fs_pop(
+                    ρ_init, j_out, angles, proj_weights; n_samples
+                )
+                # no phase argument here. Not needed, as no phases are being applied iin
+                # this step. Density matrix is rotated already in the phase estimation step.
+                # In compound scheme, only real parts of some of the coherences are
+                # extracted. For imaginary parts of arbitrary coherences, one has to
+                # consider phase argument.
+            end
+            return pops_out
+        end
     end
-    return pops_out
+    pops_out_sum = sum(fetch.(tasks))
+    return pops_out_sum
 end
 
-"""
+#= """
     fs_pop_compound_sampled(ρ_init, n_samples, angles_all=angles_compound(ρ2N(ρ_init)))
 
 Compute the sampled final-state populations for an initial state `ρ_init` for a complete set
@@ -510,7 +542,7 @@ function fs_pop_compound_sampled(
         )
     end
     return pops_out
-end
+end =#
 
 
 function _fs_pop_compound_worker(ρ_init, angles_all)
@@ -523,9 +555,9 @@ function _fs_pop_compound_worker(ρ_init, angles_all)
 
     j_out_all = j_out_compound(N)
     proj_weights = proj_weights_compound(N) # projector weights
-    pops_out = Vector{Float64}(undef, length(j_out_all))
+    #pops_out = Vector{Float64}(undef, length(j_out_all))
     # prepare pops_out array for type stability
-    return ρ_init, angles_all, j_out_all, proj_weights, pops_out
+    return ρ_init, angles_all, j_out_all, proj_weights#, pops_out
 
 end
 

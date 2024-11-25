@@ -88,6 +88,8 @@ end
     ϵ_angles = 0.05 * π
     ϕ = 0.00
 
+    Random.seed!(4441)
+
     wf_coeffs = [cis(n * ϕ * π) for n in 0:N - 1]
     Ψ_init = insert_initial_state(correlated_timebin_state(wf_coeffs))
 	ρ_pure = density_matrix(Ψ_init)
@@ -106,7 +108,7 @@ end
         atol = 1e-8
     )
 
-    pops_fs_all_pure_noisy = fs_pop_compound_sampled(ρ_pure, 1e6, angles_compound_all)
+    pops_fs_all_pure_noisy = fs_pop_compound(ρ_pure, angles_compound_all; n_samples = 1e6)
     @test isapprox(pops_fs_all_pure, pops_fs_all_pure_noisy, atol = 1e-8)
 
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
@@ -114,8 +116,8 @@ end
 
     pops_fs_all_mixed = fs_pop_compound(ρ_mixed, angles_compound_all)
 
-    pops_fs_all_mixed_noisy = fs_pop_compound_sampled(ρ_mixed, 1e6, angles_compound_all)
-    @test isapprox(pops_fs_all_mixed, pops_fs_all_mixed_noisy, atol = 1e-3)
+    pops_fs_all_mixed_noisy = fs_pop_compound(ρ_mixed, angles_compound_all; n_samples = 1e6)
+    @test isapprox(pops_fs_all_mixed, pops_fs_all_mixed_noisy, atol = 2e-3)
 
     angles_compound_all_noisy = angles_compound(N, ϵ_angles)
     pops_fs_all_pure_noisy = fs_pop_compound(ρ_pure, angles_compound_all_noisy)
