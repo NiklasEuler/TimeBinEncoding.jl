@@ -107,8 +107,10 @@ end
         mes_fidelity,
         atol = 1e-8
     )
-
-    pops_fs_all_pure_noisy = fs_pop_compound(ρ_pure, angles_compound_all; n_samples = 1e6)
+    n_samples = 1e6
+    pops_fs_all_pure_noisy = fs_pop_compound(
+        ρ_pure, angles_compound_all; n_samples=n_samples
+    )
     @test isapprox(pops_fs_all_pure, pops_fs_all_pure_noisy, atol = 1e-8)
 
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
@@ -116,7 +118,9 @@ end
 
     pops_fs_all_mixed = fs_pop_compound(ρ_mixed, angles_compound_all)
 
-    pops_fs_all_mixed_noisy = fs_pop_compound(ρ_mixed, angles_compound_all; n_samples = 1e6)
+    pops_fs_all_mixed_noisy = fs_pop_compound(
+        ρ_mixed, angles_compound_all; n_samples=n_samples
+    )
     @test isapprox(pops_fs_all_mixed, pops_fs_all_mixed_noisy, atol = 2e-3)
 
     angles_compound_all_noisy = angles_compound(N, ϵ_angles)
