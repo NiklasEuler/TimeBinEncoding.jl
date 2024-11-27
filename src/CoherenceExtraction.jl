@@ -503,7 +503,7 @@ function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)); n_s
                 angles = angles_all[k]
                 pops_out[k] = explicit_fs_pop(
                     ρ_init, j_out, angles, proj_weights; n_samples=n_samples
-                )
+                ) # Julia 1.3 cannot infere keyword argument name from passed argument name
                 # no phase argument here. Not needed, as no phases are being applied iin
                 # this step. Density matrix is rotated already in the phase estimation step.
                 # In compound scheme, only real parts of some of the coherences are
