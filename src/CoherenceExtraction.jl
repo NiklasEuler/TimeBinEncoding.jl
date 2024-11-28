@@ -344,7 +344,9 @@ function coherence_extraction_compound(pops_init, pops_fs_all)
     tasks_per_thread = 1
     # customize this as needed. More tasks have more overhead, but better load balancing
     n_settings = length(j_out_all)
-    chunk_size = max(1, n_settings ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    n_threads_compound = min(Base.Threads.nthreads(), 2)
+    #chunk_size = max(1, n_settings ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    chunk_size = max(1, n_settings ÷ (tasks_per_thread * n_threads_compound))
     data_chunks = Base.Iterators.partition(Array(1:n_settings), chunk_size)
     #for k in eachindex(j_out_all)
     tasks = map(data_chunks) do chunk
@@ -492,7 +494,8 @@ function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)); n_s
     tasks_per_thread = 1
     # customize this as needed. More tasks have more overhead, but better load balancing
     n_settings = length(j_out_all)
-    chunk_size = max(1, n_settings ÷ (tasks_per_thread * Base.Threads.nthreads()))
+    n_threads_compound = min(Base.Threads.nthreads(), 2)
+    chunk_size = max(1, n_settings ÷ (tasks_per_thread * n_threads_compound))
     data_chunks = Base.Iterators.partition(Array(1:n_settings), chunk_size)
     #for k in eachindex(j_out_all)
     tasks = map(data_chunks) do chunk
