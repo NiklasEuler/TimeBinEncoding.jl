@@ -300,7 +300,7 @@ have weight 1, wherease anti-correlated outcomes have weight -1.
 
 """
 function proj_weights_compound(N)
-    n_interference_pairs = ceil(Int, N / 2)
+    n_interference_pairs = floor(Int, N / 2)
     projector_weights = [1, 1, -1, -1] # correlated outcomes minues anti-correlated outcomes
     projector_weights_flex =
         repeat(projector_weights, n_interference_pairs) # projector weights
@@ -498,6 +498,8 @@ function fs_pop_compound(ρ_init, angles_all=angles_compound(ρ2N(ρ_init)); n_s
     chunk_size = max(1, n_settings ÷ (tasks_per_thread * n_threads_compound))
     data_chunks = Base.Iterators.partition(Array(1:n_settings), chunk_size)
     #for k in eachindex(j_out_all)
+    #println("length proj_weights: ", length(proj_weights))
+    #println("length j_out_all: ", length(j_out_all))
     tasks = map(data_chunks) do chunk
         Base.Threads.@spawn begin
             pops_out = zeros(Float64, n_settings)
