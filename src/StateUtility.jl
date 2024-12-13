@@ -12,7 +12,7 @@ to the `|l, m ⟩' basis.
 
 See also [`insert_initial_state`](@ref), [`density_matrix`](@ref).
 """
-function correlated_timebin_state(wf_coeffs::Vector)
+function correlated_timebin_state(wf_coeffs::AbstractVector)
     wf_coeffs = convert(Vector{ComplexF64}, wf_coeffs)::Vector{ComplexF64}
     N = length(wf_coeffs)
     coeffs = normalize(wf_coeffs)
