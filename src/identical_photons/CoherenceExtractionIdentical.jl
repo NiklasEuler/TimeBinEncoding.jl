@@ -13,10 +13,10 @@ export combined_weights_pops_4bins_all, combined_weights_pops_hom, combs_4bin
         projector_weights=ones(Float64, length(j_out))
     )
 
-    Extract the coherences from the final state population `pop_fs` corresponding to the in-
-    dex (or vector of indices) `j_out` after a given beam-splitter configuration `angles`.
-    Only coherences indicated in `contr_j_tuples` are extracted, all others are bounded and
-    then subtracted.
+Extract the coherences from the final state population `pop_fs` corresponding to the index
+(or vector of indices) `j_out` after a given beam-splitter configuration `angles`. Only
+coherences indicated in `contr_j_tuples` are extracted, all others are bounded and then
+subtracted.
 
 """
 function coherence_extraction_identical(
@@ -57,7 +57,7 @@ function coherence_extraction_identical(
     for idx in eachindex(j1_arr)
 		j1 = j1_arr[idx]
 		j2 = j2_arr[idx]
-		if (j1,j2) in contr_j_tuples &&
+		if (j1,j2) in contr_j_tuples
             # check whether both j1 and j2 are correlated time bins
 			push!(extracted_coherence, (j1, j2))
             # relevant coherence, so indices saved to list of extracted coherences.
