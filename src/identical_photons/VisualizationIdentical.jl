@@ -5,7 +5,7 @@ export visual_meas_coh_map_combined_identical
 function visual_meas_coh_map_identical end
 
 function visual_meas_coh_map_identical(
-    j_out::Int64, angles; extract_diagonal=true
+    j_out::Int64, angles, phases=ones(length(angles[1])); extract_diagonal=true
 )
     M = length(angles)  # number of roundtrips
     N = length(angles[1]) # initial number of time bins
