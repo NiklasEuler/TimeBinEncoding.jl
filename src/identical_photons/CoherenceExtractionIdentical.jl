@@ -237,7 +237,12 @@ function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_wei
 	d_full_hs_bl = d_local_hs_bl ^ 2
 
     combined_weights_4b = spzeros(ComplexF64, d_full_hs_bl^2)
+    # Agnostic to the actual state ρ_mixed, contains the weights of the coherences of
+    # ρ_mixed. No noise here, as this is the ideal planned DTQW.
     pop_fs_4b = 0.0
+    # Above term, but with explicit values of ρ plugged in. In experiment, this is subjected
+^   # to imperfect DTQW trajectories and sampling noise.
+
 
 	bin_combinations = combs_4bin(N)
 	N_comb = binomial(N, N - 4) # only ever let 4 bins interfere
