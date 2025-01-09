@@ -217,13 +217,15 @@ function combs_4bin(N)
 	return bin_idxs
 end
 """
-    combined_weights_pops_4bins_all(N, extraction_composition_weights)
+    combined_weights_pops_4bins_all(N, extraction_composition_weights, phases=true)
 
     Computes the combined weights and populations for the four-bin interference, with the
     desired weights for the different projectors given in `extraction_composition_weights`.
     Return both the combined weights and the total final-state population.
 """
-function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_weights)
+function combined_weights_pops_4bins_all(
+    N, ρ_mixed, extraction_composition_weights; phases=true
+    )
 
 	projector_weights_4b = [
         extraction_composition_weights[1],
@@ -251,10 +253,12 @@ function combined_weights_pops_4bins_all(N, ρ_mixed, extraction_composition_wei
         a, b, c, d = bin_combinations[:, j]
         angles_all = angles4bins(N, a, b, c, d)
         phase_args .= 0
-        phase_args[a + 1, 1] = 1
-        phase_args[b + 1, 2] = 1
-        phase_args[c + 1, 3] = 1
-        phase_args[d + 1, 4] = 1
+        if phases
+            phase_args[a + 1, 1] = 1
+            phase_args[b + 1, 2] = 1
+            phase_args[c + 1, 3] = 1
+            phase_args[d + 1, 4] = 1
+        end
         phases_all = cispi.(phase_args)
         for angles in angles_all
             N_post = N + length(angles)

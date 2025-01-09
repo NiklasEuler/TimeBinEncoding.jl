@@ -95,7 +95,7 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
             j_idx_arr_contr_local = Int64[]
             single_ket_arr = [
                 spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M
-            ]
+            ] # Preallocate the wave function
             #= single_ket_arr_temp = [
                 spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M - 1
             ] =#
