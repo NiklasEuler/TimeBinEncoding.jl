@@ -159,8 +159,8 @@ end
     # smaller accuracy, as one bin is unpaired and not producing "coincidence events"
     @test isapprox(pops_fs_all_pure, pops_fs_all_pure_noisy, atol = 1e-3)
 
-    println(pops_fs_all_pure)
-    println(pops_fs_all_pure_noisy)
+    # println(pops_fs_all_pure)
+    # println(pops_fs_all_pure_noisy)
 
     ρ_mixed = density_matrix_dephased(Ψ_init, ϵ)
     pops_mixed = populations(ρ_mixed)

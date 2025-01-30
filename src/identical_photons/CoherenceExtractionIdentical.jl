@@ -1,6 +1,7 @@
 export coherence_extraction_identical, combined_measurement_coherence_extraction_identical
 export j_out4bins, j_out_hom
 export combined_weights_pops_4bins_all, combined_weights_pops_hom, combs_4bin
+export combined_projector_weights_auto
 
 """
     coherence_extraction_identical(
@@ -127,8 +128,6 @@ function j_out_hom(N_post, bin_1, bin_2)
     return j_out
 end
 
-
-
 """
     combined_measurement_coherence_extraction_identical(
         N,
@@ -196,6 +195,51 @@ function combined_measurement_coherence_extraction_identical(
 	pop_fs /= norm # normalization of the extracted coherences
 
 	return convert(Float64, pop_fs)#, extracted_coherence
+end
+
+function combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
+
+    weights_single = 1 / 32 * [
+        [6, 6, 3, 12, 12];;
+        [-2, -2, 3, 12, -4];;
+        [4, 4, 6, 8, 0];;
+        [0, 0, 8, 0, 0];;
+        [8, 0, 4, 0, 0];;
+    ]
+
+	# columns meaning left to right:
+    # weight of (wo) dimer-no-dimer (dnd) coherences with two different bins,
+    # wo dnd coherences with three different bins,
+    # wo dimer-dimer (dd) coherences with two different bins,
+    # wo non-dimer-non-dimer (ndnd) coherences with four different bins,
+    # wo ndnd coherences with three different bins.
+	# first three lines: coming from 4bin configuration. Some terms appear in more than one
+    # 4bin setting. Thus, their weights are multiplied by a scaling factor, which we compute
+    # in the following. last two lines: from compound configuration. These appear once each
+    # and thus have no multiple appearence problem.
+    	# TODO: Need to check whether compound 2bin contributions can be extracted from side
+        # arms of 4bin settings.
+        # answer: no, as detection of photons in the two different outputs of the beam
+        # splitter would be necessary, but one output is already in use for central bin.
+
+    scaling_dd = scaling_dnd_one_diff = binomial(N - 2, 2)
+            # number of 4bin configurations that include a given dd coherence
+	scaling_ndnd_one_diff = scaling_dnd_all_diff = binomial(N - 3, 1)
+        # number of 4bin configurations that include a given ndnd coherence with three
+        # different bins
+	scaling_ndnd_all_diff = 1
+        # number of 4bin configurations that include a given ndnd coherence with 4 different
+        # bins
+
+	weights_single[1, 1:3] *= scaling_dnd_one_diff
+	weights_single[2, 1:3] *= scaling_dnd_all_diff
+	weights_single[3, 1:3] *= scaling_dd
+	weights_single[4, 1:3] *= scaling_ndnd_all_diff
+	weights_single[5, 1:3] *= scaling_ndnd_one_diff
+
+	weights_single_inv = inv(weights_single)
+	projector_weigths_auto = weights_single_inv * extraction_weights
+    return projector_weigths_auto
 end
 
 """

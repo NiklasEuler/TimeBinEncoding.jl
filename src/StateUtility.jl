@@ -220,7 +220,7 @@ end =#
 
 Compute the fidelity between density matrix `ρ` and pure state `Ψ`.
 """
-function fidelity(Ψ::Vector,ρ::Matrix)
+function fidelity(Ψ::AbstractVector,ρ::AbstractMatrix)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     fidelity = Ψ' * ρ * Ψ
     return convert(Float64, real(fidelity))

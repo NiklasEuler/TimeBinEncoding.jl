@@ -198,7 +198,7 @@ end
 """
     correlated_short_bins_tuples(N; extract_diagonal=false)
 
-Converts the indices of correlated short bins to tuples.
+Convert the indices of correlated short bins to tuples.
 
 # Arguments
 - `N`: The number of time bins.
