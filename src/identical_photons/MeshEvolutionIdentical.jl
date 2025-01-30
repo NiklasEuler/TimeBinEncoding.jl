@@ -55,7 +55,12 @@ end
 
 function coin_operator_identical(angles::Vector, kron_mem)
     coin_operator_single_party = coin_operator_sp_identical(angles)
-    kron!(kron_mem, coin_operator_single_party, coin_operator_single_party)
+    if isdefined(Main, :kron!)
+        kron!(kron_mem, coin_operator_single_party, coin_operator_single_party)
+    else
+        kron_mem .= kron(coin_operator_single_party, coin_operator_single_party)
+    end
+
     return kron_mem::SparseMatrixCSC{ComplexF64, Int64}
 end
 

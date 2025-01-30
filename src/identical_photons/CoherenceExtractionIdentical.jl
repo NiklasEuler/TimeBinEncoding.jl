@@ -199,13 +199,15 @@ end
 
 function combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
 
-    weights_single = 1 / 32 * [
+    weights_single = 1 / 32 * reshape([
         [6, 6, 3, 12, 12];;
         [-2, -2, 3, 12, -4];;
         [4, 4, 6, 8, 0];;
         [0, 0, 8, 0, 0];;
         [8, 0, 4, 0, 0];;
-    ]
+        ], (5,5)
+    )
+
 
 	# columns meaning left to right:
     # weight of (wo) dimer-no-dimer (dnd) coherences with two different bins,

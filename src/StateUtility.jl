@@ -328,3 +328,9 @@ function sample_populations(pops::Vector{<:Real}, n_samples; unity=true)
 
     return pops_measured
 end
+
+if !@isdefined cispi
+    function cispi(x)
+        return cis(x .* π)
+    end
+end
