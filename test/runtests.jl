@@ -44,4 +44,9 @@ Random.seed!(8675309) # / Jenny
     @testset "index_conversions_identical_tests" begin
         include("identical_photons/index_conversions_identical_tests.jl")
     end
+
+    @testset "coherence_extraction_identical_tests" begin
+        include("identical_photons/coherence_extraction_identical_tests.jl")
+    end
+
 end

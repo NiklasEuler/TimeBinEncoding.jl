@@ -2,12 +2,22 @@ export lcmk2j_identical, j2lcmk_identical
 export lcmk2j_super_identical, j_super2lcmk_identical, correlated_short_bins_idxs_identical
 export correlated_short_bins_tuples_identical
 
-function correlated_short_bins_idxs_identical(N)
+"""
+    correlated_short_bins_idxs_identical(N)
+
+Compute the joint indices `j` of the `|l1 c1 m1 k1 l2 c2 m2 k2⟩` basis corresponding to
+`|i0j0i0j0⟩` for i,j ∈ {0,…, N - 1}.
+
+See also [`correlated_short_bins_idxs`](@ref), [`correlated_short_bins_tuples_identical`
+](@ref).
+
+"""
+    function correlated_short_bins_idxs_identical(N)
     contr_j_idxs = Int64[]
     N = convert(Int64, N)::Int64
 
     for i in 0:N - 1
-        for j in i:N - 1
+        for j in i:N - 1 # i ≤ j
             push!(contr_j_idxs, lcmk2j_super_identical(N, i, 0, j, 0, i, 0, j, 0))
         end
     end
@@ -15,11 +25,49 @@ function correlated_short_bins_idxs_identical(N)
     return contr_j_idxs
 end
 
+"""
+    correlated_short_bins_tuples_identical(N; extract_diagonal=false)
+
+Convert the indices of correlated short bins of the four-photon state to tuples.
+
+# Arguments
+- `N`: The number of time bins.
+- `extract_diagonal`: (Optional) A boolean indicating whether to include the diagonal
+elements. Default is `false`.
+
+# Returns
+- `Vector{Tuple{Int64, Int64}}`: A list of tuples representing pairs of basis indices for a
+    density matrix.
+
+See also [`correlated_short_bins_idxs_identical`](@ref), [`correlated_short_bins_tuples`]
+(@ref).
+
+"""
 function correlated_short_bins_tuples_identical(N; extract_diagonal=false)
     contr_j_idxs = correlated_short_bins_idxs_identical(N)
     return [(i,j) for i in contr_j_idxs for j in contr_j_idxs if i ≠ j || extract_diagonal]
 end
 
+
+"""
+    lcmk2j_identical(N, l, c, m, k)
+
+Convert the parameters of the state `|lcmk⟩` of two indistinguishable photons to its cor-
+responding basis index `j`. Since the photons are indistinguishable, the basis is reduced
+in size. To avoid double counting, the time bin index l is chosen smaller than m.
+
+# Arguments
+- `N`: number of time bins in the basis
+- `l`: first time bin index of, `l` ∈ {0, 1,…}, where `l` indicates the total
+    number of long roundtrips taken.
+- `c`: corresponding loop index of `l`; `c` ∈ {0, 1}, where `c==0` means the short loop and
+    `c== 1` means the long loop.
+- `m`: second time bin index, `m` ∈ {l, l + 1,…}, with the same encoding as above.
+- `k`: corresponding loop index of `m`, `k`  {0, 1}, with the same encoding as above.
+
+See also [`j2lcmk_identical`](@ref), [`jlcmk2j_super_identical`](@ref),
+    [`j_super2lcmk_identical`](@ref), [`j2lcmk`](@ref), [`lmck2j`](@ref).
+"""
 function lcmk2j_identical(N, l, c, m, k)
 
     N, l, c, m, k = _lcmk2j_input_sanity_check(N, l, c, m, k)
@@ -42,6 +90,14 @@ function lcmk2j_identical(N, l, c, m, k)
 
 end
 
+"""
+    j2lcmk_identical(N, j)
+
+Inverse function of `lcmk2j_identical`.
+
+See also [`lcmk2j_identical`](@ref), [`jlcmk2j_super_identical`](@ref),
+    [`j_super2lcmk_identical`](@ref), [`j2lcmk`](@ref), [`lmck2j`](@ref).
+"""
 function j2lcmk_identical(N, j)
 
     N, j = _j2lcmk_input_sanity_check(N, j)
