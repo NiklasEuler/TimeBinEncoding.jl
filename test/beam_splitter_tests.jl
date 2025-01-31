@@ -384,3 +384,32 @@ end
     )
 
 end
+
+@testset "angles_kth_neighbor_interference" begin
+
+    N = 4
+    k = 2
+    i = 2
+    angles_k = angles_kth_neighbor_interference(N, k)
+    angles_k_i = TimeBinEncoding._angles_kth_neighbor(N, k, i)
+
+    @test all(angles_k[i] .≈ angles_k_i)
+
+    angles_k_i_manual = [[0, 0.5, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0.25, 0, 0]] .* π
+    @test all(angles_k_i_manual .≈ angles_k_i)
+
+    ϵ = 0
+    angles_k_no_noise = angles_kth_neighbor_interference(N, k, ϵ)
+    angles_k_i_no_noise = TimeBinEncoding._angles_kth_neighbor(N, k, i, ϵ)
+
+    @test all(angles_k_no_noise[i] .≈ angles_k_i_no_noise)
+    @test all(angles_k_i_manual .≈ angles_k_i_no_noise)
+
+    Random.seed!(4441)
+    ϵ = 0.01
+    angles_k_noise = angles_kth_neighbor_interference(N, k, ϵ)
+    angles_k_i_noise = TimeBinEncoding._angles_kth_neighbor(N, k, i, ϵ)
+
+    @test all(isapprox.(angles_k_i_noise, angles_k_noise[i], atol=5e-2))
+    @test all(isapprox.(angles_k_i_manual, angles_k_i_noise, atol=5e-2))
+end
