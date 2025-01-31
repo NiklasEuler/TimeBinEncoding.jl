@@ -188,7 +188,7 @@ function shift_timebins_operator_sp_identical(N)
     d_hilbert_space_shifted = (N + 1) * (2 * (N + 1) + 1)
 
     shift_op_single_party =
-        spzeros(Int64, d_hilbert_space_shifted, d_hilbert_space_shifted)
+        spzeros(Int64, d_hilbert_space_shifted, d_hilbert_space)
 
 	for j in 1:d_hilbert_space
         l, c, m, k = j2lcmk_identical(N, j)
@@ -202,13 +202,13 @@ function shift_timebins_operator_sp_identical(N)
             shift_op_single_party[j_shift, j] = 1
         end
 
-    return shift_op_single_party::SparseMatrixCSC{Float64, Int64}
+    return shift_op_single_party::SparseMatrixCSC{Int64, Int64}
 end
 
 function shift_timebins_operator_identical(N)
     shift_operator_single_party = shift_timebins_operator_sp_identical(N)
     tensor_shift_operator = kron(shift_operator_single_party, shift_operator_single_party)
-    return tensor_shift_operator::SparseMatrixCSC{Float64, Int64}
+    return tensor_shift_operator::SparseMatrixCSC{Int64, Int64}
 end
 
 
