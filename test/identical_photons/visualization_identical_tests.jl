@@ -8,11 +8,10 @@
 	N_post_lm = N + length(angles_lm)
 	j_out_lm_hom = lcmk2j_super_identical(N_post_lm, m, 0, m+1, 1, m, 0, m+1, 1,)
 	result = @capture_out visual_meas_coh_map_identical(
-        [j_out_lm_hom], angles_lm, [1]; extract_diagonal=false
+        j_out_lm_hom, angles_lm; extract_diagonal=false
     )
 
-    @test "+ 1 ⟨2 S 3 L 2 S 3 L|(SC)^M ρ (C^†S^†)^M) |2 S 3 L 2 S 3 L⟩ =
-=
+    @test "⟨2 S 3 L 2 S 3 L|(SC)^M ρ (C^†S^†)^M) |2 S 3 L 2 S 3 L⟩ =
 + ρ_[0 0 0 0]^[0 0 0 0] ⋅ 0.25
 + ρ_[0 0 0 0]^[0 0 2 2] ⋅ -0.25
 + ρ_[0 0 0 0]^[2 2 0 0] ⋅ -0.25
@@ -28,6 +27,33 @@
 + ρ_[2 2 2 2]^[0 0 0 0] ⋅ 0.25
 + ρ_[2 2 2 2]^[0 0 2 2] ⋅ -0.25
 + ρ_[2 2 2 2]^[2 2 0 0] ⋅ -0.25
++ ρ_[2 2 2 2]^[2 2 2 2] ⋅ 0.25
+Useful extractable coherences:
++ ρ_[0 0 0 0]^[2 2 2 2] ⋅ 0.25
++ ρ_[2 2 2 2]^[0 0 0 0] ⋅ 0.25
+" == result
+
+phases = cis.([0, 0, 1/2, 0] * π)
+result = @capture_out visual_meas_coh_map_identical(
+    j_out_lm_hom, angles_lm, phases; extract_diagonal=false
+)
+
+@test "⟨2 S 3 L 2 S 3 L|(SC)^M ρ (C^†S^†)^M) |2 S 3 L 2 S 3 L⟩ =
++ ρ_[0 0 0 0]^[0 0 0 0] ⋅ 0.25
++ ρ_[0 0 0 0]^[0 0 2 2] ⋅ 0.25
++ ρ_[0 0 0 0]^[2 2 0 0] ⋅ 0.25
++ ρ_[0 0 0 0]^[2 2 2 2] ⋅ 0.25
++ ρ_[0 0 2 2]^[0 0 0 0] ⋅ 0.25
++ ρ_[0 0 2 2]^[0 0 2 2] ⋅ 0.25
++ ρ_[0 0 2 2]^[2 2 0 0] ⋅ 0.25
++ ρ_[0 0 2 2]^[2 2 2 2] ⋅ 0.25
++ ρ_[2 2 0 0]^[0 0 0 0] ⋅ 0.25
++ ρ_[2 2 0 0]^[0 0 2 2] ⋅ 0.25
++ ρ_[2 2 0 0]^[2 2 0 0] ⋅ 0.25
++ ρ_[2 2 0 0]^[2 2 2 2] ⋅ 0.25
++ ρ_[2 2 2 2]^[0 0 0 0] ⋅ 0.25
++ ρ_[2 2 2 2]^[0 0 2 2] ⋅ 0.25
++ ρ_[2 2 2 2]^[2 2 0 0] ⋅ 0.25
 + ρ_[2 2 2 2]^[2 2 2 2] ⋅ 0.25
 Useful extractable coherences:
 + ρ_[0 0 0 0]^[2 2 2 2] ⋅ 0.25
