@@ -3,9 +3,9 @@ export angles_phase_estimation, angles_compound, angles_single_setup
 export angles4bins_01, angles4bins_02, angles4bins_03, angles4bins
 export angles_ref_bin_all_pairs, angles_pairs_from_coloring
 export graph_coloring
-# export angles_kth_neighbor_interference
+export angles_kth_neighbor_interference
 
-#= """
+"""
     angles_kth_neighbor_interference(N, k)
     angles_kth_neighbor_interference(N, k, ϵ_angles)
 
@@ -63,7 +63,7 @@ function _angles_kth_neighbor(N, k, i, ϵ_angles)
     angles_k_i = _angles_kth_neighbor(N, k, i)
     angles_k_i_noisy = noisy_angles_symmetric(angles_k_i, ϵ_angles)
     return angles_k_i_noisy
-end =#
+end
 
 
 """
@@ -190,18 +190,22 @@ function angles_single_setup(N)
     angles_cascade = [zeros(Float64, n) for n in N:N + M - 1]
     angles_cascade[1][1:N_half] .= π / 2 # send early half into long loop
 
+    recursion_depth = 1
+    initial_branch = "center"
     _recursive_beam_splitter_array!(
-        N_half, 1 + N_half, 1 + N_half, angles_cascade, "center"
+        N_half, 1 + N_half, 1 + N_half, angles_cascade, initial_branch, recursion_depth,
     )
-
+#=
     for i in 2:N_half - 1 # 2 are already included in minimum structure
         angles_cascade[N + i * 2][N + i] = π / 4 # interfere early and late branches
-    end
+    end =#
 
     return angles_cascade
 end
 
-function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
+function _recursive_beam_splitter_array!(
+    N_bs, n_idx, m_idx, angles, branch, recursion_depth
+)
     @argcheck branch in ["early", "center", "late"]
 
     angles[m_idx][n_idx:n_idx + N_bs - 1] .= π / 4 # put original bs
@@ -211,20 +215,39 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
         elseif branch == "late"
             angles[m_idx + 1][[n_idx + 1]] .= π / 2 # right flank transparent couplers
         end
-    elseif N_bs == 2
-        # smallest regular structure in the center, also appears in the flanks.
-        # no further recursion
-        angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
-        angles[m_idx + 1][[n_idx + 1]] .= π / 4
-        angles[m_idx + 3][[n_idx + 2]] .= π / 4
-        if branch == "early"
-            angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
-        elseif branch == "late"
-            angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
-            angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
-        end
     else
+
+        Nincr = N_bs - 1
+        if branch == "early"
+            angles[m_idx + Nincr * 3 + 1][n_idx + Nincr:n_idx + 2 * Nincr] .= π / 2
+            # left flank transparent couplers
+        elseif branch == "late"
+            angles[m_idx + Nincr * 3 + 1][n_idx + 2 * Nincr + 1:n_idx + 3 * Nincr + 1] .=
+                π / 2 # left flank transparent couplers
+        end
+
+        if N_bs == 2
+            # smallest regular structure in the center, also appears in the flanks.
+            # no further recursion
+            angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
+            #angles[m_idx + 1][[n_idx + 1]] .= π / 4
+            #angles[m_idx + 3][[n_idx + 2]] .= π / 4
+        #=     if branch == "early"
+                angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
+                angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
+            elseif branch == "late"
+                angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
+                angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
+            end =#
+
+            for i in 0:2 ^ recursion_depth - 1
+                angles[m_idx + 1 + i * 2][n_idx + 1 + i] = π / 4
+                # interfere early and late branches
+            end
+
+            return nothing
+        end
+
         N_bs_half = Int64(N_bs / 2)
         N_bs_quarter = Int64(N_bs / 4)
         angles[m_idx + N_bs_half][n_idx:n_idx + N_bs_quarter - 1] .= π / 2
@@ -232,16 +255,21 @@ function _recursive_beam_splitter_array!(N_bs, n_idx, m_idx, angles, branch)
         angles[m_idx + N_bs_half][
             n_idx + N_bs + N_bs_quarter:n_idx + N_bs + N_bs_half - 1] .= π / 2
         # right flank transparent couplers
+
+        m_idx_flank = m_idx + N_bs_half + N_bs_quarter
+        n_idx_flank =  n_idx + N_bs_quarter
+
+        m_idx_center = m_idx + N_bs_half
+        n_idx_center =  n_idx + N_bs_half
+
         _recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "early"
+            N_bs_quarter, n_idx_flank, m_idx_flank, angles, "early", 1
         ) # left flank beam splitter array
         _recursive_beam_splitter_array!(
-            N_bs_quarter, n_idx + N_bs+N_bs_quarter, m_idx + N_bs_half + N_bs_quarter,
-            angles, "late"
+            N_bs_quarter, n_idx_flank + N_bs, m_idx_flank, angles, "late", 1
         ) # right flank beam splitter array
         _recursive_beam_splitter_array!(
-            N_bs_half, n_idx + N_bs_half, m_idx + N_bs_half, angles, "center"
+            N_bs_half, n_idx_center, m_idx_center, angles, "center", recursion_depth + 1
         ) # center branch beam splitter array
    end
 
@@ -269,6 +297,8 @@ See also [`angles4bins_02`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_01(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, p + 1]] .= 0.5
     angles[m - l + 1][m + 1] = 0.25
@@ -300,6 +330,8 @@ See also [`angles4bins_01`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_02(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, m + 1]] .= 0.5
     angles[p - l + 1][p + 1] = 0.25
@@ -331,6 +363,8 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_03(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles = [zeros(i) for i in N:N + q - l + 1]
     angles[1][l + 1] = 0.5
     angles[m - l + 2][m + 1] = 0.5
@@ -360,11 +394,27 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins_03`](
 
 """
 function angles4bins(N, l, m, p, q)
+    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+
     angles_01 = angles4bins_01(N, l, m, p, q)
     angles_02 = angles4bins_02(N, l, m, p, q)
     angles_03 = angles4bins_03(N, l, m, p, q)
 
     return angles_01, angles_02, angles_03
+end
+
+function angles4bins_input_sanity_check(N, l, m, p, q)
+    N = convert(Int64, N)::Int64
+    l = convert(Int64, l)::Int64
+    m = convert(Int64, m)::Int64
+    p = convert(Int64, p)::Int64
+    q = convert(Int64, q)::Int64
+
+    @argcheck N > 0
+    @argcheck q < N
+    @argcheck l < m < p < q
+
+    return N, l, m, p, q
 end
 
 function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
@@ -531,12 +581,12 @@ end
 """
     graph_coloring(N)
 
-Given an integer `N`, this function performs graph-edge coloring to generate pairings of
-bins/nodes. If `N` is even, it calls the `_graph_coloring_even` function to generate the
-pairings. If `N` is odd, it first calls the `graph_coloring` function recursively with
-`N + 1` to generate pairings for an even number of bins/nodes. Then, it removes the first
-pair from each perfect matching to leave out one bin/node, resulting in an odd number of
-bins/nodes.
+Given an integer `N`, this function performs graph-edge coloring on a graph of `N` nodes to
+generate pairings of bins/nodes. If `N` is even, it calls the `_graph_coloring_even` func-
+tion to generate the pairings. If `N` is odd, it first calls the `graph_coloring` function
+recursively with `N + 1` to generate pairings for an even number of bins/nodes. Then, it re-
+moves the first pair from each perfect matching to leave out one bin/node, resulting in an
+odd number of bins/nodes.
 
 # Arguments
 - `N::Int`: The number of bins/nodes.

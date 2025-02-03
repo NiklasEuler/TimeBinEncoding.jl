@@ -1,4 +1,7 @@
 export lcmk2j, j2lcmk, lm2j, j2lm, lc2j, j2lc
+#export lcmk2j_identical, j2lcmk_identical
+#export lcmk2j_super_identical, j_super2lcmk_identical, correlated_short_bins_idxs_identical
+#export correlated_short_bins_tuples_identical
 export correlated_short_bins_idxs, correlated_short_bins_tuples, indices2tuples
 
 """
@@ -68,7 +71,7 @@ function _j2lcmk_input_sanity_check(N, j)
 
     @argcheck N > 0
     @argcheck j > 0
-    @argcheck j ≤ N_LOOPS2 * N^2
+    @argcheck j ≤ N_LOOPS2 * N ^ 2
 
     return N, j
 end
@@ -195,7 +198,7 @@ end
 """
     correlated_short_bins_tuples(N; extract_diagonal=false)
 
-Converts the indices of correlated short bins to tuples.
+Convert the indices of correlated short bins to tuples.
 
 # Arguments
 - `N`: The number of time bins.

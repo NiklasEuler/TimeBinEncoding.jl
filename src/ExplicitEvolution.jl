@@ -2,6 +2,8 @@ export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evoluti
 export explicit_fs_projection_sp, explicit_fs_projection,
     explicit_fs_coherence_map, explicit_add_fs_projection
 export explicit_fs_pop
+#export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
+#export explicit_fs_pop_identical
 
 """
     explicit_ket_evolution_sp(l, angles)
@@ -69,6 +71,9 @@ function explicit_fs_projection_sp(l, c, angles)
     j_idx_arr_contr, coeff_arr = _symbolic_2_explicit_worker(
         angles, j_idx_arr_fs, trigonometric_history_arr_fs, angle_history_arr_fs
     )
+    coeff_arr = [coeff' for coeff in coeff_arr]
+        #!!! Transpose as the phase aquired during evolution has to be counteracted such
+        # that the final state has no phase, as we are looking for coefficient in the fs.
     return j_idx_arr_contr, coeff_arr
 end
 
@@ -198,7 +203,7 @@ function _explicit_fs_projection_symbolic_backend(
     return j_idx_arr_contr, coeff_arr
 end
 
-function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
+#= function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(Float64, N))
     @argcheck abs2.(phases) ≈ ones(Float64, N)
     coeff_arr = Vector{ComplexF64}(undef, 0)
     j_idx_arr_contr = Int64[]
@@ -222,6 +227,9 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(F
         #single_ket = zeros(ComplexF64, N_LOOPS2 * N^2)
         single_ket = spzeros(ComplexF64, N_LOOPS2 * N^2)
         single_ket[j_init] = phases[l_init + 1] * phases[m_init + 1]
+        if j_init == 1
+            println(single_ket)
+        end
         single_ket_evolved = mesh_evolution(single_ket, angles)
         coeff = single_ket_evolved[j_out]
         if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
@@ -229,6 +237,28 @@ function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(F
             push!(j_idx_arr_contr, j_init)
         end
    end
+
+    return j_idx_arr_contr, coeff_arr
+end =#
+
+function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
+    @argcheck abs2.(phases) ≈ ones(Float64, N)
+    final_state_ket = spzeros(ComplexF64, N_LOOPS2 * (N+M)^2)
+    final_state_ket[j_out] = 1.0
+    initial_state = mesh_evolution_backwards(final_state_ket, angles)
+    j_idx_arr_contr = Int[]
+    coeff_arr = ComplexF64[]
+    for (j, coeff) in enumerate(initial_state)
+        l, c, m, k = j2lcmk(N, j)
+        if c != 0 || k != 0
+            continue
+        end # only consider |l, 0, m, 0> initial states
+        if abs2(coeff) > WEIGHT_CUTOFF
+            coeff *= (phases[l + 1] * phases[m + 1])'
+            push!(j_idx_arr_contr, j)
+            push!(coeff_arr, coeff)
+        end
+    end
 
     return j_idx_arr_contr, coeff_arr
 end
@@ -329,7 +359,7 @@ function explicit_fs_coherence_map(
     j_out::Int64,
     angles,
     projector_weight=1,
-    phases::Vector=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     j_idx_arr_contr, coeff_arr = explicit_fs_projection(j_out, angles, phases)
@@ -340,12 +370,11 @@ function explicit_fs_coherence_map(
     return j1_arr, j2_arr, weights
 end
 
-
 function explicit_fs_coherence_map(
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases=ones(Float64, length(angles[1]))
+    phases::AbstractVector=ones(Float64, length(angles[1]))
 )
     @argcheck length(phases) == length(angles[1])
     @argcheck length(j_out_arr) == length(projector_weights)
@@ -395,7 +424,7 @@ end
     )
 
 Compute the expectation value `⟨lcmk|U ρ_init U^†|lcmk⟩`, where `j_out` corresponds to
-`|lcmk⟩` and `U` is the unitary time evolution operator defined through the beam-splitter
+`|lcmk⟩` and `U` is the unitary time-evolution operator defined through the beam-splitter
 configuration in `angles`.
 
 Alternatively, instead of a singular `j_out`, a vector of `j_out_arr` can be provided, in
@@ -405,50 +434,47 @@ See also [`explicit_fs_coherence_map`](@ref), [`expval_calculation`](@ref).
 """
 function explicit_fs_pop end
 
-function explicit_fs_pop(ρ_init, j_out::Int64, angles)
-    j1_arr, j2_arr, weights = explicit_fs_coherence_map(j_out, angles)
+function explicit_fs_pop(
+    ρ_init, j_out::Int64, angles, phases::AbstractVector=ones(Float64, length(angles[1]))
+)
+    ### WHY NO PHASE???
+    ### Found the solution: Before, phases where inserted via auxiliary density matrix with
+    ### phases applied. Now, phases can also be inserted directly into the final-state popu-
+    ### lation function. This makes the entire process a bit more consistent.
+    projector_weight = 1 # default projector weight
+    j1_arr, j2_arr, weights =
+        explicit_fs_coherence_map(j_out, angles, projector_weight, phases)
     return expval_calculation(ρ_init, j1_arr, j2_arr, weights)
 end
 
 function explicit_fs_pop(
     ρ_init,
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
-    projector_weights=ones(Float64, length(j_out_arr))
+    projector_weights=ones(Float64, length(j_out_arr)),
+    phases::AbstractVector=ones(Float64, length(angles[1]));
+    n_samples = nothing
 )
-    exp_val = 0.0
-    for (j_idx, j_out) in enumerate(j_out_arr)
-        exp_val += explicit_fs_pop(ρ_init, j_out, angles) * projector_weights[j_idx]
+    if isnothing(n_samples)
+        pop_fs_weighted = 0.0
+        for (j_idx, j_out) in enumerate(j_out_arr)
+            pop_fs_weighted +=
+                explicit_fs_pop(ρ_init, j_out, angles, phases) * projector_weights[j_idx]
+        end
+    else
+        n_samples = convert(Int64, n_samples)::Int64
+        pops = [explicit_fs_pop(ρ_init, j_out, angles) for j_out in j_out_arr]
+        if !(sum(pops) .≈ 1)
+            push!(pops, 1 - sum(pops))
+            # add dummy entry for other results to preserve normalization
+        end
+        pops_sampled = sample_populations(pops, n_samples)
+        pop_fs_weighted =
+            sum(pops_sampled[1:length(projector_weights)] .* projector_weights)
     end
-
-    return exp_val
-end
-
-function explicit_fs_pop_sampled(
-    ρ_init,
-    j_out_arr::Vector{Int64},
-    angles,
-    n_samples,
-    projector_weights=ones(Float64, length(j_out_arr))
-)
-    n_samples = convert(Int64, n_samples)::Int64
-    pops = [explicit_fs_pop(ρ_init, j_out, angles) for j_out in j_out_arr]
-    if !(sum(pops) .≈ 1)
-        push!(pops, 1 - sum(pops))
-        # add dummy entry for other results to preserve normalization
-    end
-    pops_sampled = sample_populations(pops, n_samples)
-    pop_fs_weighted = sum(pops_sampled[1:length(projector_weights)] .* projector_weights)
-        # remove dummy entry and sum up the weighted results
-    #popat!(pops, length(pops)) # remove dummy entry
-
-    #= println("pops :",pops)
-    println("pops_sampled :",pops_sampled) =#
 
     return pop_fs_weighted
 end
-
-
 
 """
     expval_calculation(ρ_init, j1_arr, j2_arr, weights)

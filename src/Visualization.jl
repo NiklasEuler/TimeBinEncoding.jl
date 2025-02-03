@@ -1,5 +1,6 @@
 export visualize_symbolic_ket_evolution_sp, visualize_symbolic_fs_projection_sp,
     visual_meas_coh_map, visualize_combined_measurement_coherence_map
+    #export visualize_measurement_coherence_map_identical
 
 """
     visualize_symbolic_ket_evolution_sp(M, l_init)
@@ -137,7 +138,7 @@ function visual_meas_coh_map end
 function visual_meas_coh_map(
     j_out::Int64,
     angles,
-    phases=ones(Float64, length(angles[1]))::Vector,
+    phases=ones(Float64, length(angles[1]))::AbstractVector,
     off_l=0,
     off_m=0;
     extract_diagonal=true
@@ -160,10 +161,10 @@ function visual_meas_coh_map(
 end
 
 function visual_meas_coh_map(
-    j_out_arr::Vector{Int64},
+    j_out_arr::AbstractVector{Int64},
     angles,
     projector_weights=ones(Float64, length(j_out_arr)),
-    phases=ones(Float64, length(angles[1]))::Vector,
+    phases=ones(Float64, length(angles[1]))::AbstractVector,
     off_l=0,
     off_m=0;
     extract_diagonal=true,

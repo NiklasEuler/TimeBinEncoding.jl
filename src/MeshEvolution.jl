@@ -1,9 +1,13 @@
 export coin_operator, beam_splitter_operator
 export shift_timebins, shift_timebins_operator
 export shift_timebins_sp, shift_timebins_operator_sp, coin_operator_sp
-export mesh_evolution
+export mesh_evolution, mesh_evolution_backwards
 export mesh_evolution_sp
 export phase_on_density_matrix
+#export coin_operator_sp_identical, coin_operator_identical
+#export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
+#export mesh_evolution_sp_identical
+#export mesh_evolution_identical
 
 
 """
@@ -22,8 +26,8 @@ function shift_timebins_sp end
 function shift_timebins_sp(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = Vector{ComplexF64}(undef, length(state_vec)+N_LOOPS)
-    new_vec[2] = 0
-    new_vec[end - 1] = 0
+    new_vec[2] = 0.0
+    new_vec[end - 1] = 0.0
     new_vec[1:2:end - 3] = @view state_vec[1:2:end]
     new_vec[4:2:end] = @view state_vec[2:2:end]
     return new_vec
@@ -160,10 +164,10 @@ function beam_splitter_operator(θ)
     θ = convert(Float64,θ)::Float64
     cs = cos(θ)
     sn = im * sin(θ)
-    cols = [1, 1, 2, 2]
-    rows = [1, 2, 1, 2]
+    #cols = [1, 1, 2, 2]
+    #rows = [1, 2, 1, 2]
     vals = [cs, sn, sn, cs]
-   return sparse(cols, rows, vals)
+   return sparse(_cols, _rows, vals)
 end
 
 """
@@ -241,11 +245,84 @@ function mesh_evolution(initial_state::SparseVector, angles)
     return state::SparseVector{ComplexF64, Int64}
 end
 
-function mesh_evolution(initial_state, angles)
+function mesh_evolution(initial_state::AbstractMatrix, angles)
     state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     state = _iterative_mesh_evolution(state, angles)
     return state
+end
+
+"""
+    mesh_evolution_backwards(final_state::Vector, angles)
+    mesh_evolution_backwards(final_state::SparseVector, angles)
+    mesh_evolution_backwards(final_state, angles)
+
+Numerically compute the backwards unitary evolution of the two-photon final  `final_state`
+through the fiber mesh network parametrized through `angles`, i.e. the inverse of the mesh
+evolution given by `mesh_evolution`.
+
+Accepts both a dense or sparse Vector or a matrix `final_state` argument. The internal
+numerics and the return type of the `state` object after the backwards evolution match the
+type of `final_state` in the case of a Vector.
+For matrices, only a dense version is currently implemented.
+
+# Arguments
+- `final_state`: the two-photon final state after the mesh network. Can be in form of a
+    Vector or SparseVector for a pure state or in form of a Matrix for a density matrix.
+    Must be in the |lcmk⟩ basis.
+- `angles`: a vector or vectors of beam-splitter angles. The number of round trips matches
+    `length(angles)`.
+
+See also [`explicit_state_evolution`](@ref), [`mesh_evolution_sp`](@ref).
+"""
+function mesh_evolution_backwards end
+
+function mesh_evolution_backwards(final_state::Vector, angles)
+    state = convert(Vector{ComplexF64}, final_state)::Vector{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_backwards(state, angles)
+    N = length(angles[1])
+    j_arr_forbidden = j_arr_backwards_forbidden(N)
+    state[j_arr_forbidden] .= 0
+    return state::Vector{ComplexF64}
+end
+
+function mesh_evolution_backwards(final_state::SparseVector, angles)
+    state =
+    convert(SparseVector{ComplexF64, Int64}, final_state)::SparseVector{ComplexF64, Int64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_backwards(state, angles)
+    N = length(angles[1])
+    j_arr_forbidden = j_arr_backwards_forbidden(N)
+    state[j_arr_forbidden] .= 0
+    return state::SparseVector{ComplexF64, Int64}
+end
+
+function mesh_evolution_backwards(final_state::AbstractMatrix, angles)
+    state = convert(Matrix{ComplexF64}, final_state)::Matrix{ComplexF64}
+    angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
+    state = _iterative_mesh_evolution_backwards(state, angles)
+    N = length(angles[1])
+    j_arr_forbidden = j_arr_backwards_forbidden(N)
+    state[j_arr_forbidden, :] .= 0
+    state[:, j_arr_forbidden] .= 0
+    return state
+end
+
+function j_arr_backwards_forbidden(N)
+    j_arr_forbidden = []
+    for l in 0:N - 1
+        for m in 0:N - 1
+            j_sl = lcmk2j(N, l, 0, m, 1)
+            j_ls = lcmk2j(N, l, 1, m, 0)
+            j_ll = lcmk2j(N, l, 1, m, 1)
+            push!(j_arr_forbidden, j_sl)
+            push!(j_arr_forbidden, j_ls)
+            push!(j_arr_forbidden, j_ll)
+        end
+    end
+
+    return j_arr_forbidden
 end
 
 """
@@ -258,7 +335,8 @@ The `input state` argument can be both a wave function in form of a Vector or Sp
 or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
 `state` matches the type of `input_state`. The internal numerics are type-specialized too.
 
-See also [`mesh_evolution`](@ref), [`iterative_mesh_evolution_sp`](@ref).
+See also [`mesh_evolution`](@ref), [`_iterative_mesh_evolution`](@ref),
+[`iterative_mesh_evolution_sp`](@ref), [`mesh_evolution_backwards`](@ref).
 """
 function _iterative_mesh_evolution end
 
@@ -268,7 +346,7 @@ function _iterative_mesh_evolution(input_state::AbstractVector, angles)
         coin_op = coin_operator(angles[i])
         state = coin_op * state # apply beam splitters
         state = shift_timebins(state) # shift time bins accordingly
-   end
+    end
 
     return state
 end
@@ -280,7 +358,48 @@ function _iterative_mesh_evolution(input_state::AbstractMatrix, angles)
         shift_op = shift_timebins_operator(length(angles[i]))
         state = coin_op * state * coin_op' # apply beam splitters
         state = shift_op * state * shift_op' # apply time-bin shift operator
-   end
+    end
+
+    return state
+end
+
+"""
+    _iterative_mesh_evolution_backwards(input_state, angles)
+
+Iteratively apply the coin- and bin-shifting operators to the two-photon `input state`
+object, going through the network backwards.
+
+The `input state` argument can be both a wave function in form of a Vector or SparseVector
+or a density matrix (in form of a Matrix or Sparse Matrix). The type of the return object
+`state` matches the type of `input_state`. The internal numerics are type-specialized too.
+
+See also [`mesh_evolution`](@ref), [`_iterative_mesh_evolution`](@ref),
+[`iterative_mesh_evolution_sp`](@ref), [`mesh_evolution_backwards`](@ref).
+"""
+function _iterative_mesh_evolution_backwards end
+
+function _iterative_mesh_evolution_backwards(input_state::AbstractVector, angles)
+    state = copy(input_state)
+    for i in lastindex(angles):-1:1
+        shift_op = shift_timebins_operator(length(angles[i]))
+        coin_op = coin_operator(angles[i])
+        state = shift_op' * state # apply inverse time-bin shift operator
+        state = coin_op' * state # apply inverse beam splitters
+
+    end
+
+    return state
+end
+
+function _iterative_mesh_evolution_backwards(input_state::AbstractMatrix, angles)
+    state = copy(input_state)
+    for i in lastindex(angles):-1:1
+        coin_op = coin_operator(angles[i])
+        shift_op = shift_timebins_operator(length(angles[i]))
+        state = shift_op' * state * shift_op # apply inverse time-bin shift operator
+        state = coin_op' * state * coin_op # apply inverse beam splitters
+
+    end
 
     return state
 end

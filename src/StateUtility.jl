@@ -1,6 +1,7 @@
 export correlated_timebin_state, insert_initial_state, insert_initial_state_sp
 export density_matrix, density_matrix_dephased, white_noise
 export fidelity, purity, populations, sample_populations
+#export density_matrix_dephased_identical, white_noise_identical
 
 
 """
@@ -11,7 +12,7 @@ to the `|l, m ⟩' basis.
 
 See also [`insert_initial_state`](@ref), [`density_matrix`](@ref).
 """
-function correlated_timebin_state(wf_coeffs::Vector)
+function correlated_timebin_state(wf_coeffs::AbstractVector)
     wf_coeffs = convert(Vector{ComplexF64}, wf_coeffs)::Vector{ComplexF64}
     N = length(wf_coeffs)
     coeffs = normalize(wf_coeffs)
@@ -106,6 +107,21 @@ function density_matrix_dephased(Ψ, ϵ)
     return ρ
 end
 
+#= function density_matrix_dephased_identical(Ψ, ϵ)
+    Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
+    ϵ = convert(Float64, ϵ)::Float64
+    d_hilbert_space = Int(sqrt(length(Ψ)))
+
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+
+    @argcheck ϵ ≥ 0
+    @argcheck ϵ ≤ 1
+
+    ρ_pure = density_matrix(Ψ)
+    ρ = (1 - ϵ) * ρ_pure + ϵ * white_noise_identical(N)
+    return ρ
+end =#
+
 """
     phase_on_density_matrix(ρ, φ_arr)
 
@@ -154,12 +170,57 @@ function white_noise(N)
     return ρ_noise
 end
 
+#= function white_noise_identical(N)
+    d_hilbert_space = N * (2 * N + 1)
+    #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
+    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
+    for l in 0:N - 1, m in l:N - 1
+        j = lcmk2j_super_identical(N, l, 0, m, 0, l, 0, m, 0)
+        ρ_diag[j] = 1
+
+        if l != m && l < N - 1
+            j = lcmk2j_super_identical(N, l + 1, 0, m, 0, l, 0, m, 0)
+            ρ_diag[j] = 1
+            j = lcmk2j_super_identical(N, l, 0, m, 0, l + 1, 0, m, 0)
+            ρ_diag[j] = 1
+        end
+
+        if m < N - 1
+            j = lcmk2j_super_identical(N, l, 0, m + 1, 0, l, 0, m, 0)
+            ρ_diag[j] = 1
+            j = lcmk2j_super_identical(N, l, 0, m, 0, l, 0, m + 1, 0)
+            ρ_diag[j] = 1
+        end
+   end
+
+   ρ_diag /= sum(ρ_diag)
+   ρ_noise = Diagonal(ρ_diag)
+
+   return ρ_noise
+end =#
+
+#= function white_noise_identical(N)
+    d_hilbert_space = N * (2 * N + 1)
+    #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
+    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
+    for l in 0:N - 1, m in l:N - 1
+        for p in 0:N - 1, q in p:N - 1
+            j = lcmk2j_super_identical(N, l, 0, m, 0, p, 0, q, 0)
+            ρ_diag[j] = 1
+        end
+   end
+   ρ_diag /= sum(ρ_diag)
+   ρ_noise = Diagonal(ρ_diag)
+
+   return ρ_noise
+end =#
+
 """
     fidelity(Ψ::Vector,ρ::Matrix)
 
 Compute the fidelity between density matrix `ρ` and pure state `Ψ`.
 """
-function fidelity(Ψ::Vector,ρ::Matrix)
+function fidelity(Ψ::AbstractVector,ρ::AbstractMatrix)
     Ψ = convert(Vector{ComplexF64}, Ψ)::Vector{ComplexF64}
     fidelity = Ψ' * ρ * Ψ
     return convert(Float64, real(fidelity))
@@ -266,4 +327,10 @@ function sample_populations(pops::Vector{<:Real}, n_samples; unity=true)
     end
 
     return pops_measured
+end
+
+if !@isdefined cispi
+    function cispi(x)
+        return cis(x .* π)
+    end
 end
