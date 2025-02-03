@@ -117,9 +117,14 @@ function visual_meas_coh_map_combined_identical(
 	            j_super2lcmk_identical(N, j1)
 			l1_ket, c1_ket, m1_ket, k1_ket, l2_ket, c2_ket, m2_ket, k2_ket =
 	            j_super2lcmk_identical(N, j2)
+            val = round(combined_weights[j_comb], digits=5)
+            val = try
+                convert(Float64, val)
+            catch
+                val
+            end
 	        println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
-                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ",
-                round(combined_weights[j_comb], sigdigits=5)
+                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
             )
 	   end
 	end
@@ -133,9 +138,17 @@ function visual_meas_coh_map_combined_identical(
 	            j_super2lcmk_identical(N, j_contr1)
 			l1_ket, c1_ket, m1_ket, k1_ket, l2_ket, c2_ket, m2_ket, k2_ket =
 	            j_super2lcmk_identical(N, j_contr2)
+            val = round(combined_weights[j_contr], digits=5)
+            val = try
+                convert(Float64, val)
+            catch
+                val
+            end
+            println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
+                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
+            )
 	        println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
-                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ",
-                round(combined_weights[j_contr], sigdigits = 5)
+                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
             )
 	   end
 	end

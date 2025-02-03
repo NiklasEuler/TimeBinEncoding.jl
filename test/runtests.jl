@@ -57,4 +57,8 @@ Random.seed!(8675309) # / Jenny
         include("identical_photons/state_utility_identical_tests.jl")
     end
 
+    @testset "visualization_identical_tests" begin
+        include("identical_photons/visualization_identical_tests.jl")
+    end
+
 end
