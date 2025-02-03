@@ -65,11 +65,6 @@ function _visual_coh_identical(
 )
     contr_j_idxs = correlated_short_bins_idxs_identical(N)
     extractable_correlated_coherences = []
-    if phases == ones(Float64, N)
-        display_weights = round.(Real.(weights), digits=5)
-    else
-        display_weights = round.(weights, digits=5)
-    end
 
 	for i in eachindex(j1_arr)
         j1 = j1_arr[i]
@@ -83,8 +78,14 @@ function _visual_coh_identical(
         if(j1 in contr_j_idxs && j2 in contr_j_idxs && (extract_diagonal || j1 ≠ j2))
             push!(extractable_correlated_coherences, i)
         end
+        val = round(weights[i], digits=5)
+        val = try
+            convert(Float64, val)
+        catch
+            val
+        end
 		println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket, " ",
-            m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", display_weights[i]
+            m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
         )
 	end
     println("Useful extractable coherences:")
@@ -95,8 +96,14 @@ function _visual_coh_identical(
             j_super2lcmk_identical(N, j1)
 		l1_ket, c1_ket, m1_ket, k1_ket, l2_ket, c2_ket, m2_ket, k2_ket =
             j_super2lcmk_identical(N, j2)
+        val = round(weights[i], digits=5)
+        val = try
+            convert(Float64, val)
+        catch
+            val
+        end
         println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket, " ",
-            m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", display_weights[i]
+            m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
         )
    end
 
