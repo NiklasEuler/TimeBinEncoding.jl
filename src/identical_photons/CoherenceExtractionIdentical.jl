@@ -120,6 +120,10 @@ end
 
 function j_out_hom(N_post, bin_1, bin_2)
     # using the Hong-Ou-Mandel interference pattern for coherence extraction
+    @argcheck bin_1 < bin_2
+    @argcheck bin_1 ≥ 0
+    @argcheck bin_2 < N_post
+
     j_out_lm_SS = lcmk2j_super_identical(N_post, bin_1, 0, bin_1, 0, bin_1, 0, bin_1, 0)
     j_out_lm_LL = lcmk2j_super_identical(N_post, bin_2, 1, bin_2, 1, bin_2, 1, bin_2, 1)
     j_out_lm_hom = lcmk2j_super_identical(N_post, bin_1, 0, bin_2, 1, bin_1, 0, bin_2, 1,)
