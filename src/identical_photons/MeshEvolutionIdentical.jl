@@ -114,6 +114,9 @@ function shift_timebins_identical(state_vec::Vector)
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1)) # square for two species
     new_vec = zeros(ComplexF64, d_hilbert_space_shifted^2)
+    if state_vec ≈ zero(state_vec)
+        throw(ArgumentError("Input state is empty"))
+    end
     for j_super in eachindex(state_vec)
         _shift_j_identical!(N, j_super, state_vec, new_vec)
    end
@@ -139,7 +142,7 @@ function shift_timebins_identical(state_vec::SparseVector)
     return new_vec::SparseVector
 end
 
-function shift_timebins_identical!(state_vec::SparseVector, temp_vec::SparseVector)
+#= function shift_timebins_identical(state_vec::SparseVector, temp_vec::SparseVector)
     d_hilbert_space = Int(sqrt(length(state_vec)))
     N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
     state_vec =
@@ -156,7 +159,7 @@ function shift_timebins_identical!(state_vec::SparseVector, temp_vec::SparseVect
 
     return nothing
 end
-
+ =#
 function _shift_j_identical!(N, j_super, state_vec, new_vec)
     l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N, j_super)
     l_shift1 = l1 + c1
@@ -267,27 +270,27 @@ end
 
 function mesh_evolution_identical end
 
-function mesh_evolution_identical(initial_state::Vector, angles, kron_mem=nothing)
+function mesh_evolution_identical(initial_state::Vector, angles; kron_mem=nothing)
     state = convert(Vector{ComplexF64}, initial_state)::Vector{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+    state = _iterative_mesh_evolution_identical(state, angles; kron_mem=kron_mem)
 
     return state::Vector{ComplexF64}
 end
 
-function mesh_evolution_identical(initial_state::SparseVector, angles, kron_mem=nothing)
+function mesh_evolution_identical(initial_state::SparseVector, angles; kron_mem=nothing)
     state =
     convert(SparseVector{ComplexF64, Int64}, initial_state)::SparseVector{ComplexF64, Int64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+    state = _iterative_mesh_evolution_identical(state, angles; kron_mem=kron_mem)
 
     return state::SparseVector{ComplexF64, Int64}
 end
 
-function mesh_evolution_identical(initial_state, angles, kron_mem=nothing)
+function mesh_evolution_identical(initial_state::AbstractMatrix, angles; kron_mem=nothing)
     state = convert(Matrix{ComplexF64}, initial_state)::Matrix{ComplexF64}
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
-    state = _iterative_mesh_evolution_identical(state, angles, kron_mem)
+    state = _iterative_mesh_evolution_identical(state, angles; kron_mem=kron_mem)
 
     return state
 end
@@ -296,7 +299,7 @@ end
 function _iterative_mesh_evolution_identical end
 
 function _iterative_mesh_evolution_identical(
-    input_state::AbstractVector, angles, kron_mem=nothing
+    input_state::AbstractVector, angles; kron_mem=nothing
 )
     state = copy(input_state)
     for i in eachindex(angles)
@@ -313,7 +316,7 @@ function _iterative_mesh_evolution_identical(
 end
 
 function _iterative_mesh_evolution_identical(
-    input_state::AbstractMatrix, angles, kron_mem=nothing
+    input_state::AbstractMatrix, angles; kron_mem=nothing
 )
     state = copy(input_state)
     for i in eachindex(angles)

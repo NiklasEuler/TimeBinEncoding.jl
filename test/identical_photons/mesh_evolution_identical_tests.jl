@@ -24,7 +24,7 @@
     @test Ψ_out[[j1, j2, j3, j4]] ≈ [0.5, 0.5, 0.5, 0.5] # Hong-Ou-Mandel effect
 
     kron_mem = TimeBinEncoding._kron_mem_arr(N, 2)
-    Ψ_out_mem =  mesh_evolution_identical(Ψ_init, angles, kron_mem)
+    Ψ_out_mem =  mesh_evolution_identical(Ψ_init, angles; kron_mem=kron_mem)
     @test Ψ_out_mem ≈ Ψ_out
 
     Ψ_in_dense = Vector(Ψ_init)
@@ -36,8 +36,14 @@
     ρ_out = mesh_evolution_identical(ρ_in_manual, angles)
     @test ρ_out ≈ ρ_out_manual
 
-    ρ_out_mem = mesh_evolution_identical(ρ_in_manual, angles, kron_mem)
+    ρ_out_mem = mesh_evolution_identical(ρ_in_manual, angles; kron_mem=kron_mem)
     @test ρ_out_mem ≈ ρ_out
+
+    Ψ_empty = spzeros(ComplexF64, d_full_hs_bl)
+    Ψ_empty_dense = Vector(Ψ_empty)
+
+    @test_throws ArgumentError mesh_evolution_identical(Ψ_empty, angles) # empty input
+    @test_throws ArgumentError mesh_evolution_identical(Ψ_empty_dense, angles) # empty input
 
     N = 5
     d_local_hs_bl = N * (2 * N + 1)
