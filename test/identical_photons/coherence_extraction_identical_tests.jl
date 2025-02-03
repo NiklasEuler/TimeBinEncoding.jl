@@ -114,8 +114,6 @@ end
 @testset "combined_measurement_coherence_extraction_identical" begin
     N = 4
     ϵ = 0.1
-    ϵ_angles = 0.05 * π
-
     Random.seed!(4441)
 
     d_local_hs_b = Int(N * (N + 1) / 2)
