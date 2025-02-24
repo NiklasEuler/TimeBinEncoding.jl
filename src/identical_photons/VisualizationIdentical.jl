@@ -154,9 +154,9 @@ function visual_meas_coh_map_combined_identical(
             println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
                 " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
             )
-	        println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
-                " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
-            )
-	   end
+	        #println("+ ρ_[", l1_bra, " ", m1_bra, " ", l2_bra, " ", m2_bra, "]^[", l1_ket,
+            #    " ", m1_ket, " ", l2_ket, " ", m2_ket, "] ⋅ ", val
+            #)
+	    end
 	end
 end
