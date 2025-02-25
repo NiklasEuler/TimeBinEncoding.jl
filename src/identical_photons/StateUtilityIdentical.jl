@@ -114,32 +114,3 @@ function density_matrix_dephased_krauss_identical(N, ρ, ϵ)
     ρ_dephased = (1 - ϵ) * ρ + ϵ * ρ_noisy
     return ρ_dephased
 end
-
-#= function white_noise_dark_count_identical(N, loss_factor)
-    d_hilbert_space = N_LOOPS * N * (N_LOOPS * N + 1) / 2 # correct?
-    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
-    for l in 0:N - 1
-        for m in l:N - 1, for k in l:N - 1
-            j = lcmk2j_super_identical(N, l, 0, m, 0, k, 0, l, 0)
-            ρ_diag[j] = 1
-        end
-
-end
- =#
-
-
-#= function white_noise_identical(N)
-    d_hilbert_space = N * (2 * N + 1)
-    #ρ_noise = zeros(ComplexF64, d_hilbert_space^2, d_hilbert_space^2)
-    ρ_diag = zeros(ComplexF64, d_hilbert_space^2)
-    for l in 0:N - 1, m in l:N - 1
-        for p in 0:N - 1, q in p:N - 1
-            j = lcmk2j_super_identical(N, l, 0, m, 0, p, 0, q, 0)
-            ρ_diag[j] = 1
-        end
-   end
-   ρ_diag /= sum(ρ_diag)
-   ρ_noise = Diagonal(ρ_diag)
-
-   return ρ_noise
-end =#

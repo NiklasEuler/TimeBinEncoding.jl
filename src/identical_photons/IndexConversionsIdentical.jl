@@ -121,22 +121,6 @@ function j2lcmk_identical(N, j)
 
     m, k = divrem(j, N_LOOPS)
 
-
-   #=  l_temp, c_temp, m_temp, k_temp = j2lcmk(N, j)
-    idx_correction = l_temp
-    # for each timebin there is one less possible index due to indistinguishability
-
-    l_temp, c_temp, m_temp, k_temp = j2lcmk(N, j + idx_correction)
-    # correct for clear shift at this point
-
-    idx_correction = l_temp # update in case of correction pushing over l_temp
-
-    if m_temp ≥ l_temp && c_temp == 1
-    # possibly one additional index shift in current m cycle
-        idx_correction += 1
-    end
-
-    l, c, m, k = j2lcmk(N, j + idx_correction) # final indices =#
 	return l, c, m, k
 end
 
@@ -145,8 +129,8 @@ end
 """
     j_super2lcmk_identical(N, j_super)
 
-Converts a 4-photon basis state index ´j_super´ in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2>
-basis to the corresponding |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal
+Converts a 4-photon basis state index ´j_super´ in the |l1, c1 , m1 , k1, l2, c2 , m2 , k2⟩
+basis to the corresponding |l1, c1 , m1 , k1⟩ and |l2, c2 , m2 , k2⟩ indices for the signal
 and idler photon pairs, respectively.
 
 """
@@ -170,9 +154,9 @@ end
 """
     lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
 
-    Converts the |l1, c1 , m1 , k1> and |l2, c2 , m2 , k2> indices for the signal and idler
+    Converts the |l1, c1 , m1 , k1⟩ and |l2, c2 , m2 , k2⟩ indices for the signal and idler
     photon pairs, respectively, to the corresponding 4-photon basis state index ´j_super´ in
-    the |l1, c1 , m1 , k1, l2, c2 , m2 , k2> basis.
+    the |l1, c1 , m1 , k1, l2, c2 , m2 , k2⟩ basis.
 
 """
 function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)

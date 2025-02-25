@@ -309,6 +309,14 @@ function mesh_evolution_backwards(final_state::AbstractMatrix, angles)
     return state
 end
 
+"""
+    j_arr_backwards_forbidden(N)
+
+Generate a list of forbidden inintial state `j` indices for the backwards evolution of the
+two-photon state. The forbidden indices are those where at least one photon is in the long
+loop.
+
+"""
 function j_arr_backwards_forbidden(N)
     j_arr_forbidden = []
     for l in 0:N - 1

@@ -107,6 +107,17 @@ function coherence_extraction_identical(
 	return convert(Float64, pop_fs)#, extracted_coherence
 end
 
+"""
+    j_out4bins(N_post, bin_1, bin_2)
+
+    Compute the `j_out` projector-state four-photon indicies for a four-bin interference
+    setup. The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins
+    after the DTQW. The computed outputs are the indices for the full coincidence (SSSS,
+    LLLL), species coincidence (SSLL, LLSS), and signal-idler coincidence (SLSL) configura-
+    tions.
+
+    See also [`j_out_hom`](@ref).
+"""
 function j_out4bins(N_post, bin_1, bin_2)
     j_SSSS = lcmk2j_super_identical(N_post, bin_1, 0, bin_1, 0, bin_1, 0, bin_1, 0)
     j_LLLL = lcmk2j_super_identical(N_post, bin_2, 1, bin_2, 1, bin_2, 1, bin_2, 1)
@@ -118,17 +129,27 @@ function j_out4bins(N_post, bin_1, bin_2)
     return j_out
 end
 
+"""
+    j_out_hom(N_post, bin_1, bin_2)
+
+    Compute the `j_out` projector-state four-photon indicies for a Hong-Ou-Mandel interfer-
+    ence setup. The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins
+    after the DTQW. The computed outputs are the indices for the full coincidence (SSSS,
+    LLLL) and signal-idler coincidence (SLSL) configurations.
+
+    See also [`j_out4bins`](@ref).
+"""
 function j_out_hom(N_post, bin_1, bin_2)
     # using the Hong-Ou-Mandel interference pattern for coherence extraction
     @argcheck bin_1 < bin_2
     @argcheck bin_1 ≥ 0
     @argcheck bin_2 < N_post
 
-    j_out_lm_SS = lcmk2j_super_identical(N_post, bin_1, 0, bin_1, 0, bin_1, 0, bin_1, 0)
-    j_out_lm_LL = lcmk2j_super_identical(N_post, bin_2, 1, bin_2, 1, bin_2, 1, bin_2, 1)
-    j_out_lm_hom = lcmk2j_super_identical(N_post, bin_1, 0, bin_2, 1, bin_1, 0, bin_2, 1,)
+    j_out_lm_SSSS = lcmk2j_super_identical(N_post, bin_1, 0, bin_1, 0, bin_1, 0, bin_1, 0)
+    j_out_lm_LLLL = lcmk2j_super_identical(N_post, bin_2, 1, bin_2, 1, bin_2, 1, bin_2, 1)
+    j_out_lm_SLSL = lcmk2j_super_identical(N_post, bin_1, 0, bin_2, 1, bin_1, 0, bin_2, 1,)
 
-    j_out = [j_out_lm_SS, j_out_lm_LL, j_out_lm_hom]
+    j_out = [j_out_lm_SSSS, j_out_lm_LLLL, j_out_lm_SLSL]
     return j_out
 end
 
@@ -201,6 +222,32 @@ function combined_measurement_coherence_extraction_identical(
 	return convert(Float64, pop_fs)#, extracted_coherence
 end
 
+
+"""
+    combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
+
+Compute the weights for the different projectors in the four-bin and Hong-Ou-Mandel
+interference setup. The weights are computed automatically based on the number of time bins
+`N` and the desired weights for the different coherences given in `extraction_weights`.
+
+The `extraction weights` are given in the following order:
+- dimer-no-dimer coherences with two different bins (e.g. ⟨iiii|ρ|ijij⟩)
+- dimer-no-dimer coherences with three different bins, (e.g. ⟨iiii|ρ|jkjk⟩)
+- dimer-dimer coherences with two different bins, (e.g. ⟨iiii|ρ|jjjj⟩)
+- non-dimer-non-dimer coherences with four different bins, (e.g. ⟨ijij|ρ|klkl⟩)
+- non-dimer-non-dimer coherences with three different bins. (e.g. ⟨ijij|ρ|jkjk⟩)
+
+# Returns
+- `Vector{Float64}`: The weights for the different projectors.
+    The first three elements correspond to the four-bin interference and refere to the full
+    coincidence, species coincidence, and signal-idler coincidence, respectively. The last
+    two elements correspond to the Hong-Ou-Mandel interference and refer to the full
+    coincidence and signal-idler coincidence, respectively.
+
+See also [`combined_weights_pops_4bins_all`](@ref), [`combined_weights_pops_hom`](@ref),
+[`j_out4bins`](@ref), [`j_out_hom`](@ref).
+
+"""
 function combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
 
     weights_single = 1 / 32 * reshape([
@@ -211,8 +258,6 @@ function combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
         [8, 0, 4, 0, 0];;
         ], (5,5)
     )
-
-
 	# columns meaning left to right:
     # weight of (wo) dimer-no-dimer (dnd) coherences with two different bins,
     # wo dnd coherences with three different bins,
@@ -223,10 +268,6 @@ function combined_projector_weights_auto(N, extraction_weights=[1, 1, 1, 1, 1])
     # 4bin setting. Thus, their weights are multiplied by a scaling factor, which we compute
     # in the following. last two lines: from compound configuration. These appear once each
     # and thus have no multiple appearence problem.
-    	# TODO: Need to check whether compound 2bin contributions can be extracted from side
-        # arms of 4bin settings.
-        # answer: no, as detection of photons in the two different outputs of the beam
-        # splitter would be necessary, but one output is already in use for central bin.
 
     scaling_dd = scaling_dnd_one_diff = binomial(N - 2, 2)
             # number of 4bin configurations that include a given dd coherence
@@ -267,11 +308,14 @@ function combs_4bin(N)
 	return bin_idxs
 end
 """
-    combined_weights_pops_4bins_all(N, extraction_composition_weights, phases=true)
+    combined_weights_pops_4bins_all(N, extraction_composition_weights; phases=true)
 
-    Computes the combined weights and populations for the four-bin interference, with the
-    desired weights for the different projectors given in `extraction_composition_weights`.
-    Return both the combined weights and the total final-state population.
+    Compute the combined weights and populations for the three four-bin interference
+    settings, with the desired weights for the different projectors given in
+    `extraction_composition_weights`. Return both the combined weights and the total
+    final-state populations.
+
+    See also [`combined_weights_pops_hom`](@ref), ['angles4bins](@ref).
 """
 function combined_weights_pops_4bins_all(
     N, ρ_mixed, extraction_composition_weights; phases=true
@@ -333,7 +377,16 @@ function combined_weights_pops_4bins_all(
 	return combined_weights_4b, pop_fs_4b
 end
 
+"""
+    combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
 
+    Compute the combined weights and populations for the Hong-Ou-Mandel interference
+    setting, with the desired weights for the different projectors given in
+    `extraction_composition_weights`. Return both the combined weights and the total
+    final-state populations.
+
+    See also [`combined_weights_pops_4bins_all`](@ref), [`angles_compound`](@ref).
+"""
 function combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
 
 	pop_fs_hom = 0.0

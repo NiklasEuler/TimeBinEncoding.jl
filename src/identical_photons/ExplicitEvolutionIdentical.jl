@@ -1,67 +1,21 @@
 export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
 export explicit_fs_pop_identical
 
-function explicit_fs_projection_identical(j_out, angles, phases=ones(Float64, N))
+
+
+function explicit_fs_projection_identical(
+    j_out, angles, phases=ones(Float64, length(angles[1]))
+)
     j_out = convert(Int64, j_out)::Int64 # two-photon bin index in the |l, c , m , k > basis
     angles = convert(Vector{Vector{Float64}}, angles)::Vector{Vector{Float64}}
     M = length(angles) # number of roundtrips
     N = length(angles[1]) # initial number of time bins
 
-    #if M ≤ 6 # symbolic backend is faster, but too memory intensive for too many iterations
-    #    return _explicit_fs_projection_symbolic_backend(N, M, j_out, angles)
-    #else
-        #return _explicit_fs_projection_mesh_backend(N, M, j_out, angles)
-    #end
-
-    #return _explicit_fs_projection_mesh_identical_backend(N, M, j_out, angles, phases)
     return _explicit_fs_projection_mesh_identical_backend_parallel(
         N, M, j_out, angles, phases
     )
 
 end
-
-#= function _explicit_fs_projection_mesh_identical_backend(
-    N, M, j_out, angles, phases=ones(Float64, N)
-)
-    @argcheck abs2.(phases) ≈ ones(Float64, N)
-    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
-    # full local hilbert space dimension for two photons
-    coeff_arr = Vector{ComplexF64}(undef, 0)
-    j_idx_arr_contr = Int64[]
-    l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
-    # four-photon state indices
-#=
-    l1_init_min = max(0, l1 - M) # light cone for contributions fron the initial state
-    #m1_init_min = max(0, m1 - M)
-    l2_init_min = max(0, l2 - M)
-    #m2_init_min = max(0, m2 - M)
-
-    l1_init_max = min(N - 1, l1) # light cone for contributions fron the initial state
-    m1_init_max = min(N - 1, m1)
-    l2_init_max = min(N - 1, l2)
-    m2_init_max = min(N - 1, m2)
-    # due to symmetry in the two species, could consider only one half of the states
-    # would have to consider (j1, j2) and (j2, j1) in the end
-
-    for l1_init in l1_init_min:l1_init_max, m1_init in l1_init:m1_init_max
-        for l2_init in l2_init_min:l2_init_max, m2_init in l2_init:m2_init_max =#
-
-    configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
-    for (l1_init, m1_init, l2_init, m2_init) in eachcol(configs_lightcone_arr)
-        j_init = lcmk2j_super_identical(N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0)
-        single_ket = spzeros(ComplexF64, d_hilbert_space^2)
-        phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
-        single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
-        single_ket_evolved = mesh_evolution_identical(single_ket, angles)
-        coeff = single_ket_evolved[j_out]
-        if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
-            push!(coeff_arr, coeff)
-            push!(j_idx_arr_contr, j_init)
-        end
-    end
-
-    return j_idx_arr_contr, coeff_arr
-end =#
 
 function _kron_mem_arr(N, M)
     dims = [(n * (2 * n + 1)) ^ 2 for n in N:N + M]
@@ -69,7 +23,7 @@ function _kron_mem_arr(N, M)
     return mem
 end
 
-function _explicit_fs_projection_mesh_identical_backend_parallel(
+#= function _explicit_fs_projection_mesh_identical_backend_parallel(
     N, M, j_out, angles, phases=ones(Float64, N)
 )
     @argcheck abs2.(phases) ≈ ones(Float64, N)
@@ -86,7 +40,6 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
     chunk_size = max(1, N_comb ÷ (tasks_per_thread * Base.Threads.nthreads()))
     data_chunks = Base.Iterators.partition(Array(1:N_comb), chunk_size)
     # partition your data into chunks that individual tasks will deal with
-    # for j in 1:N_comb
     kron_mem = _kron_mem_arr(N, M) # preallocate memory for kron products
     coin_op = [coin_operator_identical(angles[i], kron_mem[i]) for i in 1:M]
     tasks = map(data_chunks) do chunk
@@ -96,9 +49,6 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
             single_ket_arr = [
                 spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M
             ] # Preallocate the wave function
-            #= single_ket_arr_temp = [
-                spzeros(ComplexF64, Int(n * (2 * n + 1))^2) for n in N:N + M - 1
-            ] =#
             for j in chunk
                 l1_init, m1_init, l2_init, m2_init = @view configs_lightcone_arr[:, j]
                 j_init = lcmk2j_super_identical(
@@ -106,13 +56,9 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
                 )
                 phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
                 single_ket_arr[1][j_init] = prod(phases[phase_idxs]) # initial state phase
-                #single_ket_evolved = mesh_evolution_identical(single_ket, angles, kron_mem)
                 for i in 1:M # apply coin operators
                     single_ket_arr[i] .= coin_op[i] * single_ket_arr[i]
                     single_ket_arr[i + 1] .= shift_timebins_identical(single_ket_arr[i])
-                    #= mul!(single_ket_arr_temp[i], coin_op[i], single_ket_arr[i])
-                    shift_timebins_identical!(single_ket_arr_temp[i], single_ket_arr[i + 1])
-                    =#
                 end
                 coeff = single_ket_arr[end][j_out]
                 if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
@@ -126,59 +72,46 @@ function _explicit_fs_projection_mesh_identical_backend_parallel(
         end
     end
     results = fetch.(tasks)::Vector{Tuple{Vector{Int64}, Vector{ComplexF64}}}
-    #println("Results: ", typeof(results))
 	j_idx_arr_contr = cat([tup[1] for tup in results]..., dims = 1)::Vector{Int64}
     coeff_arr = cat([tup[2] for tup in results]..., dims = 1)::Vector{ComplexF64}
     return j_idx_arr_contr, coeff_arr
-end
+end =#
 
-#= function _explicit_fs_projection_mesh_identical_backend_parallel(
+function _explicit_fs_projection_mesh_identical_backend_parallel(
     N, M, j_out, angles, phases=ones(Float64, N)
 )
     @argcheck abs2.(phases) ≈ ones(Float64, N)
     #println("Running in parallel!")
-    d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
+    d_hilbert_space_init = Int(N * (2 * N + 1))
+    d_hilbert_space_final = Int((N + M) * (2 * (N + M) + 1))
     # full local hilbert space dimension for two photons
-    l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N + M, j_out)
-    # four-photon state indices
-    configs_lightcone_arr = _configs_lightcone_identical(N, M, l1, m1, l2, m2)
-    N_comb = size(configs_lightcone_arr, 2)
-    tasks_per_thread = 1
-    # customize this as needed. More tasks have more overhead, but better load balancing
+    coeff_arr = ComplexF64[]
+    j_idx_arr_contr = Int64[]
 
-    chunk_size = max(1, N_comb ÷ (tasks_per_thread * Base.Threads.nthreads()))
-    data_chunks = Base.Iterators.partition(Array(1:N_comb), chunk_size)
-    # partition your data into chunks that individual tasks will deal with
-    # for j in 1:N_comb
-    tasks = map(data_chunks) do chunk
-        Base.Threads.@spawn begin
-            coeff_arr_local = Vector{ComplexF64}(undef, 0)
-            j_idx_arr_contr_local = Int64[]
-            kron_mem = _kron_mem_arr(N, M) # preallocate memory for kron products
-            for j in chunk
-                l1_init, m1_init, l2_init, m2_init = @view configs_lightcone_arr[:, j]
-                j_init = lcmk2j_super_identical(
-                    N, l1_init, 0, m1_init, 0, l2_init, 0, m2_init, 0
-                )
-                single_ket = spzeros(ComplexF64, d_hilbert_space^2)
-                phase_idxs = [l1_init, m1_init, l2_init, m2_init] .+ 1 # indexing from 1
-                single_ket[j_init] = prod(phases[phase_idxs]) # initial state phase
-                single_ket_evolved = mesh_evolution_identical(single_ket, angles, kron_mem)
-                coeff = single_ket_evolved[j_out]
-                if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
-                    push!(coeff_arr_local, coeff)
-                    push!(j_idx_arr_contr_local, j_init)
-                end
-            end
-            return j_idx_arr_contr_local, coeff_arr_local
+
+    kron_mem = _kron_mem_arr(N, M) # preallocate memory for kron products
+    coin_op = [adjoint(coin_operator_identical(angles[i], kron_mem[i])) for i in M:-1:1]
+    shift_op = [adjoint(shift_timebins_operator_identical(i)) for i in N+M-1:-1:N]
+    state = spzeros(ComplexF64, d_hilbert_space_final^2)
+    state[j_out] = 1
+    phases_inv = conj(phases)
+    for i in eachindex(coin_op)
+        state = shift_op[i] * state
+        state = coin_op[i] * state
+    end
+    for j in 1:d_hilbert_space_init^2
+        l1, c1, m1, k1, l2, c2, m2, k2 = j_super2lcmk_identical(N, j)
+
+        coeff = state[j]
+        if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
+            phase_idxs = [l1, m1, l2, m2] .+ 1 # indexing from 1
+            coeff *= prod(phases_inv[phase_idxs]) # initial state phase
+            push!(coeff_arr, coeff)
+            push!(j_idx_arr_contr, j)
         end
     end
-    results = fetch.(tasks)
-	j_idx_arr_contr = cat([tup[1] for tup in results]..., dims = 1)
-    coeff_arr = cat([tup[2] for tup in results]..., dims = 1)
     return j_idx_arr_contr, coeff_arr
 end
- =#
 
 function _configs_lightcone_identical(N, M, l1, m1, l2, m2)
 	l1_init_min = max(0, l1 - M) # light cone for contributions fron the initial state
