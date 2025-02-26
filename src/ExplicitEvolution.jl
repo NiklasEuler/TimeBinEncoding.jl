@@ -2,8 +2,6 @@ export explicit_ket_evolution_sp, explicit_ket_evolution, explicit_state_evoluti
 export explicit_fs_projection_sp, explicit_fs_projection,
     explicit_fs_coherence_map, explicit_add_fs_projection
 export explicit_fs_pop
-#export explicit_fs_projection_identical, explicit_fs_coherence_map_identical
-#export explicit_fs_pop_identical
 
 """
     explicit_ket_evolution_sp(l, angles)
@@ -202,44 +200,6 @@ function _explicit_fs_projection_symbolic_backend(
         _sp_2_two_photon(N, j_idx_arr_l, j_idx_arr_m, coeff_arr_l, coeff_arr_m, phases)
     return j_idx_arr_contr, coeff_arr
 end
-
-#= function _explicit_fs_projection_mesh_backend2(N, M, j_out, angles, phases=ones(Float64, N))
-    @argcheck abs2.(phases) ≈ ones(Float64, N)
-    coeff_arr = Vector{ComplexF64}(undef, 0)
-    j_idx_arr_contr = Int64[]
-    l_out, c_out, m_out, k_out = j2lcmk(N + M, j_out)
-    if c_out == 0
-        l_init_max = min(N - 1, l_out)
-        # light cone for contributions fron the initial state
-    else
-        l_init_max = min(N - 1, l_out - 1)
-        # |n,S> cannot contribute to |n,L>, at most |n-1,S> can
-    end
-    if k_out == 0
-        m_init_max = min(N - 1, m_out)
-        # light cone for contributions fron the initial state
-    else
-        m_init_max = min(N - 1, m_out - 1)
-        # |n,S> cannot contribute to |n,L>, at most |n-1,S> can
-    end
-    for l_init in 0:l_init_max, m_init in 0:m_init_max
-        j_init = lcmk2j(N, l_init, 0, m_init, 0)
-        #single_ket = zeros(ComplexF64, N_LOOPS2 * N^2)
-        single_ket = spzeros(ComplexF64, N_LOOPS2 * N^2)
-        single_ket[j_init] = phases[l_init + 1] * phases[m_init + 1]
-        if j_init == 1
-            println(single_ket)
-        end
-        single_ket_evolved = mesh_evolution(single_ket, angles)
-        coeff = single_ket_evolved[j_out]
-        if !isapprox(abs2(coeff), 0.0, atol = WEIGHT_CUTOFF)
-            push!(coeff_arr, coeff)
-            push!(j_idx_arr_contr, j_init)
-        end
-   end
-
-    return j_idx_arr_contr, coeff_arr
-end =#
 
 function _explicit_fs_projection_mesh_backend(N, M, j_out, angles, phases=ones(Float64, N))
     @argcheck abs2.(phases) ≈ ones(Float64, N)

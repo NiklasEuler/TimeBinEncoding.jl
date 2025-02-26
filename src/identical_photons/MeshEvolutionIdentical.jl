@@ -3,6 +3,18 @@ export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
 export mesh_evolution_sp_identical
 export mesh_evolution_identical
 
+"""
+    coin_operator_sp_identical(angles::AbstractVector)
+
+Compute the coin operator for a single party of two identical photons for a given set of
+beam splitter `angles`. The coin operator is a unitary matrix that describes the action of
+the central beam splitter on the two-photon state during one round trip.
+
+See also [`coin_operator_identical`](@ref), [`shift_timebins_sp_identical`](@ref),
+[`shift_timebins_operator_sp_identical`](@ref), [`mesh_evolution_sp_identical`](@ref),
+[`mesh_evolution_identical`](@ref).
+
+"""
 function coin_operator_sp_identical(angles::AbstractVector)
     N = length(angles)
     d_hilbert_space = N * (2 * N + 1)
@@ -45,6 +57,22 @@ function coin_operator_sp_identical(angles::AbstractVector)
     return coin_op::SparseMatrixCSC{ComplexF64, Int64}
 end
 
+
+"""
+    coin_operator_identical(angles::AbstractVector)
+    coin_operator_identical(angles::AbstractVector, kron_mem)
+
+Two-party version of `coin_operator_sp_identical`. Compute the tensor product of two single-
+party coin operators for two identical photons for a given set of beam splitter `angles`.
+
+Optionally, a preallocated memory for the tensor-product operators can be provided in the
+`kron_mem` argument.
+
+See also [`coin_operator_sp_identical`](@ref), [`shift_timebins_sp_identical`](@ref),
+[`shift_timebins_operator_sp_identical`](@ref), [`mesh_evolution_sp_identical`](@ref),
+[`mesh_evolution_identical`](@ref).
+
+"""
 function coin_operator_identical end
 
 function coin_operator_identical(angles::Vector)
@@ -64,6 +92,21 @@ function coin_operator_identical(angles::Vector, kron_mem)
     return kron_mem::SparseMatrixCSC{ComplexF64, Int64}
 end
 
+"""
+    shift_timebins_sp_identical(state_vec::Vector)
+    shift_timebins_sp_identical(state_vec::SparseVector)
+
+Shift the time bins of a single party of two identical photons for a given state vector
+based on their loop indices. The state vector is assumed to be in the `|lcmk⟩` basis.
+
+Photon states in the long loop are delayed by one time bin, while states in the short loop
+remain in their current time bin. The state vector is reshaped accordingly.
+
+See also [`shift_timebins_identical`](@ref), [`shift_timebins_operator_sp_identical`](@ref),
+[`coin_operator_sp_identical`](@ref), [`coin_operator_identical`](@ref),
+[`mesh_evolution_sp_identical`](@ref), [`mesh_evolution_identical`](@ref).
+
+"""
 function shift_timebins_sp_identical end
 
 function shift_timebins_sp_identical(state_vec::Vector)
@@ -96,17 +139,34 @@ function _shift_j_sp_identical!(N, j, state_vec, new_vec)
     l_shift = l + c
     m_shift = m + k
     if l_shift  == m_shift && c > k
+        # if l == m, we need to swap the indices to maintain the correct order
         j_shift = lcmk2j_identical(N + 1, l_shift, k, m_shift, c)
     else
         j_shift = lcmk2j_identical(N + 1, l_shift, c, m_shift, k)
     end
-
     # adapted system has one more time bin, so we need to put N + 1
     new_vec[j_shift] = state_vec[j]
     return nothing
 end
 
-function shift_timebins end
+
+"""
+    shift_timebins_identical(state_vec::Vector)
+    shift_timebins_identical(state_vec::SparseVector)
+
+Two-party version of `shift_timebins_sp_identical`. Shift the time bins of the full two-
+party quantum state for a given state vector based on their loop indices. The state vector
+is assumed to be in the `|l1 c1 m1 k1 l2 c2 m2 k2⟩` basis.
+
+Photon states in the long loop are delayed by one time bin, while states in the short loop
+remain in their current time bin. The state vector is reshaped accordingly.
+
+See also [`shift_timebins_sp_identical`](@ref), [`shift_timebins_operator_identical`](@ref),
+[`coin_operator_sp_identical`](@ref), [`coin_operator_identical`](@ref),
+[`mesh_evolution_sp_identical`](@ref), [`mesh_evolution_identical`](@ref).
+
+"""
+function shift_timebins_identical end
 
 function shift_timebins_identical(state_vec::Vector)
     d_hilbert_space = Int(sqrt(length(state_vec)))
@@ -147,6 +207,7 @@ function _shift_j_identical!(N, j_super, state_vec, new_vec)
     l_shift1 = l1 + c1
     m_shift1 = m1 + k1
     if l_shift1 == m_shift1 && c1 > k1
+        # if l_shift1 == m_shift1, we need to swap the indices to maintain the correct order
         j_shift1 = lcmk2j_identical(N + 1, l_shift1, k1, m_shift1, c1)
     else
         j_shift1 = lcmk2j_identical(N + 1, l_shift1, c1, m_shift1, k1)
@@ -154,6 +215,7 @@ function _shift_j_identical!(N, j_super, state_vec, new_vec)
     l_shift2 = l2 + c2
     m_shift2 = m2 + k2
     if l_shift2 == m_shift2 && c2 > k2
+        # if l_shift2 == m_shift2, we need to swap the indices to maintain the correct order
         j_shift2 = lcmk2j_identical(N + 1, l_shift2, k2, m_shift2, c2)
     else
         j_shift2 = lcmk2j_identical(N + 1, l_shift2, c2, m_shift2, k2)
@@ -166,6 +228,19 @@ function _shift_j_identical!(N, j_super, state_vec, new_vec)
     return nothing
 end
 
+
+"""
+    shift_timebins_operator_sp_identical(N)
+
+Compute the time-bin shift operator for a single party of two identical photons for a given
+number of time bins `N`. The shift operator is a unitary matrix that describes the action of
+the time-bin shift on the two-photon state during one round trip.
+
+See also [`shift_timebins_sp_identical`](@ref), [`shift_timebins_operator_identical`](@ref),
+[`coin_operator_sp_identical`](@ref), [`coin_operator_identical`](@ref),
+[`mesh_evolution_sp_identical`](@ref), [`mesh_evolution_identical`](@ref).
+
+"""
 function shift_timebins_operator_sp_identical(N)
     N = convert(Int64, N)::Int64
     d_hilbert_space = N * (2 * N + 1)
@@ -190,6 +265,19 @@ function shift_timebins_operator_sp_identical(N)
     return shift_op_single_party::SparseMatrixCSC{Int64, Int64}
 end
 
+"""
+    shift_timebins_operator_identical(N)
+
+Two-party version of `shift_timebins_operator_sp_identical`. Compute the tensor product of
+two single-party time-bin shift operators for two identical photons for a given number of
+time bins `N`.
+
+See also [`shift_timebins_sp_identical`](@ref),
+[`shift_timebins_operator_sp_identical`](@ref), [`coin_operator_sp_identical`](@ref),
+[`coin_operator_identical`](@ref), [`mesh_evolution_sp_identical`](@ref),
+[`mesh_evolution_identical`](@ref).
+
+"""
 function shift_timebins_operator_identical(N)
     shift_operator_single_party = shift_timebins_operator_sp_identical(N)
     tensor_shift_operator = kron(shift_operator_single_party, shift_operator_single_party)
@@ -197,7 +285,11 @@ function shift_timebins_operator_identical(N)
 end
 
 
+"""
+    mesh_evolution_sp_identical(initial_state, angles)
 
+Compute the evolution of a single party of two identical photons for a given initial state
+"""
 function mesh_evolution_sp_identical end
 
 function mesh_evolution_sp_identical(initial_state::Vector, angles)
