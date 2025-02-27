@@ -29,7 +29,8 @@
     ρ_dephased = density_matrix_dephased_identical(Ψ_init, ϵ)
     @test ρ_dephased ≈ (1 - ϵ) * ρ_pure + ϵ * white_noise_identical(N)
     fidelity_deph = fidelity(Ψ_init, ρ_dephased)
-    @test isapprox(fidelity_deph, 0.90294117647, atol=1e-10)
+    @test isapprox(fidelity_deph, 0.9017241379310346,atol=1e-10)
+    # old implementation: 0.90294117647
 
     ρ_krauss = density_matrix_dephased_krauss_identical(N, ρ_pure, ϵ)
     fidelity_krauss = fidelity(Ψ_init, ρ_krauss)
@@ -38,7 +39,5 @@
 
     @test sum(diag(ρ_krauss)) ≈ 1
     @test sum(diag(ρ_dephased)) ≈ 1
-    # @test ρ_krauss !≈ ρ_dephased
-    # @test
 
 end

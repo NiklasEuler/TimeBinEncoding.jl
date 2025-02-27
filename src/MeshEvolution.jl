@@ -4,11 +4,6 @@ export shift_timebins_sp, shift_timebins_operator_sp, coin_operator_sp
 export mesh_evolution, mesh_evolution_backwards
 export mesh_evolution_sp
 export phase_on_density_matrix
-#export coin_operator_sp_identical, coin_operator_identical
-#export shift_timebins_sp_identical, shift_timebins_operator_sp_identical
-#export mesh_evolution_sp_identical
-#export mesh_evolution_identical
-
 
 """
     shift_timebins_sp(state_vec::Vector)

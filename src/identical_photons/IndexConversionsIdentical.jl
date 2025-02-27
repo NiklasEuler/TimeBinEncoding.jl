@@ -124,8 +124,6 @@ function j2lcmk_identical(N, j)
 	return l, c, m, k
 end
 
-
-
 """
     j_super2lcmk_identical(N, j_super)
 
@@ -165,7 +163,7 @@ function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
     j2 = lcmk2j_identical(N, l2, c2, m2, k2)
 
     d_hilbert_space = Int(N_LOOPS * N * (N_LOOPS * N + 1) / 2)
-        # local hilbert space dimension for two photons
+    # local hilbert space dimension for two photons
     # indistinguishable and N_LOOPS * N states per photon -> geometric series
     j_super = lm2j(d_hilbert_space, j1 - 1, j2 - 1) # -1 for 0-based indexing
 

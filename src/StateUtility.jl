@@ -112,7 +112,7 @@ end
     ϵ = convert(Float64, ϵ)::Float64
     d_hilbert_space = Int(sqrt(length(Ψ)))
 
-    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formula
 
     @argcheck ϵ ≥ 0
     @argcheck ϵ ≤ 1

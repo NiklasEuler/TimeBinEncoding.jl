@@ -111,7 +111,7 @@ function shift_timebins_sp_identical end
 
 function shift_timebins_sp_identical(state_vec::Vector)
     d_hilbert_space = length(state_vec)
-    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formula
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     new_vec = zeros(ComplexF64, (N + 1) * (2 * (N + 1) + 1))
     for j in 1:d_hilbert_space
@@ -123,7 +123,7 @@ end
 
 function shift_timebins_sp_identical(state_vec::SparseVector)
     d_hilbert_space = length(state_vec)
-    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formula
     state_vec =
         convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
     new_vec = spzeros(ComplexF64, (N + 1) * (2 * (N + 1) + 1))
@@ -170,7 +170,7 @@ function shift_timebins_identical end
 
 function shift_timebins_identical(state_vec::Vector)
     d_hilbert_space = Int(sqrt(length(state_vec)))
-    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formula
     state_vec = convert(Vector{ComplexF64}, state_vec)::Vector{ComplexF64}
     d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1)) # square for two species
     new_vec = zeros(ComplexF64, d_hilbert_space_shifted^2)
@@ -186,7 +186,7 @@ end
 
 function shift_timebins_identical(state_vec::SparseVector)
     d_hilbert_space = Int(sqrt(length(state_vec)))
-    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formular
+    N = Int(-1 / 4 + sqrt(1 / 16 + d_hilbert_space / 2)) # p-q formula
     state_vec =
         convert(SparseVector{ComplexF64, Int64}, state_vec)::SparseVector{ComplexF64, Int64}
     d_hilbert_space_shifted = ((N + 1) * (2 * (N + 1) + 1))
@@ -286,9 +286,21 @@ end
 
 
 """
-    mesh_evolution_sp_identical(initial_state, angles)
+    mesh_evolution_sp_identical(initial_state::Vector, angles)
+    mesh_evolution_sp_identical(initial_state::SparseVector, angles)
+    mesh_evolution_sp_identical(initial_state::AbstractMatrix, angles)
 
-Compute the evolution of a single party of two identical photons for a given initial state
+Compute the evolution of a single party of two identical photons for a given `initial state`
+and a set of beam splitter `angles`. The evolution is described by the action of the single-
+species coin and time-bin-shift operators on the initial state.
+
+The initial state can be provided as a dense vector, a sparse vector, or a matrix, with
+specialized methods for each sparse and dense vectors and dense matrices.
+
+See also [`coin_operator_sp_identical`](@ref), [`coin_operator_identical`](@ref),
+[`shift_timebins_sp_identical`](@ref), [`shift_timebins_operator_sp_identical`](@ref),
+[`mesh_evolution_identical`](@ref).
+
 """
 function mesh_evolution_sp_identical end
 
@@ -342,6 +354,26 @@ function _iterative_mesh_evolution_sp_identical(state::AbstractMatrix, angles)
     return state
 end
 
+"""
+    mesh_evolution_identical(initial_state::Vector, angles; kron_mem=nothing)
+    mesh_evolution_identical(initial_state::SparseVector, angles; kron_mem=nothing)
+    mesh_evolution_identical(initial_state::AbstractMatrix, angles; kron_mem=nothing)
+
+Two-party version of `mesh_evolution_sp_identical`. Compute the evolution of the full two-
+party quantum state for a given `initial state` and a set of beam splitter `angles`. The
+evolution is described by the action of the two-species coin and time-bin-shift operators
+on the initial state.
+
+The initial state can be provided as a dense vector, a sparse vector, or a matrix, with
+specialized methods for each sparse and dense vectors and dense matrices.
+
+Optionally, a preallocated memory for the tensor-product coin operators can be provided in
+the `kron_mem` argument.
+
+See also [`coin_operator_sp_identical`](@ref), [`coin_operator_identical`](@ref),
+[`shift_timebins_sp_identical`](@ref), [`shift_timebins_operator_sp_identical`](@ref),
+[`mesh_evolution_sp_identical`](@ref), [`_kron_mem_arr`](@ref).
+"""
 function mesh_evolution_identical end
 
 function mesh_evolution_identical(initial_state::Vector, angles; kron_mem=nothing)
