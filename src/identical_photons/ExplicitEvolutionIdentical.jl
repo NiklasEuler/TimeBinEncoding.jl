@@ -14,7 +14,7 @@ index `j_out` through the loop system with beam splitter `angles` and initial-st
 - `angles: Vector of beam splitter angles for each roundtrip.
 - `phases: Vector of initial-state phase factors for each time bin.
 
-# Output
+# Returns
 - `j_idx_arr_contr: Vector of basis indices that contribute to the final state of `j_out`.
 - `coeff_arr: Vector of coefficients for each contributing basis index.
 
@@ -118,7 +118,7 @@ the corresponding `projector weights` is returned.
     respective contributions are scaled by the corresponding element of `projector_weights`.
 - `phases: Vector of initial-state phase factors for each time bin.
 
-# Output
+# Returns
 - `j1_arr: Vector of first basis indices of the contributing coherences in the
     |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
 - `j2_arr: Vector of second basis indices of the contributing coherences in the
@@ -221,7 +221,7 @@ corresponding `projector weights` is returned.
     `projector_weights`.
 - `phases: Vector of initial-state phase factors for each time bin.
 
-# Output
+# Returns
 - `exp_val: Expectation value of the populations of `j_out`/`j_out_arr` in the full four-
     photon state `ρ_init`.
 

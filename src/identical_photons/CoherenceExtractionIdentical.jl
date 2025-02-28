@@ -37,9 +37,9 @@ function coherence_extraction_identical(
 		convert(Int64, j_out)::Int64
 	end
 
-    if length(j_out) == 1
+ #=    if length(j_out) == 1
         projector_weights = projector_weights[1]
-    end
+    end =#
 
     projector_weights = try
 		convert(Vector{Float64}, projector_weights)::Vector{Float64}

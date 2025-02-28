@@ -1,7 +1,21 @@
 export visual_meas_coh_map_identical
 export visual_meas_coh_map_combined_identical
 
+"""
+    visual_meas_coh_map_identical(
+        j_out, angles, phases=ones(length(angles[1])); extract_diagonal=true
+    )
 
+Visualize the contributions of the initial state coherences to a final-state projector given
+by `j_out` in the `|l1, c1, m1, k1, l2, c2, m2, k2⟩` basis after evolution through beam-
+splitter `angles`. Optionally, initial-state phases can be specified by `phases`.
+At the end, a list of all contributing coherences to the fidelity of a typical reference
+state is printed. Here, by default, the diagonal elements are also included, but this can be
+changed by setting `extract_diagonal=false`.
+
+See also [`visual_meas_coh_map`](@ref), [`visual_meas_coh_map_combined_identical`](@ref).
+
+"""
 function visual_meas_coh_map_identical end
 
 function visual_meas_coh_map_identical(
@@ -110,6 +124,21 @@ function _visual_coh_identical(
     return nothing
 end
 
+
+"""
+    visual_meas_coh_map_combined_identical(
+        N, combined_weights, contr_j_idxs; extract_diagonal=false
+    )
+
+Visualize the initial-state contributions to a combination of different measurements. The
+`combined_weights` are the weights of the combined measurements of `N` initial time bins.
+The `contr_j_idxs` are the indices of the contributing coherences, which are printed at the
+end. By default, the diagonal elements are not included, but this can be changed by setting
+`extract_diagonal=true`.
+
+See also [`visual_meas_coh_map_identical`](@ref), [`visual_meas_coh_map`](@ref).
+
+"""
 function visual_meas_coh_map_combined_identical(
     N, combined_weights, contr_j_idxs; extract_diagonal=false
 )
@@ -117,6 +146,7 @@ function visual_meas_coh_map_combined_identical(
 	println("All remaining coherences:")
 	for j_comb in eachindex(combined_weights)
 		if !(isapprox(combined_weights[j_comb], 0, atol=1e-10))
+            # only print non-zero coherences
 			j1, j2 = j2lm(d_full_hs_bl, j_comb)
 			j1 += 1
 			j2 += 1

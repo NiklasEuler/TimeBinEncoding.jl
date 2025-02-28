@@ -114,45 +114,6 @@ function angles_phase_estimation(ρ_init::AbstractMatrix)
     return angles
 end
 
-#= """
-    angles_compound(N)
-    angles_compound(N, ϵ_angles)
-
-Return the set of all beam-splitter configurations `angles` needed for compound coherence
-extraction.
-
-Optionally, `ϵ_angles` can be given as an argument, returning uniform random angles
-distributed symmetrically around the targeted angles.
-
-# Returns
-
-- `angles`::Vector{Vector{Vector{Vector{Float64}}}}: Nested Vector of beam-splitter angles.
-At the lowest two levels, it contains complete sets of beam splitter configurations as
-Vector{Vector{Float64}}. All configurations that interfere initial-state time bins of
-distance `k` are collected into Vector{Vector{Vector{Float64}}}, which are then grouped into
-a final Vector{Vector{Vector{Vector{Float64}}}} for all allowed values of `k`
-
-See also [`j_out_compound`](@ref), [`coherence_extraction_compound`](@ref),
-[`noisy_angles_symmetric`](@ref), [`angles_single_setup`](@ref).
-"""
-function angles_compound end
-
-function angles_compound(N)
-    N = convert(Int64, N)::Int64
-
-    angles = [angles_kth_neighbor_interference(N, k) for k in 1:N - 1]
-    return angles:: Vector{Vector{Vector{Vector{Float64}}}}
-end
-
-function angles_compound(N, ϵ_angles)
-    N = convert(Int64, N)::Int64
-    ϵ_angles = convert(Float64, ϵ_angles)::Float64
-
-    angles = [angles_kth_neighbor_interference(N, k, ϵ_angles) for k in 1:N - 1]
-    return angles::Vector{Vector{Vector{Vector{Float64}}}}
-end =#
-
-
 """
     noisy_angles_symmetric(angles, ϵ_angles)
 
@@ -230,16 +191,6 @@ function _recursive_beam_splitter_array!(
             # smallest regular structure in the center, also appears in the flanks.
             # no further recursion
             angles[m_idx + 1][[n_idx, n_idx + 2]] .= π / 2
-            #angles[m_idx + 1][[n_idx + 1]] .= π / 4
-            #angles[m_idx + 3][[n_idx + 2]] .= π / 4
-        #=     if branch == "early"
-                angles[m_idx + 4][[n_idx + 1]] .= π / 2 # left flank transparent couplers
-                angles[m_idx + 4][[n_idx + 2]] .= π / 2 # left flank transparent couplers
-            elseif branch == "late"
-                angles[m_idx + 4][[n_idx + 3]] .= π / 2 # left flank transparent couplers
-                angles[m_idx + 4][[n_idx + 4]] .= π / 2 # left flank transparent couplers
-            end =#
-
             for i in 0:2 ^ recursion_depth - 1
                 angles[m_idx + 1 + i * 2][n_idx + 1 + i] = π / 4
                 # interfere early and late branches
@@ -297,7 +248,7 @@ See also [`angles4bins_02`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_01(N, l, m, p, q)
-    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+    N, l, m, p, q = _angles4bins_input_sanity_check(N, l, m, p, q)
 
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, p + 1]] .= 0.5
@@ -330,7 +281,7 @@ See also [`angles4bins_01`](@ref), [`angles4bins_03`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_02(N, l, m, p, q)
-    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+    N, l, m, p, q = _angles4bins_input_sanity_check(N, l, m, p, q)
 
     angles = [zeros(i) for i in N:N + q - l]
     angles[1][[l + 1, m + 1]] .= 0.5
@@ -363,7 +314,7 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins`](@re
 
 """
 function angles4bins_03(N, l, m, p, q)
-    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+    N, l, m, p, q = _angles4bins_input_sanity_check(N, l, m, p, q)
 
     angles = [zeros(i) for i in N:N + q - l + 1]
     angles[1][l + 1] = 0.5
@@ -394,7 +345,7 @@ See also [`angles4bins_01`](@ref), [`angles4bins_02`](@ref), [`angles4bins_03`](
 
 """
 function angles4bins(N, l, m, p, q)
-    N, l, m, p, q = angles4bins_input_sanity_check(N, l, m, p, q)
+    N, l, m, p, q = _angles4bins_input_sanity_check(N, l, m, p, q)
 
     angles_01 = angles4bins_01(N, l, m, p, q)
     angles_02 = angles4bins_02(N, l, m, p, q)
@@ -403,7 +354,7 @@ function angles4bins(N, l, m, p, q)
     return angles_01, angles_02, angles_03
 end
 
-function angles4bins_input_sanity_check(N, l, m, p, q)
+function _angles4bins_input_sanity_check(N, l, m, p, q)
     N = convert(Int64, N)::Int64
     l = convert(Int64, l)::Int64
     m = convert(Int64, m)::Int64
@@ -411,12 +362,23 @@ function angles4bins_input_sanity_check(N, l, m, p, q)
     q = convert(Int64, q)::Int64
 
     @argcheck N > 0
-    @argcheck q < N
-    @argcheck l < m < p < q
+    @argcheck q < N # largest index at most N - 1
+    @argcheck l < m < p < q # ascending order basis convention
 
     return N, l, m, p, q
 end
 
+"""
+    angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
+
+Compute the beam-splitter angles for `N` initial time bins that generates all pairs of bins
+that include the reference time bin at index `idx_ref`. Optionally, the diagram can be
+extended to include pure population output bins for all but the reference bin by setting
+`population_bins=true`. In this way, coherences of the kind |ii⟩⟨ij| can be accessed.
+
+See also [`angles_compound`](@ref), [`angles_single_setup`](@ref).
+
+"""
 function angles_ref_bin_all_pairs(N, idx_ref; population_bins=false)
 	N = convert(Int64, N)::Int64 # initial number of time bins
     idx_ref = convert(Int64, idx_ref)::Int64 # reference time-bin index
@@ -584,8 +546,8 @@ end
 Given an integer `N`, this function performs graph-edge coloring on a graph of `N` nodes to
 generate pairings of bins/nodes. If `N` is even, it calls the `_graph_coloring_even` func-
 tion to generate the pairings. If `N` is odd, it first calls the `graph_coloring` function
-recursively with `N + 1` to generate pairings for an even number of bins/nodes. Then, it re-
-moves the first pair from each perfect matching to leave out one bin/node, resulting in an
+recursively with `N + 1` to generate pairings for an even number of bins/nodes. Then, it
+removes the first pair from each perfect matching to leave out one bin/node, resulting in an
 odd number of bins/nodes.
 
 # Arguments
