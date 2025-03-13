@@ -292,9 +292,10 @@ end
 """
     combs_4bin(N)
 
-    Generates all possible combinations of 4 bins out of N bins, such that the bins are
-    ordered in increasing order. The output is a 4xN_comb matrix, where each column
-    corresponds to a combination of 4 bins.
+Generates all possible combinations of 4 bins out of N bins, such that the bins are
+ordered in increasing order. The output is a 4xN_comb matrix, where each column
+corresponds to a combination of 4 bins.
+
 """
 function combs_4bin(N)
 	@argcheck N ≥ 4
@@ -310,12 +311,13 @@ end
 """
     combined_weights_pops_4bins_all(N, extraction_composition_weights; phases=true)
 
-    Compute the combined weights and populations for the three four-bin interference
-    settings, with the desired weights for the different projectors given in
-    `extraction_composition_weights`. Return both the combined weights and the total
-    final-state populations.
+Compute the combined weights and populations for the three four-bin interference settings,
+with the desired weights for the different projectors given in
+`extraction_composition_weights`. Return both the combined weights and the total final-state
+populations.
 
-    See also [`combined_weights_pops_hom`](@ref), ['angles4bins](@ref).
+See also [`combined_weights_pops_hom`](@ref), ['angles4bins](@ref).
+
 """
 function combined_weights_pops_4bins_all(
     N, ρ_mixed, extraction_composition_weights; phases=true
