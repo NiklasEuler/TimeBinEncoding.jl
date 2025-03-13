@@ -10,13 +10,13 @@ index `j_out` through the loop system with beam splitter `angles` and initial-st
 `phases`.
 
 # Arguments
-- `j_out: Two-photon bin index in the |l, c, m, k⟩ basis.
-- `angles: Vector of beam splitter angles for each roundtrip.
-- `phases: Vector of initial-state phase factors for each time bin.
+- `j_out`: Two-photon bin index in the |l, c, m, k⟩ basis.
+- `angles`: Vector of beam splitter angles for each roundtrip.
+- `phases`: Vector of initial-state phase factors for each time bin.
 
 # Returns
-- `j_idx_arr_contr: Vector of basis indices that contribute to the final state of `j_out`.
-- `coeff_arr: Vector of coefficients for each contributing basis index.
+- `j_idx_arr_contr`: Vector of basis indices that contribute to the final state of `j_out`.
+- `coeff_arr`: Vector of coefficients for each contributing basis index.
 
 See also [`explicit_fs_coherence_map_identical`](@ref), [`explicit_fs_pop_identical`](@ref).
 
@@ -107,21 +107,21 @@ scale the contributuing coherences. A single final state `j_out` or a vector of 
 the corresponding `projector weights` is returned.
 
 # Arguments
-- `j_out: four-photon bin index in the |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
+- `j_out`: four-photon bin index in the |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
     Can be a single integer or a vector of integers. In the second case, the contributions
     are summed up with weights according to `projector_weights`.
-- `angles: Vector of beam splitter angles for each roundtrip.
-- `projector_weight: Weight for the projector contribution. For an integer `j_out`, the
+- `angles`: Vector of beam splitter angles for each roundtrip.
+- `projector_weight`: Weight for the projector contribution. For an integer `j_out`, the
     projector contribution is simply scaled by this factor. For a vector `j_out_arr`, the
     respective contributions are scaled by the corresponding element of `projector_weights`.
-- `phases: Vector of initial-state phase factors for each time bin.
+- `phases`: Vector of initial-state phase factors for each time bin.
 
 # Returns
-- `j1_arr: Vector of first basis indices of the contributing coherences in the
+- `j1_arr`: Vector of first basis indices of the contributing coherences in the
     |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
-- `j2_arr: Vector of second basis indices of the contributing coherences in the
+- `j2_arr`: Vector of second basis indices of the contributing coherences in the
     |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
-- `weights: Vector of weights for each contributing coherence.
+- `weights`: Vector of weights for each contributing coherence.
 
 See also [`explicit_fs_projection_sp_identical`](@ref), [`explicit_fs_pop_identical`](@ref).
 
@@ -209,18 +209,18 @@ can be provided. In the latter case, the sum of all populations, modified by the
 corresponding `projector weights` is returned.
 
 # Arguments
-- `ρ_init: Initial density matrix of the four-photon state.
-- `j_out: four-photon bin index in the |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
+- `ρ_init`: Initial density matrix of the four-photon state.
+- `j_out`: four-photon bin index in the |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.
     Can be a single integer or a vector of integers. In the latter case, the populations
     are summed up with weights according to `projector_weights`.
-- `angles: Vector of beam splitter angles for each roundtrip.
-- `projector_weights: WeightS for the projector contribution. Only for a vector `j_out_arr`.
+- `angles`: Vector of beam splitter angles for each roundtrip.
+- `projector_weights`: Weights for the projector contribution. Only for a vector `j_out_arr`.
     The respective contributions are scaled by the corresponding element of
     `projector_weights`.
-- `phases: Vector of initial-state phase factors for each time bin.
+- `phases`: Vector of initial-state phase factors for each time bin.
 
 # Returns
-- `exp_val: Expectation value of the populations of `j_out`/`j_out_arr` in the full four-
+- `exp_val`: Expectation value of the populations of `j_out`/`j_out_arr` in the full four-
     photon state `ρ_init`.
 
 See also [`explicit_fs_projection_sp_identical`](@ref),

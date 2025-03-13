@@ -203,7 +203,7 @@ Convert the indices of correlated short bins to tuples.
 # Arguments
 - `N`: The number of time bins.
 - `extract_diagonal`: (Optional) A boolean indicating whether to include the diagonal
-elements. Default is `false`.
+    elements. Default is `false`.
 
 # Returns
 - `Vector{Tuple{Int64, Int64}}`: A list of tuples representing pairs of indices.

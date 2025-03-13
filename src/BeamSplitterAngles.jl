@@ -81,7 +81,7 @@ the use in default argument usage.
 
 # Returns
 
-- `angles`::Vector{Vector{Float64}}: Unified beam-splitter configuration for initial-state
+- `angles::Vector{Vector{Float64}}`: Unified beam-splitter configuration for initial-state
     phase estimation. This configuration allows the readout of all relative initial initial-
     state phases between |ii⟩ and |jj⟩ for all i, j = 1, ..., N.
 
@@ -453,9 +453,10 @@ distributed symmetrically around the targeted angles.
 # Returns
 
 - `angles`::Vector{Vector{Vector{Float64}}}: Nested Vector of beam-splitter angles.
-At the lowest two levels, it contains complete sets of beam splitter configurations as
-Vector{Vector{Float64}}. Each configuration interferes all bins in pairs of two (if N is
-odd, one bin remains unaltered). Over all configurations, all possible pairings are covered.
+    At the lowest two levels, it contains complete sets of beam splitter configurations as
+    Vector{Vector{Float64}}. Each configuration interferes all bins in pairs of two (if N is
+    odd, one bin remains unaltered). Over all configurations, all possible pairings are
+    covered.
 
 See also [`j_out_compound`](@ref), [`coherence_extraction_compound`](@ref),
 [`noisy_angles_symmetric`](@ref), [`angles_single_setup`](@ref).
