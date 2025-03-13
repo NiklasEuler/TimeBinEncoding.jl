@@ -12,16 +12,16 @@ If the argument `l` is omitted, the evolution of `|0,S⟩` is returned.
 
 # Returns
 
- -`j_idx_arr`::Vector{Int64}: All `j` indices of the `|l,c⟩` for which the state after
+- `j_idx_arr`::Vector{Int64}: All `j` indices of the `|l,c⟩` for which the state after
     evolution has a potentially non-zero coefficient.
- -`trigonometric_history_arr`::Vector{Matrix{Int64}}: Contains a Matrix for each index `j`
+- `trigonometric_history_arr`::Vector{Matrix{Int64}}: Contains a Matrix for each index `j`
     from `j_idx_arr` which keeps track at what times cos or sin function should be applied.
     Each of the columns of each Matrix corresponds to one round trip in the fiber-loop
     system. Each row marks the contributions of a single time-bin trajectory through the
     lattice. A entry of 0 indicates a cos factor for that given round-trip index and
     trajectory, whereas a value of 1 indicates a sin contribution, i.e., the photon changes
     from the short to the long loop or vice versa.
- -`angle_history_arr`:Vector{Matrix{Int64}}: Of the same shape as
+- `angle_history_arr`:Vector{Matrix{Int64}}: Of the same shape as
     `trigonometric_history_arr`. Every entry holds information about the temporal position
     of each trajectory at each round trip. Each value corresponds to the current time-bin
     index `l` in the `|l,c⟩` basis at each round trip.
