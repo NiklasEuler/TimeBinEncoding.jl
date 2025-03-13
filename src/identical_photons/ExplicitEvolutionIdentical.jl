@@ -41,7 +41,7 @@ end
 Preallocate memory for the Kronecker products of the coin operators. Return a vector with
 an preallocated sparse array for each roundtrip.
 
-    See also [`_explicit_fs_projection_mesh_identical_backend`](@ref).
+See also [`_explicit_fs_projection_mesh_identical_backend`](@ref).
 """
 function _kron_mem_arr(N, M)
     dims = [(n * (2 * n + 1)) ^ 2 for n in N:N + M]
@@ -105,8 +105,6 @@ splitter `angles` and initial-state `phases`. Also accepts a `projector_weight` 
 scale the contributuing coherences. A single final state `j_out` or a vector of final states
 `j_out_arr` can be provided. In the latter case, the sum of all contributions, modified by
 the corresponding `projector weights` is returned.
-
-
 
 # Arguments
 - `j_out: four-photon bin index in the |l1, c1, m1, k1, l2, c2, m2, k2⟩ basis.

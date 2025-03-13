@@ -152,9 +152,9 @@ end
 """
     lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)
 
-    Converts the |l1, c1 , m1 , k1⟩ and |l2, c2 , m2 , k2⟩ indices for the signal and idler
-    photon pairs, respectively, to the corresponding 4-photon basis state index ´j_super´ in
-    the |l1, c1 , m1 , k1, l2, c2 , m2 , k2⟩ basis.
+Converts the |l1, c1 , m1 , k1⟩ and |l2, c2 , m2 , k2⟩ indices for the signal and idler
+photon pairs, respectively, to the corresponding 4-photon basis state index ´j_super´ in the
+|l1, c1 , m1 , k1, l2, c2 , m2 , k2⟩ basis.
 
 """
 function lcmk2j_super_identical(N, l1, c1, m1, k1, l2, c2, m2, k2)

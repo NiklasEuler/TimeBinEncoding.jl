@@ -286,6 +286,7 @@ end
 
 if !@isdefined cispi
     function cispi(x)
+        # define the complex exponential function with π factor for older Julia versions
         return cis(x .* π)
     end
 end

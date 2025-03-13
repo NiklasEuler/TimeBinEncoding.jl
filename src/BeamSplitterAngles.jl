@@ -84,6 +84,7 @@ the use in default argument usage.
 - `angles`::Vector{Vector{Float64}}: Unified beam-splitter configuration for initial-state
     phase estimation. This configuration allows the readout of all relative initial initial-
     state phases between |ii⟩ and |jj⟩ for all i, j = 1, ..., N.
+
 See also [`angles_single_setup`](@ref), [`angles_compound`](@ref), [`j_out_compound`](@ref),
 [`coherence_extraction_compound`](@ref), [`noisy_angles_symmetric`](@ref).
 """
@@ -94,7 +95,6 @@ function angles_phase_estimation(N::Real)
     M = 2
     angles = [fill(0.25 * π, n) for n in N:N + M - 1]
     angles[2][[1, end]] .= 0
-    # angles = angles_kth_neighbor_interference(N, 1) # nearest neighbor phase estimation
     return angles
 end
 
@@ -102,7 +102,6 @@ function angles_phase_estimation(N::Real, ϵ_angles)
     N = convert(Int64, N)::Int64
     angles = angles_phase_estimation(N)
     angles_noisy = noisy_angles_symmetric(angles, ϵ_angles)
-    #angles_noisy = angles_kth_neighbor_interference(N, 1, ϵ_angles)
     # noisy nearest neighbor phase estimation
     return angles_noisy
 end
@@ -156,11 +155,6 @@ function angles_single_setup(N)
     _recursive_beam_splitter_array!(
         N_half, 1 + N_half, 1 + N_half, angles_cascade, initial_branch, recursion_depth,
     )
-#=
-    for i in 2:N_half - 1 # 2 are already included in minimum structure
-        angles_cascade[N + i * 2][N + i] = π / 4 # interfere early and late branches
-    end =#
-
     return angles_cascade
 end
 

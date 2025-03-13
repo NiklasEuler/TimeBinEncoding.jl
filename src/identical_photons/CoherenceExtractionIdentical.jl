@@ -110,13 +110,13 @@ end
 """
     j_out4bins(N_post, bin_1, bin_2)
 
-    Compute the `j_out` projector-state four-photon indicies for a four-bin interference
-    setup. The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins
-    after the DTQW. The computed outputs are the indices for the full coincidence (SSSS,
-    LLLL), species coincidence (SSLL, LLSS), and signal-idler coincidence (SLSL) configura-
-    tions.
+Compute the `j_out` projector-state four-photon indicies for a four-bin interference setup.
+The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins after the DTQW.
+The computed outputs are the indices for the full coincidence (SSSS, LLLL), species
+coincidence (SSLL, LLSS), and signal-idler coincidence (SLSL) configurations.
 
-    See also [`j_out_hom`](@ref).
+See also [`j_out_hom`](@ref).
+
 """
 function j_out4bins(N_post, bin_1, bin_2)
     j_SSSS = lcmk2j_super_identical(N_post, bin_1, 0, bin_1, 0, bin_1, 0, bin_1, 0)
@@ -132,12 +132,13 @@ end
 """
     j_out_hom(N_post, bin_1, bin_2)
 
-    Compute the `j_out` projector-state four-photon indicies for a Hong-Ou-Mandel interfer-
-    ence setup. The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins
-    after the DTQW. The computed outputs are the indices for the full coincidence (SSSS,
-    LLLL) and signal-idler coincidence (SLSL) configurations.
+Compute the `j_out` projector-state four-photon indicies for a Hong-Ou-Mandel interference
+setup. The photons can be detected in bins `bin_1` and `bin_2` out of `N_post` bins after
+the DTQW. The computed outputs are the indices for the full coincidence (SSSS, LLLL) and
+signal-idler coincidence (SLSL) configurations.
 
-    See also [`j_out4bins`](@ref).
+See also [`j_out4bins`](@ref).
+
 """
 function j_out_hom(N_post, bin_1, bin_2)
     # using the Hong-Ou-Mandel interference pattern for coherence extraction
@@ -162,9 +163,9 @@ end
         contr_j_tuples=correlated_short_bins_tuples_identical(N);
     )
 
-    Extract the coherences from a combined measurement of several different beam-splitter
-    configurations or phase settings. This allowes for the cancelation of additional cohe-
-    rences across different measurements and improves fidelity of the extracted coherences.
+Extract the coherences from a combined measurement of several different beam-splitter
+configurations or phase settings. This allowes for the cancelation of additional coherences
+across different measurements and improves fidelity of the extracted coherences.
 
 """
 function combined_measurement_coherence_extraction_identical(
@@ -382,12 +383,12 @@ end
 """
     combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
 
-    Compute the combined weights and populations for the Hong-Ou-Mandel interference
-    setting, with the desired weights for the different projectors given in
-    `extraction_composition_weights`. Return both the combined weights and the total
-    final-state populations.
+Compute the combined weights and populations for the Hong-Ou-Mandel interference setting,
+with the desired weights for the different projectors given in
+`extraction_composition_weights`. Return both the combined weights and the total final-state
+populations.
 
-    See also [`combined_weights_pops_4bins_all`](@ref), [`angles_compound`](@ref).
+See also [`combined_weights_pops_4bins_all`](@ref), [`angles_compound`](@ref).
 """
 function combined_weights_pops_hom(N, ρ_mixed, extraction_composition_weights)
 

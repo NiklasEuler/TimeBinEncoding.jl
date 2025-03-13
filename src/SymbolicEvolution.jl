@@ -26,8 +26,8 @@ If the argument `l` is omitted, the evolution of `|0,S⟩` is returned.
     of each trajectory at each round trip. Each value corresponds to the current time-bin
     index `l` in the `|l,c⟩` basis at each round trip.
 
-    See also [`symbolic_fs_projection_sp`](@ref), [`explicit_ket_evolution_sp`](@ref),
-    [`explicit_ket_evolution`](@ref).
+See also [`symbolic_fs_projection_sp`](@ref), [`explicit_ket_evolution_sp`](@ref),
+[`explicit_ket_evolution`](@ref).
 
 """
 function symbolic_ket_evolution_sp end
@@ -161,8 +161,8 @@ Accepts either the time-bin index `l` and loop index `c` or the `j` index of the
     of each trajectory at each round trip. Each value corresponds to the current time-bin
     index `l` in the `|l,c⟩` basis at each round trip.
 
-    See also [`symbolic_ket_evolution_sp`](@ref), [`explicit_fs_projection_sp`](@ref),
-    [`explicit_fs_projection`](@ref).
+See also [`symbolic_ket_evolution_sp`](@ref), [`explicit_fs_projection_sp`](@ref),
+[`explicit_fs_projection`](@ref).
 """
 function symbolic_fs_projection_sp end
 
