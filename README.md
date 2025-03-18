@@ -9,3 +9,5 @@
 This Julia package contains code to simulate pure and mixed quantum states in photonic mesh lattices. It offers both numerical and symbolic simulation tools for unitary time evolution in optical fiber loops and allows to compute forward and backward coherence maps between the initial and final state quantum states. The aim is to study photonic mesh lattices as a platform for high-dimensional entanglement.
 
 This package is used for the numerical simulations presented in the manuscript "Detecting high-dimensional time-bin entanglement in fiber-loop systems" (https://arxiv.org/abs/2502.18336). The scripts used for the generation and visualization of the data shown are contained in https://github.com/NiklasEuler/Detecting-high-dimensional-time-bin-entanglement-in-fiber-loop-systems.
+
+To install TimeBinEncoding.jl, simply run `using Pkg; Pkg.add(path="https://github.com/NiklasEuler/TimeBinEncoding.jl.git")` in your local Julia REPL.
